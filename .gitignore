@@ -1,0 +1,6 @@
+.DS_Store
+.vscode/sftp.json
+/.vscode
+/node-rtsp-rtmp-server
+/socketIO
+node_modules

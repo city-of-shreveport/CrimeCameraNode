@@ -1,0 +1,93 @@
+
+body {
+  
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  
+}
+
+a {
+  color: #00B7FF;
+}
+
+
+#main{
+
+  width: 100%;
+  height:800px;
+  margin: 0%;
+padding: 0%;
+}
+.mainContainer{
+  margin-top: 8px;
+  min-width: 1200px;
+}
+
+.customBox{
+
+
+  background-color: lightgrey;
+
+
+}
+.topRow{
+
+
+  height: 100px;
+  width: 100%;
+}
+.videoBox{
+    height: 400px;
+
+
+}
+.videoSide{
+    height: 620px;
+  
+
+}
+.videoInSide{
+    margin-top: 8px;
+    
+}
+#liveVideo{
+  height: 400px;
+  width: inherit;
+
+}
+.controlButton{
+
+
+
+
+  height: 60px;
+}
+.btn-secondary{
+    min-width: 100%;
+
+}
+.actionHeader{
+  text-align: center;
+  font-size: x-large;
+
+}
+.presetButton{
+  height: 40px;
+margin-top: 3px;
+
+
+}
+.cardVIdeosDate{
+  max-height: 200px;
+  overflow: scroll;
+}
+
+#myModal{
+  width: 1100px;
+
+
+}
+.modal-content{
+
+  width: 1100px;
+
+}
