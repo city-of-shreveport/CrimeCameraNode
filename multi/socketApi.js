@@ -1,12 +1,11 @@
 var socket_io = require('socket.io');
-
 var io = socket_io();
 var socketApi = {};
 const dreamHost = require("socket.io-client");
 var os = require('os');
 var ifaces = os.networkInterfaces();
 const si = require('systeminformation');
-
+const { exec } = require("child_process");
 
 require('events').EventEmitter.prototype._maxListeners = 100;
 
@@ -165,8 +164,6 @@ socket2.on("hi", function(data){
    
 })
 
-const { exec } = require("child_process");
-
 function executeCommand(command) {
   exec(command, (error, stdout, stderr) => {
       if (error) {
@@ -263,8 +260,6 @@ function Startrecording(){
         var alias = 0;
 
     });
-    
-var exec = require('child_process').exec;
 
 function sendVideoandData() {
     var y;

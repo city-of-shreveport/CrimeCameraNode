@@ -4,3 +4,4 @@
 /node-rtsp-rtmp-server
 /socketIO
 node_modules
+*videos
