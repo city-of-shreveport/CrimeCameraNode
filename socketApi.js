@@ -29,10 +29,11 @@ child1 = spawn("ffmpeg", [
  "-segment_time", "1",
  "-segment_list_size", "3",
  "-segment_format", "mpegts",
- "-segment_list", "/home/spd/CrimeCamera/backend/public/liveStream/index.m3u8",
+ "-segment_list", "/home/spd/CrimeCamera/backend/public/liveStream/cam1/index.m3u8",
  "-segment_list_type", "m3u8",
  "-segment_list_entry_prefix", "",
- "public/liveStream/%d.ts"
+ "-segment_wrap", "10",
+ "public/liveStream/cam1/%d.ts"
 
 ]);
 child2 = spawn("ffmpeg", [
@@ -50,10 +51,11 @@ child2 = spawn("ffmpeg", [
  "-segment_time", "1",
  "-segment_list_size", "3",
  "-segment_format", "mpegts",
- "-segment_list", "/home/spd/CrimeCamera/backend/public/liveStream/index2.m3u8",
+ "-segment_list", "/home/spd/CrimeCamera/backend/public/liveStream/cam2/index2.m3u8",
  "-segment_list_type", "m3u8",
  "-segment_list_entry_prefix", "",
- "public/liveStream/2%d.ts"
+ "-segment_wrap", "10",
+ "public/liveStream/cam2/2%d.ts"
 
 ]);
 child3 = spawn("ffmpeg", [
@@ -71,10 +73,11 @@ child3 = spawn("ffmpeg", [
  "-segment_time", "1",
  "-segment_list_size", "3",
  "-segment_format", "mpegts",
- "-segment_list", "/home/spd/CrimeCamera/backend/public/liveStream/index3.m3u8",
+ "-segment_list", "/home/spd/CrimeCamera/backend/public/liveStream/cam3/index3.m3u8",
  "-segment_list_type", "m3u8",
  "-segment_list_entry_prefix", "",
- "public/liveStream/3%d.ts"
+ "-segment_wrap", "10",
+ "public/liveStream/cam3/3%d.ts"
 
 ]);
 child1.stdout.on('data', (data) => {

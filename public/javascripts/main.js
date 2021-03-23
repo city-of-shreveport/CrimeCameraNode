@@ -192,10 +192,175 @@ var caraouselHTML = "<div class='card' style='width: 18rem;'>"+
 "</div>"+
 "</div>"
 
+var topNewGrid = `
+<div class='row'>
+  <div class='col-sm-6'>
+  <div class='card border-dark mb-4' style='max-width: 100%;'>
+  <div class='card-header actionHeader'>Cameras</div>
+  <div class='card-body text-dark'>
+    <div class='row'>
+      <div class='col-sm-7'>
+        <input class='form-control' id='filterCameras' type='text' placeholder='Search..'></input>
+        <div class='list-group' id='cameraListItems' role='tablist'>
+        </div>
+
+
+      </div>
+      <div class='col-4'>
+      <div class='card-header actionHeader'>Camera Info</div>
+      <ul class='list-group'>
+      <li class='list-group-item'>Drive Space</li>
+      <li class='list-group-item'>Something Else</li>
+      <li class='list-group-item'>Last Check in</li>
+      <li class='list-group-item'>One more item</li>
+      <li class='list-group-item'>And a fifth one</li>
+    </ul>
+
+
+
+      </div>
+    </div>
+
+    
+
+
+
+
+
+  </div>
+</div>
+  </div>
+  <div class='col-sm-6'>
+  <div id='map'>
+      </div>
+  </div>
+</div>  
+<div class='row'>
+  <div class='col-sm-6'>
+        <div class='card text-center'>
+          <div class='card-header'>
+              Search Calendar
+          </div>
+          <div class='card-body'>
+            <div class='row'>
+              <div class='col-sm-7'>
+                ${calendarHTML}
+              </div>
+              <div class='col-sm-5'>
+                <div class='card border-dark mb-3' style='max-width: 100%;'>
+                  <div class='card-header actionHeader'>Videos by Date</div>
+                  <div class='card-body text-dark cardVIdeosDate'>
+                    <form>
+                      <div class='mb-3'>
+                        <select class='form-select form-select-lg' aria-label='Default select example'>
+                          <option selected>Start Time</option>
+                          <option value='1'>One</option>
+                          <option value='2'>Two</option>
+                          <option value='3'>Three</option>
+                        </select>
+                        <select class='form-select form-select-lg' aria-label='Default select example'>
+                          <option selected>End Time</option>
+                          <option value='1'>One</option>
+                          <option value='2'>Two</option>
+                          <option value='3'>Three</option>
+                        </select>
+                      </div>
+                    </form>
+                    <input class='form-control' id='filterVideos' type='text' placeholder='Search..'></input>
+                    <ul class='list-group list-group-flush' id='videoDates'>
+                    </ul>
+                  </div>
+                </div>
+            
+              </div>
+            </div>
+          </div> 
+          <div class='card-footer text-muted'>
+            2 days ago
+          </div>
+        </div>
+      </div>
+  	<div class='col-sm-6'>
+      <div class='card text-center'>
+        <div class='card-header' id='cameraName'>
+          CrimeCamera001
+        </div>
+        <div class="row">
+          <div class="col-sm">
+            <div class='card' >
+              <div class='card-body'>
+                <h5 class='card-title'>Camera 1</h5>
+                <video controls='controls' autoplay width='100%' height='100%' id='video' >
+                </video>
+              </div>
+              <ul class='list-group list-group-flush'>
+                <li class='list-group-item'>On Line</li>
+                <li class='list-group-item'>Oldest Video: 3/15/2021</li>
+              </ul>
+              <div class='card-body'>
+                <a href='#' class='card-link'>Search Videos</a>
+                <a href='#' class='card-link'>Controll Camera</a>
+              </div>
+            </div>
+          </div>  
+          <div class="col-sm">
+            <div class='card' >
+              <div class='card-body'>
+                <h5 class='card-title'>Camera 2</h5>
+                <video controls='controls' autoplay width='100%' height='100%' id='video2' >
+                </video>
+
+              </div>
+              <ul class='list-group list-group-flush'>
+                <li class='list-group-item'>On Line</li>
+                <li class='list-group-item'>Oldest Video: 3/15/2021</li>
+                
+              </ul>
+              <div class='card-body'>
+                <a href='#' class='card-link'>Search Videos</a>
+                <a href='#' class='card-link'>Controll Camera</a>
+              </div>
+            </div>
+          </div>  
+          <div class="col-sm">
+            <div class='card' >
+              <div class='card-body'>
+                <h5 class='card-title'>Camera 3</h5>
+                <video controls='controls' autoplay width='100%' height='100%' id='video3' >
+                </video>
+
+              </div>
+              <ul class='list-group list-group-flush'>
+                <li class='list-group-item'>On Line</li>
+                <li class='list-group-item'>Oldest Video: 3/15/2021</li>
+                  
+              </ul>
+              <div class='card-body'>
+                <a href='#' class='card-link'>Search Videos</a>
+                 <a href='#' class='card-link'>Controll Camera</a>
+              </div>
+            </div>
+          </div>
+          </div>
+          <div class='card-footer text-muted'>
+        </div>
+      </div>     
+    </div>
+  </div>
+
+
+`
+var bottomNewGrid = `
+
+`
+
+
+
+
 var grid = `
 <div class='container'>
-  <div class='row justify-content-md-center'>
-    <div class='col col-4'>
+  <div class='row '>
+    <div class='col col-5'>
       <div class='card border-dark mb-4' style='max-width: 100%;'>
         <div class='card-header actionHeader'>Cameras</div>
         <div class='card-body text-dark'>
@@ -204,25 +369,17 @@ var grid = `
           </div>
         </div>
       </div>
-      </div>
+      
+    </div>
     <div class='col-5'>
       <div id='map'>
       </div>
     </div>
-    <div class='col col-2'>
-    <div class='card border-dark mb-4' style='max-width: 100%;'>
-    <div class='card-header actionHeader'>Camera Info</div>
-      <div class='card-body text-dark'>
-      <div class='container'>
-<canvas id='myChart' width='400' height='400'></canvas>
-</div>
-    </div>
-    </div>
-    </div>
+
   </div>
   <br>
   <div class='row'>
-    <div class='col-lg-3'>
+    <div class='col-5'>
     <div class='card border-dark mb-3' style='max-width: 90%;'>
     <div class='card-header actionHeader'>Calendar</div>
     ${calendarHTML}
@@ -489,15 +646,15 @@ const myLatLng = { lat: 38.926908833333336, lng: -77.69556366666667 }
 myLatlng = new google.maps.LatLng(38.926415, -77.704038);
 
 $(function() {
-    $('#mainDIV').html(grid)
-
+    //$('#mainDIV').html(grid)
+    $('#mainDIV').html(topNewGrid)
 
     var video = document.getElementById('video');
     var video2 = document.getElementById('video2');
     var video3 = document.getElementById('video3');
-  var videoSrc = '/liveStream/index.m3u8';
-  var videoSrc2 = '/liveStream/index2.m3u8';
-  var videoSrc3 = '/liveStream/index3.m3u8';
+  var videoSrc = '/liveStream/cam1/index.m3u8';
+  var videoSrc2 = '/liveStream/cam2/index2.m3u8';
+  var videoSrc3 = '/liveStream/cam3/index3.m3u8';
   if (Hls.isSupported()) {
     var hls = new Hls();
     var hls2 = new Hls();
