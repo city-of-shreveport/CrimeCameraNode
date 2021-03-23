@@ -164,11 +164,57 @@ socket2.on("hi", function(data){
     console.log("HHHHIII")
    
 })
+
+const { exec } = require("child_process");
+
+function executeCommand(command) {
+  exec(command, (error, stdout, stderr) => {
+      if (error) {
+          console.log(`error: ${error.message}`);
+          return;
+      }
+      if (stderr) {
+          console.log(`stderr: ${stderr}`);
+          return;
+      }
+  });
+}
+
+function setupFirewall() {
+  executeCommand(`
+    sudo sysctl net.ipv4.conf.eth0.forwarding=0 &&
+    sudo sysctl net.ipv4.conf.wlan0.forwarding=0 &&
+    sudo sysctl net.ipv4.conf.ztr2q2q3ib.forwarding=0 &&
+    sudo iptables -P INPUT ACCEPT &&
+    sudo iptables -P FORWARD ACCEPT &&
+    sudo iptables -P OUTPUT ACCEPT  &&
+    sudo iptables -t nat -F &&
+    sudo iptables -t mangle -F &&
+    sudo iptables -t raw -F &&
+    sudo iptables -F &&
+    sudo iptables -X &&
+
+    sudo sysctl net.ipv4.conf.eth0.forwarding=1 &&
+    sudo sysctl net.ipv4.conf.wlan0.forwarding=1 &&
+    sudo sysctl net.ipv4.conf.ztr2q2q3ib.forwarding=1 &&
+
+    sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d 192.168.196.164 --dport 554 -j DNAT --to 10.10.5.2:554 &&
+    sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 554 -j ACCEPT  &&
+    sudo iptables -t nat -A POSTROUTING -j MASQUERADE &&
+
+    sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d 192.168.196.164 --dport 555 -j DNAT --to 10.10.5.3:554 &&
+    sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 555 -j ACCEPT  &&
+    sudo iptables -t nat -A POSTROUTING -j MASQUERADE &&
+
+    sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d 192.168.196.164 --dport 556 -j DNAT --to 10.10.5.4:554 &&
+    sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 556 -j ACCEPT  &&
+    sudo iptables -t nat -A POSTROUTING -j MASQUERADE
+  `)
+}
+
+setupFirewall()
+
 function Startrecording(){
-
-
-    
-
        child = spawn("ffmpeg", [
           "-hide_banner","-loglevel", "panic",
           "-i", "rtsp://admin:UUnv9njxg123@10.10.5.2:554/cam/realmonitor?channel=1&subtype=0",
