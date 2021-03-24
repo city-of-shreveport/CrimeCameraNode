@@ -1,230 +1,93 @@
+
 body {
-  padding: 50px;
+  
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  
 }
 
 a {
   color: #00B7FF;
 }
-.container{
-  min-width:100%;
 
 
-}
-#div.container.videoFeeds{
-  max-width:100%;
-
-
-}
-#div.row.videoFeeds{
-  max-width:100%;
-
-
-}
-#mainDIV{
-
-  width:100%;
-  height: 800px;
-}
-#map{
+#main{
 
   width: 100%;
-  height: 400px;
+  height:800px;
+  margin: 0%;
+padding: 0%;
+}
+.mainContainer{
+  margin-top: 8px;
+  min-width: 1200px;
 }
 
-#cameraInfo{
+.customBox{
 
-  width: 640px;
-  height: 480px;
-}
 
-#vidoeCOntainer{
-  width: 400px;
-  height: 400px;
+  background-color: lightgrey;
+
+
 }
-#vidoe{
+.topRow{
+
+
+  height: 100px;
   width: 100%;
-  height: 400px;
 }
-.wc-calendar {
-  background-color: $white;
+.videoBox{
+    height: 400px;
+
+
 }
-
-  .wc-calendar__header {
-    position: relative;
-    height: 40px;
-    border-bottom: 2px solid gray;
-    overflow: hidden;
-    text-align: center;
-  }
-    .wc-calendar__header__date {
-      display: inline-block;
-    }
-
-  .wc-calendar__btn {
-    height: 32px;
-    padding: 0 15px;
-    border: none;
-    border-radius: 5px;
-    color: white;
-    font-size: 12px;
-    line-height: 32px;
-    background-color: grey;
-    cursor: pointer;
-
-    &:focus, &:active {
-      outline: none;
-    }
-
-    &:hover {
-      background-color: green;
-    }
-  }
-    .wc-calendar__btn--prev {
-      float: left;
-    }
-    .wc-calendar__btn--next {
-      float: right;
-    }
-
-  .wc-calendar__days-names,
-  .wc-calendar__days-list {
-    display: flex;
-    flex-wrap: wrap;
-    list-style: none;
-    padding: 0;
-  }
-
-  .wc-calendar__days-names {
-    border-bottom: 1px solid white;
-  }
-
-  .wc-calendar__days-names__item,
-  .wc-calendar__days-list__item {
-    width: 14.2%;
-    flex-grow: 1;
-    text-align: center;
-  }
-
-  .wc-calendar__days-names__item {
-    padding-top: 10px;
-  }
-
-  .wc-calendar__days-list__item {
-    height: 60px;
-    line-height: 60px;
-    cursor: pointer;
-  }
-    .wc-calendar__days-list__item--active {
-      color: $white;
-      background-color: $btn-bg-color;
-    }
-    .wc-calendar__days-list__item--prev-month,
-    .wc-calendar__days-list__item--next-month {
-      color: $gray;
-    }
-      .wc-calendar__days-list__item--active.wc-calendar__days-list__item--prev-month,
-      .wc-calendar__days-list__item--active.wc-calendar__days-list__item--next-month {
-        border: 1px solid btn-bg-color;
-        background-color: white;
-      }
-
-/* testing styles */
-.red-class {
-  background-color: red;
-}
-.gray-class {
-  background-color: gray;
-}
-.calendar-form {
-  width: 300px;
-  padding: 10px;
-  border: 1px solid gray;
-}
-  .control-group + .control-group {
-    margin-top: 5px;
-  }
-  .control-label {
-    display: inline-block;
-    width: 94px;
-    font-size: 14px;
-  }
-  .control-input {
-    width: 197px;
-  }
-  .customBox{
-
-  max-width: 100%;
+.videoSide{
+    height: 620px;
   
-  }
-  .btn-sm{
+
+}
+.videoInSide{
+    margin-top: 8px;
+    
+}
+#liveVideo{
+  height: 400px;
+  width: inherit;
+
+}
+.controlButton{
+
+
+
+
+  height: 60px;
+}
+.btn-secondary{
     min-width: 100%;
 
+}
+.actionHeader{
+  text-align: center;
+  font-size: x-large;
 
-  }
-  .container{
-  max-width: 100%;
+}
+.presetButton{
+  height: 40px;
+margin-top: 3px;
 
 
-  }
-  .topRow{
-  
-  
-    height: 100px;
-  }
-  .videoBox{
-      height: 620px;
-  
-  
-  }
-  .videoSide{
-      height: 620px;
-      width: 600px;;
-  
-  }
-  .videoInSide{
-      margin-top: 8px;
-      
-  }
-  #liveVideo{
-    height: 600px;
-    width: inherit;
-  
-  }
-  .controlButton{
-  
-  
-  
-  
-    height: 60px;
-  }
-  .btn-secondary{
-      min-width: 100%;
-  
-  }
-  .actionHeader{
-    text-align: center;
-    font-size: x-large;
-  
-  }
-  .presetButton{
-    height: 40px;
-  margin-top: 3px;
-  
-  
-  }
-  .cardVIdeosDate{
-    max-height: 200px;
-    overflow: scroll;
-  }
-  
-  #myModal{
-    width: 1100px;
-  
-  
-  }
-  .modal-content{
-  
-    width: 1100px;
-  
-  }
+}
+.cardVIdeosDate{
+  max-height: 200px;
+  overflow: scroll;
+}
+
+#myModal{
+  width: 1100px;
+
+
+}
+.modal-content{
+
+  width: 1100px;
+
+}

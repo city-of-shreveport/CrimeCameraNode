@@ -1,2 +1,1 @@
-# CrimeCamera
-City Wide Crime Camera
+# DualCrimCamera
