@@ -1,0 +1,29 @@
+doctype html
+html
+  head
+    title= title
+    
+    link(rel="stylesheet", href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css", integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z", crossorigin="anonymous")
+    link(rel='stylesheet', href='/stylesheets/datepicker.css')
+    link(rel="stylesheet", href='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.css')
+    link(rel='stylesheet', href='/stylesheets/style.css')
+
+
+    <!-- Optional theme --> 
+
+
+    script(src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js')   
+
+    script(src='https://momentjs.com/downloads/moment-timezone-with-data-10-year-range.js')
+    script(src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js')
+    
+
+    script(src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/js/bootstrap-datetimepicker.min.js')
+    script(src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js')
+    script(src='https://maps.googleapis.com/maps/api/js?key=AIzaSyAxgBe1BLPLfPIPwK0ucb6-SeqkZdckChI')
+    script(src='/socket.io/socket.io.js')
+    script(src='/javascripts/jsmpeg.min.js')
+    script(src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js')
+    script(src='/javascripts/management2-main.js')
+  body
+    block content
