@@ -7,190 +7,6 @@ var marker2
 var marker3
 let infoWindow;
 var nodeID = "";
-var calendarHTML = "<div class='calendar'></div>"
-var PTZCamHTML = "<div class='row'>"+
-"<div class='col-sm-6'>"+
-  "<div class='card'>"+
-    "<div class='card-body' id=PTZVideoFeed>"+
-      
-    "</div>"+
-  "</div>"+
-"</div>"+
-"<div class='col-sm-6'>"+
-  "<div class='row'>"+
-    "<div class='col-6 col-md-3 customBox videoSide'>"+
-        "<div class='customBox videoInSide'>"+
-          "<div class='card border-dark mb-3' style='max-width: 400px;'>"+
-            "<div class='card-header actionHeader'>Controls</div>"+
-            "<div class='card-body text-dark'>"+
-            "<form>"+
-              "<div class='form-group'>"+
-                "<label for='formControlRange'>Movement Speed</label>"+
-                "<input type='range' class='form-control-range' id='panSpeed' value=4 min=0 max=8>"+
-              "</div>"+
-            "</form>"+
-              "<div class='container'>"+
-                "<div class='row'>"+
-                  "<div class='col-sm'>"+
-                  "</div>"+
-                  "<div class='col-sm'>"+
-                    "<button type='button' class='btn btn-secondary up'> Up </button>"+
-                  "</div>"+
-                  "<div class='col-sm'>"+
-                  "</div>"+
-                "</div>"+
-                "<div class='row'>"+
-                  "<div class='col-sm'>"+
-                    "<button type='button' class='btn btn-secondary left'>Left</button>"+
-                  "</div>"+
-                  "<div class='col-sm'></div>"+
-                  "<div class='col-sm'>"+
-                    "<button type='button' class='btn btn-secondary right'>Right</button>"+
-                  "</div>"+
-                "</div>"+
-                "<div class='row'>"+
-                  "<div class='col-sm'>"+
-                  "</div>"+
-                  "<div class='col-sm'>"+
-                    "<button type='button' class='btn btn-secondary down' >Down</button>"+
-                  "</div>"+
-                  "<div class='col-sm'>"+
-                  "</div>"+
-                "</div>"+
-              "</div>"+
-            "</div>"+   
-                "<div class='card-footer'>"+
-                  "<div class='container'>"+
-                    "<div class='row'>"+
-                      "<div class='col'>"+
-                        "<h5>Zoom</h5>"+
-                        "<div class='btn-group btn-group-sm' role='group' aria-label='...'>"+
-                          "<button type='button' class='btn btn-primary btn-sm zoomout'>Out\</button>"+
-                          "<button type='button' class='btn btn-danger btn-sm zoomin'>IN</button>"+
-                        "</div>"+
-                      "</div>"+
-                      "<div class='col'>"+
-                        "<h5>Recording</h5>"+
-                        "<div class='btn-group btn-group-sm' role='group' aria-label='...'>"+
-                          "<button type='button' class='btn btn-primary btn-sm recordon'>Start</button>"+
-                          "<button type='button' class='btn btn-danger btn-sm recordoff'>Stop</button>"+
-                        "</div>"+
-                      "</div>"+
-                      "<div class='col'>"+
-                      "<h5>Tour</h5>"+
-                      "<div class='btn-group btn-group-sm' role='group' aria-label='...'>"+
-                        "<button type='button' class='btn btn-primary btn-sm startTour'>Start</button>"+
-                        "<button type='button' class='btn btn-danger btn-sm stopTour'>Stop</button>"+
-                      "</div>"+
-                      "</div>"+
-                      "<div class='col'>"+
-                      "<h5>Scanning</h5>"+
-                      "<div class='btn-group btn-group-sm' role='group' aria-label='...'>"+
-                            "<button type='button' class='btn btn-primary btn-sm scanon'>Start</button>"+
-                            "<button type='button' class='btn btn-danger btn-sm scanoff'>Stop</button>"+
-                        "</div>"+
-                      "</div>"+
-                    "</div>"+
-                  "</div>"+
-                "</div>"+
-                "</div>"+
-          "</div>"+
-      "</div>"+
-  "</div>"+
-    "</div>"+
-  "</div>"+
-"</div>"+
-"</div>"  
-var Cam2ViewHTML = "<div class='row'>"+
-  "<div class='col-sm-6'>"+
-    "<div class='card'>"+
-      "<div class='card-body'>"+
-        "<h5 class='card-title'>Special title treatment</h5>"+
-        "<p class='card-text'>With supporting text below as a natural lead-in to additional content.</p>"+
-        "<a href='#' class='btn btn-primary'>Go somewhere</a>"+
-      "</div>"+
-   " </div>"+
-  "</div>"+
-  "<div class='col-sm-6'>"+
-    "<div class='card'>"+
-      "<div class='card-body'>"+
-        "<h5 class='card-title'>Special title treatment</h5>"+
-        "<p class='card-text'>With supporting text below as a natural lead-in to additional content.</p>"+
-        "<a href='#' class='btn btn-primary'>Go somewhere</a>"+
-      "</div>"+
-    "</div>"+
-  "</div>"+
-"</div>"
-
-var Cam3ViewHTML = "<div class='row'>"+
-  "<div class='col-sm-6'>"+
-    "<div class='card'>"+
-      "<div class='card-body'>"+
-        "<h5 class='card-title'>Special title treatment</h5>"+
-        "<p class='card-text'>With supporting text below as a natural lead-in to additional content.</p>"+
-        "<a href='#' class='btn btn-primary'>Go somewhere</a>"+
-      "</div>"+
-   " </div>"+
-  "</div>"+
-  "<div class='col-sm-6'>"+
-    "<div class='card'>"+
-      "<div class='card-body'>"+
-        "<h5 class='card-title'>Special title treatment</h5>"+
-        "<p class='card-text'>With supporting text below as a natural lead-in to additional content.</p>"+
-        "<a href='#' class='btn btn-primary'>Go somewhere</a>"+
-      "</div>"+
-    "</div>"+
-  "</div>"+
-"<div class='col-sm-6'>"+
-    "<div class='card'>"+
-      "<div class='card-body'>"+
-        "<h5 class='card-title'>Special title treatment</h5>"+
-        "<p class='card-text'>With supporting text below as a natural lead-in to additional content.</p>"+
-        "<a href='#' class='btn btn-primary'>Go somewhere</a>"+
-      "</div>"+
-    "</div>"+
-  "</div>"+
-"</div>"
-
-var Cards3HTML = "<div class='card-group'>"+
-"<div class='card'>"+
-"<div class='col-md-6 customBox videoBox' id='livefeed1'>"+
-
-"</div>"+
-  "<div class='card-body'>"+
-    "<h5 class='card-title'>Card title</h5>"+
-    "<p class='card-text'>This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>"+
-    "<a href='#' class='btn btn-primary'>Go somewhere</a>"+
-    "<p class='card-text'><small class='text-muted'>Last updated 3 mins ago</small></p>"+
-  "</div>"+
-"</div>"+
-" <div class='card'>"+
-"<div class='col-md-6 customBox videoBox' id='livefeed2'>"+
-
-"</div>"+
-  "<div class='card-body'>"+
-    "<h5 class='card-title'>Card title</h5>"+
-    "<p class='card-text'>This card has supporting text below as a natural lead-in to additional content.</p>"+
-    "<p class='card-text'><small class='text-muted'>Last updated 3 mins ago</small></p>"+
-  "</div>"+
-"</div>"+
-"<div class='card'>"+
-"<div class='col-md-6 customBox videoBox' id='livefeed3'>"+
-
-"</div>"+
-  "<div class='card-body'>"+
-    "<h5 class='card-title'>Card title</h5>"+
-    "<p class='card-text'>This is a wider card with supporting text below as a natural lead-in to additional content. This card has even longer content than the first to show that equal height action.</p>"+
-    "<p class='card-text'><small class='text-muted'>Last updated 3 mins ago</small></p>"+
-  "</div>"+
-"</div>"+
-"</div>"
-var caraouselHTML = "<div class='card' style='width: 18rem;'>"+
-"<img id='liveVideo' style='width:200px;height:200px' src='http://192.168.196.113:8081/'></img>"+
-"<div class='card-body'>"+
-  "<p class='card-text'>Some quick example text to build on the card title and make up the bulk of the card's content.</p>"+
-"</div>"+
-"</div>"
 
 var topNewGrid = `
 <div class='row'>
@@ -203,8 +19,6 @@ var topNewGrid = `
         <input class='form-control' id='filterCameras' type='text' placeholder='Search..'></input>
         <div class='list-group' id='cameraListItems' role='tablist'>
         </div>
-
-
       </div>
       <div class='col-4'>
       <div class='card-header actionHeader'>Camera Info</div>
@@ -215,18 +29,8 @@ var topNewGrid = `
       <li class='list-group-item'>One more item</li>
       <li class='list-group-item'>And a fifth one</li>
     </ul>
-
-
-
       </div>
     </div>
-
-    
-
-
-
-
-
   </div>
 </div>
   </div>
@@ -244,7 +48,7 @@ var topNewGrid = `
           <div class='card-body'>
             <div class='row'>
               <div class='col-sm-7'>
-                ${calendarHTML}
+              <div class='calendar'></div>
               </div>
               <div class='col-sm-5'>
                 <div class='card border-dark mb-3' style='max-width: 100%;'>
@@ -266,7 +70,7 @@ var topNewGrid = `
                         </select>
                       </div>
                     </form>
-                    <input class='form-control' id='filterVideos' type='text' placeholder='Search..'></input>
+
                     <ul class='list-group list-group-flush' id='videoDates'>
                     </ul>
                   </div>
@@ -314,7 +118,6 @@ var topNewGrid = `
               <ul class='list-group list-group-flush'>
                 <li class='list-group-item'>On Line</li>
                 <li class='list-group-item'>Oldest Video: 3/15/2021</li>
-                
               </ul>
               <div class='card-body'>
                 <a href='#' class='card-link'>Search Videos</a>
@@ -328,12 +131,10 @@ var topNewGrid = `
                 <h5 class='card-title'>Camera 3</h5>
                 <video controls='controls' autoplay width='100%' height='100%' id='video3' >
                 </video>
-
               </div>
               <ul class='list-group list-group-flush'>
                 <li class='list-group-item'>On Line</li>
                 <li class='list-group-item'>Oldest Video: 3/15/2021</li>
-                  
               </ul>
               <div class='card-body'>
                 <a href='#' class='card-link'>Search Videos</a>
@@ -347,301 +148,7 @@ var topNewGrid = `
       </div>     
     </div>
   </div>
-
-
 `
-var bottomNewGrid = `
-
-`
-
-
-
-
-var grid = `
-<div class='container'>
-  <div class='row '>
-    <div class='col col-5'>
-      <div class='card border-dark mb-4' style='max-width: 100%;'>
-        <div class='card-header actionHeader'>Cameras</div>
-        <div class='card-body text-dark'>
-          <input class='form-control' id='filterCameras' type='text' placeholder='Search..'></input>
-          <div class='list-group' id='cameraListItems' role='tablist'>
-          </div>
-        </div>
-      </div>
-      
-    </div>
-    <div class='col-5'>
-      <div id='map'>
-      </div>
-    </div>
-
-  </div>
-  <br>
-  <div class='row'>
-    <div class='col-5'>
-    <div class='card border-dark mb-3' style='max-width: 90%;'>
-    <div class='card-header actionHeader'>Calendar</div>
-    ${calendarHTML}
-    </div>
-    </div>
-  <div class='col-6 col-md-3 customBox'>
-    <div class='card border-dark mb-3' style='max-width: 100%;'>
-        <div class='card-header actionHeader'>Videos by Date</div>
-        <div class='card-body text-dark cardVIdeosDate'>
-        <form>
-        <div class='mb-3'>
-        <select class='form-select form-select-lg' aria-label='Default select example'>
-          <option selected>Start Time</option>
-          <option value='1'>One</option>
-          <option value='2'>Two</option>
-          <option value='3'>Three</option>
-        </select>
-        <select class='form-select form-select-lg' aria-label='Default select example'>
-          <option selected>End Time</option>
-          <option value='1'>One</option>
-          <option value='2'>Two</option>
-          <option value='3'>Three</option>
-        </select>
-        </div>
-        </form>
-          <input class='form-control' id='filterVideos' type='text' placeholder='Search..'></input>
-          <ul class='list-group list-group-flush' id='videoDates'>
-          </ul>
-        </div>
-      </div>
-    </div>" 
-  <div class='col col-lg' id='vidoeCOntainer'>
-    <video controls='controls' autoplay width='320' height='240' id='video' >
-    </video>
-    <video controls='controls' autoplay width='320' height='240' id='video2' >
-    </video>
-    <video controls='controls' autoplay width='320' height='240' id='video3' >
-    </video>
-  </div>
-</div>
-`
-
-var grid2 = "<div class='container'>"+
-  "<div class='row'>"+
-    "<div class='col'>"+
-    "<div id='map'>"+
-    "</div>"+
-    "</div>"+
-    "<div class='col'>"+
-    calendarHTML+
-    "</div>"+
-  "</div>"+
-
-"<div class='row videoFeeds'>"+
-"</div>"+
-"<button type='button'id='modalbtn'>Launch modal</button>"+
-
-"<div class='modal' id='myModal'>"+
-  "<div class='modal-dialog modal-lg'>"+
-    "<div class='modal-content'>"+
-      "<div class='modal-header'>"+
-        "<h5 class='modal-title'>Video Player</h5>"+
-        "<button type='button' class='close' data-dismiss='modal' aria-label='Close'>"+
-            "<span aria-hidden='true'>&times;</span>"+
-        "</button>"+
-      "</div>"+
-      "<div class='row'>"+
-    "<div class='col-6'>"+
-    "<div class='card' style='width: 50%;'>"+
-        "<div class='card-body'>"+
-          "<div class='container'>"+
-          "<canvas id='myChart' width='400' height='400'></canvas>"+
-          "</div>"+
-        "</div>"+
-      "</div>"+
-    
-    "</div>"+
-    "<div class='col-6'>"+
-    "<video controls='controls' id='myVideo' >"+
-
-   "</video>"+
-    
-    "</div>"+
-
-  "</div>"+
-"</div>"+
-      
-    "</div>"+
-  "</div>"+
-"</div>"
-
-
-var html = "<div class='container'>"+
-"<div class='row'>"+
-
-  "</div>"+
-  "<div class='col-sm'>"+
-  "<div class='col' id='liveFeeds'>"+
-  "</div>"+
-  "</div>"+
-  "<div class='col' id='liveFeeds2'>"+
-    "One of three columns"+
-  "</div>"+
-"</div>"+
-"</div>"+
-"  "
-var mainLayOutHTML = "<div class='container mainContainer'>"+
-                        "<div class='row'>"+
-                          "<div class='col-5 col-md-5 customBox topRow'><h1>Shreveport LA Crime Camera</h1></div>"+
-                          "<div class='col-5 col-md-6 customBox  topRow'>Shreveport LA Crime Camera</div>"+
-                        "</div>"+
-                        "<div class='row'>"+
-                          "<div class='col-md-8 customBox videoBox'>"+
-                            "<img id='liveVideo' src='http://192.168.196.75:8081/'></img>"+
-                          "</div>"+
-                          "<div class='col-6 col-md-3 customBox videoSide'>"+
-                            "<h4>Sound Levels</h4>"+
-                            "<canvas id='soundLevel'></canvas>"+
-                              "<div class='customBox videoInSide'>"+
-                                "<div class='card border-dark mb-3' style='max-width: 100%;'>"+
-                                  "<div class='card-header actionHeader'>Controls</div>"+
-                                  "<div class='card-body text-dark'>"+
-                                  "<form>"+
-                                    "<div class='form-group'>"+
-                                      "<label for='formControlRange'>Movement Speed</label>"+
-                                      "<input type='range' class='form-control-range' id='panSpeed' value=4 min=0 max=8>"+
-                                    "</div>"+
-                                  "</form>"+
-                                    "<div class='container'>"+
-                                      "<div class='row'>"+
-                                        "<div class='col-sm'>"+
-                                        "</div>"+
-                                        "<div class='col-sm'>"+
-                                          "<button type='button' class='btn btn-secondary up'> Up </button>"+
-                                        "</div>"+
-                                        "<div class='col-sm'>"+
-                                        "</div>"+
-                                      "</div>"+
-                                      "<div class='row'>"+
-                                        "<div class='col-sm'>"+
-                                          "<button type='button' class='btn btn-secondary left'>Left</button>"+
-                                        "</div>"+
-                                        "<div class='col-sm'></div>"+
-                                        "<div class='col-sm'>"+
-                                          "<button type='button' class='btn btn-secondary right'>Right</button>"+
-                                        "</div>"+
-                                      "</div>"+
-                                      "<div class='row'>"+
-                                        "<div class='col-sm'>"+
-                                        "</div>"+
-                                        "<div class='col-sm'>"+
-                                          "<button type='button' class='btn btn-secondary down' >Down</button>"+
-                                        "</div>"+
-                                        "<div class='col-sm'>"+
-                                        "</div>"+
-                                      "</div>"+
-                                    "</div>"+
-                                  "</div>"+   
-                                      "<div class='card-footer'>"+
-                                        "<div class='container'>"+
-                                          "<div class='row'>"+
-                                            "<div class='col'>"+
-                                              "<h5>Zoom</h5>"+
-                                              "<div class='btn-group btn-group-sm' role='group' aria-label='...'>"+
-                                                "<button type='button' class='btn btn-primary btn-sm zoomout'>Out\</button>"+
-                                                "<button type='button' class='btn btn-danger btn-sm zoomin'>IN</button>"+
-                                              "</div>"+
-                                            "</div>"+
-                                            "<div class='col'>"+
-                                              "<h5>Recording</h5>"+
-                                              "<div class='btn-group btn-group-sm' role='group' aria-label='...'>"+
-                                                "<button type='button' class='btn btn-primary btn-sm recordon'>Start</button>"+
-                                                "<button type='button' class='btn btn-danger btn-sm recordoff'>Stop</button>"+
-                                              "</div>"+
-                                            "</div>"+
-                                            "<div class='col'>"+
-                                            "<h5>Tour</h5>"+
-                                            "<div class='btn-group btn-group-sm' role='group' aria-label='...'>"+
-                                              "<button type='button' class='btn btn-primary btn-sm startTour'>Start</button>"+
-                                              "<button type='button' class='btn btn-danger btn-sm stopTour'>Stop</button>"+
-                                            "</div>"+
-                                            "</div>"+
-                                            "<div class='col'>"+
-                                            "<h5>Scanning</h5>"+
-                                            "<div class='btn-group btn-group-sm' role='group' aria-label='...'>"+
-                                                  "<button type='button' class='btn btn-primary btn-sm scanon'>Start</button>"+
-                                                  "<button type='button' class='btn btn-danger btn-sm scanoff'>Stop</button>"+
-                                              "</div>"+
-                                            "</div>"+
-                                          "</div>"+
-                                        "</div>"+
-                                      "</div>"+
-                                      "</div>"+
-                                "</div>"+
-                            "</div>"+
-                        "</div>"+
-                        "<div class='row'>"+
-                          "<div class='col-6 col-md-4 customBox'>"+
-                          "<div class='card border-dark mb-4' style='max-width: 100%;'>"+
-                                "<div class='card-header actionHeader'>Videos by Date</div>"+
-                                "<div class='card-body text-dark cardVIdeosDate'>"+ 
-                                "<input class='form-control' id='filterVideos' type='text' placeholder='Search..'></input>"+
-                                  "<ul class='list-group list-group-flush' id='videoDates'>"+
-                                  "</ul>"+
-                                "</div>"+
-                              "</div>"+
-                          "</div>"+
-                          "<div class='col-6 col-md-4 customBox'>"+ 
-                              "<div class='card border-dark mb-4' style='max-width: 100%;'>"+
-                                "<div class='card-header actionHeader'>Video Info</div>"+
-                                "<div class='card-body text-dark'>"+ 
-                                "<ul class='list-group list-group' id='videoInfo'>"+
-                                  "</ul>"+
-                                "</div>"+
-                              "</div>"+
-                            "</div>"+
-                          "<div class='col-6 col-md-3 customBox'>"+
-                            "<div class='card border-dark mb-3' style='max-width: 100%;'>"+
-                              "<div class='card-header actionHeader'>Presets</div>"+
-                              "<div class='card-body text-dark'>"+
-                                "<div class='container'>"+
-                                  "<div class='row'>"+
-                                    "<div class='col-sm'>"+
-                                      "<button type='button' class='btn btn-secondary pos1 presetButton' >1</button>"+
-                                    "</div>"+
-                                    "<div class='col-sm'>"+
-                                      "<button type='button' class='btn btn-secondary pos2 presetButton '>2</button>"+
-                                    "</div>"+
-                                    "<div class='col-sm'>"+
-                                      "<button type='button' class='btn btn-secondary pos3 presetButton'>3</button>"+
-                                    "</div>"+
-                                  "</div>"+
-                                  "<div class='row'>"+
-                                    "<div class='col-sm'>"+
-                                      "<button type='button' class='btn btn-secondary pos4 presetButton'>4</button>"+
-                                    "</div>"+
-                                    "<div class='col-sm'>"+
-                                      "<button type='button' class='btn btn-secondary pos5 presetButton'>5</button>"+
-                                    "</div>"+
-                                    "<div class='col-sm'>"+
-                                      "<button type='button' class='btn btn-secondary pos6 presetButton'>6</button>"+
-                                    "</div>"+
-                                  "</div>"+
-                                  "<div class='row'>"+
-                                    "<div class='col-sm'>"+ 
-                                      "<button type='button' class='btn btn-secondary pos7 presetButton'>7</button>"+
-                                    "</div>"+
-                                    "<div class='col-sm'>"+
-                                      "<button type='button' class='btn btn-secondary pos8 presetButton'>8</button>"+
-                                    "</div>"+
-                                    "<div class='col-sm'>"+
-                                      "<button type='button' class='btn btn-secondary pos9 presetButton'>9</button>"+
-                                    "</div>"+
-                                  "</div>"+
-                                "</div>"+            
-                              "</div>"+
-                            "</div>"+
-                          "</div>"+
-                        "</div>"+
-                      "</div>"
-
-
 const myLatLng = { lat: 38.926908833333336, lng: -77.69556366666667 }
 myLatlng = new google.maps.LatLng(38.926415, -77.704038);
 
@@ -661,29 +168,20 @@ $(function() {
     var hls3 = new Hls();
     hls.loadSource(videoSrc);
     hls.attachMedia(video);
-
     hls2.loadSource(videoSrc2);
     hls2.attachMedia(video2);
-
     hls3.loadSource(videoSrc3);
     hls3.attachMedia(video3);
   }
-  // hls.js is not supported on platforms that do not have Media Source
-  // Extensions (MSE) enabled.
-  //
-  // When the browser has built-in HLS support (check using `canPlayType`),
-  // we can provide an HLS manifest (i.e. .m3u8 URL) directly to the video
-  // element through the `src` property. This is using the built-in support
-  // of the plain video element, without using hls.js.
-  //
-  // Note: it would be more normal to wait on the 'canplay' event below however
-  // on Safari (where you are most likely to find built-in HLS support) the
-  // video.src URL must be on the user-driven white-list before a 'canplay'
-  // event will be emitted; the last video event that can be reliably
-  // listened-for when the URL is not on the white-list is 'loadedmetadata'.
   else if (video.canPlayType('application/vnd.apple.mpegurl')) {
     video.src = videoSrc;
+    video2.src = videoSrc2;
+    video3.src = videoSrc3;
   }
+
+
+
+
     var myModal = document.getElementById('myModal')
     $('body').on('click', '#modalbtn', function () {
       $('#myModal').modal('show');
@@ -754,17 +252,17 @@ $(function() {
             var URL2 = "<img id='liveVideo2' style='height:400px;width:490px' src='http://"+ marker.videoURL  +":8082/'></img>"
             var URL3 = "<img id='liveVideo3' style='height:400px;width:490px' src='http://"+ marker.videoURL  +":8083/'></img>"
             
-            $('.videoFeeds').html(Cards3HTML)
-            $('#livefeed1').html(URL1)
-            $('#livefeed2').html(URL2)
-            $('#livefeed3').html(URL3)
+            //$('.videoFeeds').html(Cards3HTML)
+            //$('#livefeed1').html(URL1)
+            //$('#livefeed2').html(URL2)
+            //$('#livefeed3').html(URL3)
           }
           if(marker.sysType==='PTZ'){
             var URL1 = "<img id='liveVideo' style='height:400px;width:490px' src='http://"+ marker.videoURL  +":8081/'></img>"
             
             
-            $('.videoFeeds').html(PTZCamHTML)
-            $('#PTZVideoFeed').html(URL1)
+            //$('.videoFeeds').html(PTZCamHTML)
+            //$('#PTZVideoFeed').html(URL1)
             $("#panSpeed").change(function(){ 
       
               panspeed = $("#panSpeed").val()

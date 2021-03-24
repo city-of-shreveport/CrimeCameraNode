@@ -15,6 +15,7 @@ child3 = null;
 
 
 child1 = spawn("ffmpeg", [
+  "-hide_banner","-loglevel", "panic",
   "-fflags", "nobuffer" ,
  "-rtsp_transport", "tcp", 
  "-i", "rtsp://admin:UUnv9njxg123@192.168.196.164:554/cam/realmonitor?channel=1&subtype=0", 
@@ -26,17 +27,18 @@ child1 = spawn("ffmpeg", [
  "-hls_flags", "delete_segments+append_list", 
  "-f", "segment",
  "-segment_list_flags", "live",
- "-segment_time", "1",
+ "-segment_time", "10",
  "-segment_list_size", "3",
  "-segment_format", "mpegts",
  "-segment_list", "/home/spd/CrimeCamera/backend/public/liveStream/cam1/index.m3u8",
  "-segment_list_type", "m3u8",
  "-segment_list_entry_prefix", "",
- "-segment_wrap", "10",
+ "-segment_wrap", "100",
  "public/liveStream/cam1/%d.ts"
 
 ]);
 child2 = spawn("ffmpeg", [
+  "-hide_banner","-loglevel", "panic",
   "-fflags", "nobuffer" ,
  "-rtsp_transport", "tcp", 
  "-i", "rtsp://admin:UUnv9njxg123@192.168.196.164:555/cam/realmonitor?channel=1&subtype=0", 
@@ -48,17 +50,18 @@ child2 = spawn("ffmpeg", [
  "-hls_flags", "delete_segments+append_list", 
  "-f", "segment",
  "-segment_list_flags", "live",
- "-segment_time", "1",
+ "-segment_time", "10",
  "-segment_list_size", "3",
  "-segment_format", "mpegts",
  "-segment_list", "/home/spd/CrimeCamera/backend/public/liveStream/cam2/index2.m3u8",
  "-segment_list_type", "m3u8",
  "-segment_list_entry_prefix", "",
- "-segment_wrap", "10",
+ "-segment_wrap", "100",
  "public/liveStream/cam2/2%d.ts"
 
 ]);
 child3 = spawn("ffmpeg", [
+  "-hide_banner","-loglevel", "panic",
   "-fflags", "nobuffer" ,
  "-rtsp_transport", "tcp", 
  "-i", "rtsp://admin:UUnv9njxg123@192.168.196.164:556/cam/realmonitor?channel=1&subtype=0", 
@@ -70,30 +73,30 @@ child3 = spawn("ffmpeg", [
  "-hls_flags", "delete_segments+append_list", 
  "-f", "segment",
  "-segment_list_flags", "live",
- "-segment_time", "1",
+ "-segment_time", "10",
  "-segment_list_size", "3",
  "-segment_format", "mpegts",
  "-segment_list", "/home/spd/CrimeCamera/backend/public/liveStream/cam3/index3.m3u8",
  "-segment_list_type", "m3u8",
  "-segment_list_entry_prefix", "",
- "-segment_wrap", "10",
+ "-segment_wrap", "100",
  "public/liveStream/cam3/3%d.ts"
 
 ]);
 child1.stdout.on('data', (data) => {
-console.log(`stdout: ${data}`);
+//console.log(`stdout: ${data}`);
 });
 child1.stderr.on('data', (data) => {
 console.log(`stderr: ${data}`);
 });
 child2.stdout.on('data', (data) => {
-  console.log(`stdout: ${data}`);
+  //console.log(`stdout: ${data}`);
   });
   child2.stderr.on('data', (data) => {
   console.log(`stderr: ${data}`);
   });
   child3.stdout.on('data', (data) => {
-    console.log(`stdout: ${data}`);
+    //console.log(`stdout: ${data}`);
     });
     child3.stderr.on('data', (data) => {
     console.log(`stderr: ${data}`);
@@ -118,7 +121,7 @@ var olderThanDate = moment(newDateTime).toISOString()
 
 cams.find({ lastCheckIn: {$lte:olderThanDate}}, function (err, docs) { 
   if (err){ 
-      console.log(err); 
+      //console.log(err); 
   } 
   else{ 
       //console.log("OFFLINE : ", docs); 
@@ -127,7 +130,7 @@ cams.find({ lastCheckIn: {$lte:olderThanDate}}, function (err, docs) {
 
 cams.find({ lastCheckIn: {$gte:olderThanDate}}, function (err, docs) { 
   if (err){ 
-      console.log(err); 
+      //console.log(err); 
   } 
   else{ 
       //console.log("ONLINE : ", docs); 
@@ -141,7 +144,7 @@ cams.find({ lastCheckIn: {$gte:olderThanDate}}, function (err, docs) {
 cameraNodes.on('connection', socket => {
   console.log("newconnection");
   socket.emit('hi');
-  socket.on('videoFilesCam1', function(data) {
+  socket.on('videoFiles', function(data) {
     //console.log("videoFilesCam1:  " + data)
     for(var i=0;i<data.length;i++){
       //console.log(data[i])
@@ -216,7 +219,7 @@ cameraNodes.on('connection', socket => {
               cams.findOneAndUpdate({nodeName: data.name },  
                 {lastCheckIn:dateNOW}, null, function (err, docs) { 
                 if (err){ 
-                    console.log(err) 
+                    //console.log(err) 
                 } 
                 else{ 
                    //console.log("Original Doc : ",docs); 
@@ -242,12 +245,13 @@ cameraNodes.on('connection', socket => {
 
   })
   socket.on('videoInfo', function(data){
-    //console.log(data.nodeinfo)
+    console.log("VideoInfo")
+    console.log(data)
   
  try{
   vids.exists({fileLocation:data.metadata.format.filename}, function (err, doc) { 
     if (err){ 
-      
+      console.log(err)
     }else{ 
         //("Result :", doc) // true 
 
@@ -260,8 +264,8 @@ cameraNodes.on('connection', socket => {
           var nodeID = data.nodeinfo.id
           var date =  data.metadata.format.filename
           var sperateddate =  date.split('/')
-          var fileString = sperateddate[7]
-          //console.log(fileString)
+          var fileString = sperateddate[8]
+          console.log(fileString)
           var splitFileString = fileString.split("_")
           var fileData = splitFileString[0]
           var fileTimewithExtention = splitFileString[1]
@@ -288,9 +292,9 @@ cameraNodes.on('connection', socket => {
             DateTime: dateTimeString
         })
         vid.save()
-      }catch(err){//console.log(err)
+      }catch(err){console.log(err)
       }
-        //console.log(err)
+        ////console.log(err)
 
 
 
@@ -301,7 +305,7 @@ cameraNodes.on('connection', socket => {
   
 
  }catch(err){
-  console.log(err)
+  //console.log(err)
 
  }     
          
