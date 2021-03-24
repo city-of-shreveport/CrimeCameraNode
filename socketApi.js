@@ -1,12 +1,11 @@
 var socket_io = require('socket.io');
-
 var io = socket_io();
 var socketApi = {};
 const dreamHost = require("socket.io-client");
 var os = require('os');
 var ifaces = os.networkInterfaces();
 const si = require('systeminformation');
-
+const { exec } = require("child_process");
 
 require('events').EventEmitter.prototype._maxListeners = 100;
 
@@ -49,22 +48,11 @@ var sysInfo = {'diskLayout':[],
 
 
 }
-var systemInfo = {
-    "name":"DualCrimeCam",
-    'id': 'jhgwesd',
-    "ip":"192.168.196.164",
-    "numOfCams":3,
-    "typs":"standard",
-    'sysInfo':sysInfo,
-      'location':{'lat': 38.65456, 'lng':  -77.435076},
-
-
-
-}
+var systemInfo
 
 
 var perfmonPacket = {
-camera:'DualCrimeCam',
+camera:sysInfo.osInfo.hostname,
 'currentLoad':{
     'cpus':[]},
   'mem':{},
@@ -72,63 +60,75 @@ camera:'DualCrimeCam',
    
 }
 
-si.diskLayout(function(data) {
-    for(var i=0;i<data.length;i++){
-        sysInfo.diskLayout.push({
-        'device':data[i].device,
-        'type':data[i].type,
-        'type':data[i].name,
-        'vendor':data[i].vendor,
-        'size':data[i].size
 
-        })
-    }
-  })
-si.fsSize(function(data) {
-    for(var i=0;i<data.length;i++){
-        sysInfo.fsSize.push({
-            'fs':data[i].fs,
-            'type':data[i].type,
-            'size': data[i].size,
-            'used': data[i].used,
-            'available': data[i].available,
-            'mount': data[i].mount
-        })
-        
-    }
-    
-  })
-
-si.osInfo(function(data) {
-    sysInfo.osInfo.distro = data.distro
-    sysInfo.osInfo.release = data.release
-    sysInfo.osInfo.codename = data.codename
-    sysInfo.osInfo.kernel = data.kernel
-    sysInfo.osInfo.arch = data.arch
-    sysInfo.osInfo.hostname = data.hostname
-    sysInfo.osInfo.fqdn = data.fqdn
-})
-
-  
-
-
-
-si.memLayout(function(data) {
-    sysInfo.memLayout = data
-    console.log('Memory Available:');
-    console.log(data[0].size);
-  })
-
-si.cpu(function(data) {
-    console.log('CPU Information:');
-    sysInfo.cpu = data
-    console.log(data.speed)
-    console.log(data.cores)
-    console.log(data.brand);
-  })
 var socket2 = dreamHost('http://192.168.196.123:3001/cameras', { autoConnect: true});
 function intervalFunc() {
+    si.diskLayout(function(data) {
+        for(var i=0;i<data.length;i++){
+            sysInfo.diskLayout.push({
+            'device':data[i].device,
+            'type':data[i].type,
+            'type':data[i].name,
+            'vendor':data[i].vendor,
+            'size':data[i].size
     
+            })
+        }
+      })
+    si.fsSize(function(data) {
+        for(var i=0;i<data.length;i++){
+            sysInfo.fsSize.push({
+                'fs':data[i].fs,
+                'type':data[i].type,
+                'size': data[i].size,
+                'used': data[i].used,
+                'available': data[i].available,
+                'mount': data[i].mount
+            })
+            
+        }
+        
+      })
+    
+    si.osInfo(function(data) {
+        sysInfo.osInfo.distro = data.distro
+        sysInfo.osInfo.release = data.release
+        sysInfo.osInfo.codename = data.codename
+        sysInfo.osInfo.kernel = data.kernel
+        sysInfo.osInfo.arch = data.arch
+        sysInfo.osInfo.hostname = data.hostname
+        sysInfo.osInfo.fqdn = data.fqdn
+    })
+    
+      
+    
+    
+    
+    si.memLayout(function(data) {
+        sysInfo.memLayout = data
+        console.log('Memory Available:');
+        console.log(data[0].size);
+      })
+    
+    si.cpu(function(data) {
+        console.log('CPU Information:');
+        sysInfo.cpu = data
+        console.log(data.speed)
+        console.log(data.cores)
+        console.log(data.brand);
+      })
+      systemInfo = {
+        "name":sysInfo.osInfo.hostname,
+        'id': 'jhgwesd',
+        "ip":"192.168.196.164",
+        "numOfCams":3,
+        "typs":"standard",
+        'sysInfo':sysInfo,
+          'location':{'lat': 38.65456, 'lng':  -77.435076},
+    
+    
+    
+    }
     socket2.emit('systemOnline',systemInfo)
   }
   
@@ -164,11 +164,94 @@ socket2.on("hi", function(data){
     console.log("HHHHIII")
    
 })
+
+function executeCommand(command) {
+  exec(command, (error, stdout, stderr) => {
+      if (error) {
+          console.log(`error: ${error.message}`);
+          return;
+      }
+      if (stderr) {
+          console.log(`stderr: ${stderr}`);
+          return;
+      }
+  });
+}
+
+function setupFirewall() {
+  executeCommand(`
+    sudo sysctl net.ipv4.conf.eth0.forwarding=0 &&
+    sudo sysctl net.ipv4.conf.wlan0.forwarding=0 &&
+    sudo sysctl net.ipv4.conf.ztr2q2q3ib.forwarding=0 &&
+    sudo iptables -P INPUT ACCEPT &&
+    sudo iptables -P FORWARD ACCEPT &&
+    sudo iptables -P OUTPUT ACCEPT  &&
+    sudo iptables -t nat -F &&
+    sudo iptables -t mangle -F &&
+    sudo iptables -t raw -F &&
+    sudo iptables -F &&
+    sudo iptables -X &&
+
+    sudo sysctl net.ipv4.conf.eth0.forwarding=1 &&
+    sudo sysctl net.ipv4.conf.wlan0.forwarding=1 &&
+    sudo sysctl net.ipv4.conf.ztr2q2q3ib.forwarding=1 &&
+
+    sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d 192.168.196.164 --dport 554 -j DNAT --to 10.10.5.2:554 &&
+    sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 554 -j ACCEPT  &&
+    sudo iptables -t nat -A POSTROUTING -j MASQUERADE &&
+
+    sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d 192.168.196.164 --dport 555 -j DNAT --to 10.10.5.3:554 &&
+    sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 555 -j ACCEPT  &&
+    sudo iptables -t nat -A POSTROUTING -j MASQUERADE &&
+
+    sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d 192.168.196.164 --dport 556 -j DNAT --to 10.10.5.4:554 &&
+    sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 556 -j ACCEPT  &&
+    sudo iptables -t nat -A POSTROUTING -j MASQUERADE
+  `)
+}
+
+
+
+
+var d = require('diskinfo');
+var driveMounted
+
+function checkDriveMounting(){
+    const { spawn } = require("child_process");
+    d.getDrives(function(err, aDrives) {
+        for (var i = 0; i < aDrives.length; i++) {
+            if(aDrives[i].filesystem==="/dev/sda1"){
+                driveMounted = 1;
+          }
+          else{
+              driveMounted = 0;}
+          }
+    });
+    if(driveMounted === 1){
+
+    }
+    else{
+      //
+        const ls = spawn("mount", ["/dev/sda1", "/home/pi/CrimeCamera/multi/public/videos/"]);
+        ls.stdout.on("data", data => {
+            driveMounted = 1;
+        });
+        ls.stderr.on("data", data => {
+            //console.log(`stderr: ${data}`);
+            driveMounted = 0;
+        });
+        ls.on('error', (error) => {
+            console.log(`error: ${error.message}`);
+        });
+        ls.on("close", code => {
+            //console.log(`child process exited with code ${code}`);
+        });         
+    }
+}
+setupFirewall()
+checkDriveMounting()
+
 function Startrecording(){
-
-
-    
-
        child = spawn("ffmpeg", [
           "-hide_banner","-loglevel", "panic",
           "-i", "rtsp://admin:UUnv9njxg123@10.10.5.2:554/cam/realmonitor?channel=1&subtype=0",
@@ -217,8 +300,6 @@ function Startrecording(){
         var alias = 0;
 
     });
-    
-var exec = require('child_process').exec;
 
 function sendVideoandData() {
     var y;
@@ -271,6 +352,7 @@ function sendVideoandData() {
 }
 function sendVideoInfo(file, camera){
     console.log("Getting metaData")
+    console.log(file)
     var ffmpeg = require('fluent-ffmpeg');
         ffmpeg.ffprobe(file,function(err, metadata) {
          
@@ -280,7 +362,7 @@ function sendVideoInfo(file, camera){
                 metadata:metadata
     
                }
-               console.log(sendOBJ)
+               //console.log(sendOBJ)
             socket2.emit('videoInfo', sendOBJ)
        
             if(err){console.log(err)}
@@ -421,12 +503,12 @@ socket2.on('getVideos', function(data){
             sendData = 1
 
         }
-        console.log(data)
+        //console.log(data)
 
 
     })
     socket2.on('recording', function(data) {
-        console.log(data)
+        //console.log(data)
         if(data==="start"){
 
             Startrecording();
@@ -441,13 +523,8 @@ socket2.on('getVideos', function(data){
 
         }
       })
-   
-
-
       Startrecording();
       sendVideoFiles()
-
-
 socketApi.io = io;
 Startrecording()
 module.exports = socketApi;
