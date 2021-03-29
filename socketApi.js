@@ -5,6 +5,35 @@ const dreamHost = require("socket.io-client");
 var os = require('os');
 var ifaces = os.networkInterfaces();
 const si = require('systeminformation');
+var chokidar = require('chokidar');
+
+var watcher = chokidar.watch('/home/pi/CrimeCamera/public/videos/cam1', {ignored: /^\./, persistent: true});
+var addedFIles = []
+watcher
+  .on('add', function(path) {
+    addedFIles.push(path)
+
+
+
+
+  })
+  .on('change', function(path) {
+      
+
+  })
+  .on('unlink', function(path) {
+      
+
+  })
+  .on('error', function(error) {console.error('Error happened', error);})
+
+function intervalFunc4() {
+  console.log(addedFIles)
+  addedFIles.length = 0
+}
+
+setInterval(intervalFunc4, 100000);
+
 const {
     exec
 } = require("child_process");
@@ -231,7 +260,7 @@ function Startrecording() {
         "-hide_banner", "-loglevel", "panic",
         "-i", "rtsp://admin:UUnv9njxg123@10.10.5.2:554/cam/realmonitor?channel=1&subtype=0",
         "-vcodec", "copy", "-f", "segment", "-strftime", "1",
-        "-segment_time", "900", "-segment_format", "mp4", "/home/pi/CrimeCamera/public/videos/cam1/%Y-%m-%d_%H-%M.mp4"
+        "-segment_time", "90", "-segment_format", "mp4", "/home/pi/CrimeCamera/public/videos/cam1/%Y-%m-%d_%H-%M.mp4"
     ]);
     child.stdout.on('data', (data) => {
     });
@@ -244,7 +273,7 @@ function Startrecording() {
         "-hide_banner", "-loglevel", "panic",
         "-i", "rtsp://admin:UUnv9njxg123@10.10.5.3:554/cam/realmonitor?channel=1&subtype=0",
         "-vcodec", "copy", "-f", "segment", "-strftime", "1",
-        "-segment_time", "900", "-segment_format", "mp4", "/home/pi/CrimeCamera/public/videos/cam2/%Y-%m-%d_%H-%M.mp4"
+        "-segment_time", "90", "-segment_format", "mp4", "/home/pi/CrimeCamera/public/videos/cam2/%Y-%m-%d_%H-%M.mp4"
     ]);
     child2.stdout.on('data', (data2) => {
     });
@@ -256,7 +285,7 @@ function Startrecording() {
         "-hide_banner", "-loglevel", "panic",
         "-i", "rtsp://admin:UUnv9njxg123@10.10.5.4:554/cam/realmonitor?channel=1&subtype=0",
         "-vcodec", "copy", "-f", "segment", "-strftime", "1",
-        "-segment_time", "900", "-segment_format", "mp4", "/home/pi/CrimeCamera/public/videos/cam3/%Y-%m-%d_%H-%M.mp4"
+        "-segment_time", "90", "-segment_format", "mp4", "/home/pi/CrimeCamera/public/videos/cam3/%Y-%m-%d_%H-%M.mp4"
     ]);
     child3.stdout.on('data', (data2) => {
     });
@@ -319,7 +348,6 @@ function sendVideoandData() {
 function sendVideoInfo(file, camera) {
     var ffmpeg = require('fluent-ffmpeg');
     ffmpeg.ffprobe(file, function (err, metadata) {
-
         var sendOBJ = {
             cam: camera,
             nodeinfo: systemInfo,
@@ -347,11 +375,14 @@ function sendVideoFiles() {
             //newStringArray = toString(newStringArray)
             for (y = 0; y < newStringArray.length; y++) {
                 if (newStringArray[y]) {
-                    videoFilescam1.push(newStringArray[y])
+                     socket2.emit("videoFilesCam1", newStringArray[y])
+                    videoFilescam1.push()
                 }
                 if (y == newStringArray.length - 1) {
-                    socket2.emit("videoFilesCam1", videoFilescam1)
+                   
                     videoFilescam1.length = 0;
+                    
+                    
                     setTimeout(() => {
                         exec('ls /home/pi/CrimeCamera/public/videos/cam2', function (error, stdout, stderr) {
                             if (error) {
@@ -361,11 +392,15 @@ function sendVideoFiles() {
                                 //newStringArray = toString(newStringArray)
                                 for (y = 0; y < newStringArray.length; y++) {
                                     if (newStringArray[y]) {
+                                        socket2.emit("videoFilesCam2", newStringArray[y])
                                         videoFilescam2.push(newStringArray[y])
                                     }
                                     if (y == newStringArray.length - 1) {
-                                        socket2.emit("videoFilesCam2", videoFilescam2)
+                                        
                                         videoFilescam2.length = 0;
+                                        
+                                        
+                                        
                                         setTimeout(() => {
                                             exec('ls /home/pi/CrimeCamera/public/videos/cam3', function (error, stdout, stderr) {
                                                 if (error) {
@@ -376,9 +411,10 @@ function sendVideoFiles() {
                                                     for (y = 0; y < newStringArray.length; y++) {
                                                         if (newStringArray[y]) {
                                                             videoFilescam3.push(newStringArray[y])
+                                                            socket2.emit("videoFilesCam3", newStringArray[y])
                                                         }
                                                         if (y == newStringArray.length - 1) {
-                                                            socket2.emit("videoFilesCam3", videoFilescam3)
+                                                            
                                                             videoFilescam3.length = 0;
                                                         }
 
@@ -424,7 +460,6 @@ function sendVideoFiles() {
 
 
 socket2.on('getVideoInfoCam1', function (data) {
-    console.log(data)
     var fileURI = "/home/pi/CrimeCamera/public/videos/cam1/" + data
     sendVideoInfo(fileURI, 'camera1')
 
@@ -477,10 +512,12 @@ socket2.on('recording', function (data) {
 
 
 
-Startrecording();
+
 sendVideoFiles()
 
 
 socketApi.io = io;
 Startrecording()
+
+
 module.exports = socketApi;
