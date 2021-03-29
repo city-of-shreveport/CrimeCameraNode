@@ -329,6 +329,7 @@ function sendVideoInfo(file, camera) {
         socket2.emit('videoInfo', sendOBJ)
 
         if (err) {
+            console.log(err)
         }
     });
 }
@@ -423,6 +424,7 @@ function sendVideoFiles() {
 
 
 socket2.on('getVideoInfoCam1', function (data) {
+    console.log(data)
     var fileURI = "/home/pi/CrimeCamera/public/videos/cam1/" + data
     sendVideoInfo(fileURI, 'camera1')
 
