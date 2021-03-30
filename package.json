@@ -26,6 +26,6 @@
     "request": "^2.88.2",
     "serialport": "^9.0.1",
     "socketio": "^1.0.0",
-    "systeminformation": "^5.6.7"
+    "systeminformation": "^5.6.6"
   }
 }
