@@ -180,7 +180,7 @@ $(function() {
                 li += "<li class='list-group-item' value='"+ data.format.size  +"'>Size: "+ data.format.size +" Bytes</li>"
                 $('#videoInfo').html(li)
                 $('#videoPlayer').html("<video width='1024' height='600' controls>"+
-                        "<source src='http://192.168.196.164:3000/videos/" +clickedVideo + "' type='video/mp4'>"+
+                        "<source src='https://192.168.196.164:3000/videos/" +clickedVideo + "' type='video/mp4'>"+
  
                             "Your browser does not support the video tag."+
                           "</video>")

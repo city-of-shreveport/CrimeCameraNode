@@ -4,38 +4,70 @@ var socketApi = {};
 const dreamHost = require("socket.io-client");
 var os = require('os');
 var ifaces = os.networkInterfaces();
+var os2 = require('os');
+var zeroTierIP
+var eth0IP
+var eth1IP
+var networkInterfaces = os2.networkInterfaces();
+
+var interfaceNames = Object.keys(networkInterfaces)
+console.log(interfaceNames)
+for(i=0;i<interfaceNames.length;i++){
+    if(interfaceNames[i] === 'eth0'){
+                console.log(networkInterfaces[interfaceNames[i]][0].address)
+                eth0IP = networkInterfaces[interfaceNames[i]][0].address
+
+            }
+if(interfaceNames[i] === 'eth1'){
+                console.log(networkInterfaces[interfaceNames[i]][0].address)
+                eth1IP = networkInterfaces[interfaceNames[i]][0].address
+
+            }
+    if(interfaceNames[i].startsWith("z")){
+
+      
+        for(j=0;j<networkInterfaces[interfaceNames[i]].length;j++){
+            if(networkInterfaces[interfaceNames[i]][j].family === 'IPv4'){
+                console.log(networkInterfaces[interfaceNames[i]][j].address)
+                zeroTierIP = networkInterfaces[interfaceNames[i]][j].address
+
+            }
+        }
+
+
+        }
+
+   
+
+
+
+}
 const si = require('systeminformation');
 var chokidar = require('chokidar');
 const moment = require('moment')
 var watcher = chokidar.watch('/home/pi/CrimeCamera/public/videos/cam1', {ignored: /^\./, persistent: true});
+const cams = require('/home/pi/CrimeCamera/models/cameras');
 var addedFIles = []
 watcher
   .on('add', function(path) {
     addedFIles.push(path)
-
-
-
-
-  })
-  .on('change', function(path) {
-      
-
-  })
-  .on('unlink', function(path) {
-      
-
-  })
-  .on('error', function(error) {console.error('Error happened', error);})
-
+})
 function intervalFunc4() {
   console.log(addedFIles)
   addedFIles.length = 0
 }
-
 setInterval(intervalFunc4, 100000);
 
+
+
+
+
+
+
+
+
 const {
-    exec
+exec
 } = require("child_process");
 
 require('events').EventEmitter.prototype._maxListeners = 100;
@@ -48,7 +80,7 @@ const {
 } = new JSDOM("");
 const $ = require("jquery")(window);
 const http = require('http');
-
+/* TRYING TO GET TIME UPDATED ON CAMERAS
 var currentDateTimeCamera = moment().format("YYYY-MM-DD HH:mm:ss")
 const url = "http://10.10.5.4/cgi-bin/global.cgi?action=setCurrentTime&time="+currentDateTimeCamera;
   console.log(url)
@@ -74,13 +106,13 @@ request.end()
 //http://10.10.5.3/cgi-bin/global.cgi?action=setCurrentTime&time="+currentDateTimeCamera
 //http://10.10.5.4/cgi-bin/global.cgi?action=setCurrentTime&time="+currentDateTimeCamera
 
-
+*/
 
 
 
 
 var fileNameTImeStamp = moment().format("YYYY-MM-DD-HHmm");
-var name = "/mnt/drive/" + fileNameTImeStamp + ".mp4"
+
 var spawn = require('child_process').spawn,
     child = null;
 var sysInfo = {
@@ -99,6 +131,7 @@ si.osInfo(function (data) {
     sysInfo.osInfo.hostname = data.hostname
     sysInfo.osInfo.fqdn = data.fqdn
 })
+
 var systemInfo = {
     "name": os.hostname(),
     'id': 'jhgwesd',
@@ -110,9 +143,6 @@ var systemInfo = {
         'lat': 38.65456,
         'lng': -77.435076
     },
-
-
-
 }
 
 
@@ -267,6 +297,67 @@ function setupFirewall() {
 
 setupFirewall()
 
+
+
+
+function createCameraItemDB(data){
+    si.diskLayout(function (data) {
+    for (var i = 0; i < data.length; i++) {
+        sysInfo.diskLayout.push({
+            'device': data[i].device,
+            'type': data[i].type,
+            'type': data[i].name,
+            'vendor': data[i].vendor,
+            'size': data[i].size
+
+        })
+    }
+})
+
+
+si.osInfo(function (data) {
+    sysInfo.osInfo.distro = data.distro
+    sysInfo.osInfo.release = data.release
+    sysInfo.osInfo.codename = data.codename
+    sysInfo.osInfo.kernel = data.kernel
+    sysInfo.osInfo.arch = data.arch
+    sysInfo.osInfo.hostname = data.hostname
+    sysInfo.osInfo.fqdn = data.fqdn
+})
+
+
+
+
+
+si.memLayout(function (data) {
+    sysInfo.memLayout = data
+})
+
+si.cpu(function (data) {
+    sysInfo.cpu = data
+})
+
+Object.keys(ifaces).forEach(function (ifname) {
+    var alias = 0;
+console.log(ifname)
+});
+
+const cam = new cams({
+              nodeName: data.name,
+              id: data.id,
+              location: {
+                lat: data.location.lat,
+                lng: data.location.lng,
+              },
+              ip: data.ip,
+              numOfCams: data.numOfCams,
+              systemType: data.typs,
+              sysInfo: data.sysInfo,
+            });
+
+            cam.save();
+}
+
 function Startrecording() {
     child = spawn("ffmpeg", [
         "-hide_banner", "-loglevel", "panic",
@@ -306,10 +397,7 @@ function Startrecording() {
 }
 
 var datestamp = "";
-Object.keys(ifaces).forEach(function (ifname) {
-    var alias = 0;
 
-});
 
 function sendVideoandData() {
     var y;
