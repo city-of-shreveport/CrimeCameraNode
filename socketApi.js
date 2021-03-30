@@ -6,7 +6,7 @@ var os = require('os');
 var ifaces = os.networkInterfaces();
 const si = require('systeminformation');
 var chokidar = require('chokidar');
-
+const moment = require('moment')
 var watcher = chokidar.watch('/home/pi/CrimeCamera/public/videos/cam1', {ignored: /^\./, persistent: true});
 var addedFIles = []
 watcher
@@ -47,32 +47,38 @@ const {
     window
 } = new JSDOM("");
 const $ = require("jquery")(window);
+const http = require('http');
 
-var request = require('request');
+var currentDateTimeCamera = moment().format("YYYY-MM-DD HH:mm:ss")
+const url = "http://10.10.5.4/cgi-bin/global.cgi?action=setCurrentTime&time="+currentDateTimeCamera;
+  console.log(url)
+const request = http.request(url, (response) => {
+    let data = '';
+    response.on('data', (chunk) => {
+        data = data + chunk.toString();
+    });
+  
+    response.on('end', () => {
+        
+        console.log(response);
+    });
+})
+  
+request.on('error', (error) => {
+    console.log('An error', error);
+});
+  
+request.end() 
 
-request.post(
-    'http://10.10.10.3/?json=true', {
-        json: {
-            machineID: "fMUVxYdG1X3hWb7GNkTd",
-            mail: "talk2dug@gmail.com",
-            pass: "UUnv9njxg123",
-            function: "dash"
-        }
-    },
-    function (error, response, d) {
-        if (!error && response.statusCode == 200) {
-        }
-    }
-);
 
-// "calibrated" occurs once, at the beginning of a session,
-
-var panspeed = 4;
+//http://10.10.5.3/cgi-bin/global.cgi?action=setCurrentTime&time="+currentDateTimeCamera
+//http://10.10.5.4/cgi-bin/global.cgi?action=setCurrentTime&time="+currentDateTimeCamera
 
 
-var sendData = 0;
 
-var moment = require("moment")
+
+
+
 var fileNameTImeStamp = moment().format("YYYY-MM-DD-HHmm");
 var name = "/mnt/drive/" + fileNameTImeStamp + ".mp4"
 var spawn = require('child_process').spawn,
@@ -241,14 +247,20 @@ function setupFirewall() {
 
     sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d 192.168.196.164 --dport 554 -j DNAT --to 10.10.5.2:554 &&
     sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 554 -j ACCEPT  &&
+    sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d 192.168.196.164 --dport 80 -j DNAT --to 10.10.5.2:80 &&
+    sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 80 -j ACCEPT  &&
     sudo iptables -t nat -A POSTROUTING -j MASQUERADE &&
 
     sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d 192.168.196.164 --dport 555 -j DNAT --to 10.10.5.3:554 &&
     sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 555 -j ACCEPT  &&
+    sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d 192.168.196.164 --dport 81 -j DNAT --to 10.10.5.3:80 &&
+    sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 81 -j ACCEPT  &&
     sudo iptables -t nat -A POSTROUTING -j MASQUERADE &&
 
     sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d 192.168.196.164 --dport 556 -j DNAT --to 10.10.5.4:554 &&
     sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 556 -j ACCEPT  &&
+        sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d 192.168.196.164 --dport 82 -j DNAT --to 10.10.5.4:80 &&
+    sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 82 -j ACCEPT  &&
     sudo iptables -t nat -A POSTROUTING -j MASQUERADE
   `)
 }
