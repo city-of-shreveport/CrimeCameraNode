@@ -242,9 +242,7 @@ perfmonPacket.fsSize.length = 0
 
 setInterval(intervalFunc2, 60000);
 
-socket2.on("hi", function (data) {
 
-})
 
 function executeCommand(command) {
     exec(command, (error, stdout, stderr) => {
@@ -363,7 +361,7 @@ function Startrecording() {
         "-hide_banner", "-loglevel", "panic",
         "-i", "rtsp://admin:UUnv9njxg123@10.10.5.2:554/cam/realmonitor?channel=1&subtype=0",
         "-vcodec", "copy", "-f", "segment", "-strftime", "1",
-        "-segment_time", "90", "-segment_format", "mp4", "/home/pi/CrimeCamera/public/videos/cam1/%Y-%m-%d_%H-%M.mp4"
+        "-segment_time", "300", "-segment_format", "mp4", "/home/pi/CrimeCamera/public/videos/cam1/%Y-%m-%d_%H-%M.mp4"
     ]);
     child.stdout.on('data', (data) => {
     });
@@ -376,7 +374,7 @@ function Startrecording() {
         "-hide_banner", "-loglevel", "panic",
         "-i", "rtsp://admin:UUnv9njxg123@10.10.5.3:554/cam/realmonitor?channel=1&subtype=0",
         "-vcodec", "copy", "-f", "segment", "-strftime", "1",
-        "-segment_time", "90", "-segment_format", "mp4", "/home/pi/CrimeCamera/public/videos/cam2/%Y-%m-%d_%H-%M.mp4"
+        "-segment_time", "300", "-segment_format", "mp4", "/home/pi/CrimeCamera/public/videos/cam2/%Y-%m-%d_%H-%M.mp4"
     ]);
     child2.stdout.on('data', (data2) => {
     });
@@ -388,13 +386,29 @@ function Startrecording() {
         "-hide_banner", "-loglevel", "panic",
         "-i", "rtsp://admin:UUnv9njxg123@10.10.5.4:554/cam/realmonitor?channel=1&subtype=0",
         "-vcodec", "copy", "-f", "segment", "-strftime", "1",
-        "-segment_time", "90", "-segment_format", "mp4", "/home/pi/CrimeCamera/public/videos/cam3/%Y-%m-%d_%H-%M.mp4"
+        "-segment_time", "300", "-segment_format", "mp4", "/home/pi/CrimeCamera/public/videos/cam3/%Y-%m-%d_%H-%M.mp4"
     ]);
     child3.stdout.on('data', (data2) => {
     });
     child3.stderr.on('data', (data2) => {
     });
 }
+
+
+//Stops and restarts recording every 4 hours. This id to eliminate hung recordings
+function intervalFunc3(){
+child.kill();
+child2.kill();
+child3.kill();
+setTimeout(() => {
+    Startrecording()
+}, 5000);
+
+
+}
+setInterval(intervalFunc3, 14400000);
+Startrecording()
+
 
 var datestamp = "";
 
@@ -597,7 +611,7 @@ socket2.on('status', function (data) {
 socket2.on('recording', function (data) {
     if (data === "start") {
 
-        Startrecording();
+       
     }
     if (data === "stop") {
 
@@ -617,7 +631,6 @@ sendVideoFiles()
 
 
 socketApi.io = io;
-Startrecording()
 
 
 module.exports = socketApi;
