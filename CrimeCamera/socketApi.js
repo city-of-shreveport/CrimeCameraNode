@@ -191,7 +191,7 @@ si.memLayout(function (data) {
 si.cpu(function (data) {
     sysInfo.cpu = data
 })
-var socket2 = dreamHost('http://192.168.196.150:3001/cameras', {
+var socket2 = dreamHost('http://192.168.86.60:3001/cameras', {
     autoConnect: true
 });
 
@@ -592,7 +592,7 @@ socket2.on('getVideoInfoCam3', function (data) {
 
 })
 socket2.on('getAllvideoandData', function (data) {
-    //sendVideoandData()
+    sendVideoandData()
 })
 socket2.on('getVideos', function (data) {
     sendVideoFiles()
