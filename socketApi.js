@@ -9,9 +9,28 @@ var zeroTierIP
 var eth0IP
 var eth1IP
 var networkInterfaces = os2.networkInterfaces();
-
+const vids = require('./models/videos');
+const perfmons = require('./models/perfmons');
+const glob = require('glob')
+const fs = require("fs")
+const mongoose = require('mongoose');
+ var ffmpeg = require('fluent-ffmpeg')
 var interfaceNames = Object.keys(networkInterfaces)
-console.log(interfaceNames)
+
+const {exec} = require("child_process");
+require('events').EventEmitter.prototype._maxListeners = 100;
+const {JSDOM} = require("jsdom");
+const {window} = new JSDOM("");
+const $ = require("jquery")(window);
+const http = require('http');
+const si = require('systeminformation');
+var chokidar = require('chokidar');
+const moment = require('moment')
+var watcher = chokidar.watch('/home/pi/CrimeCamera/public/videos/cam3', {ignored: /^\./, persistent: true});
+const cams = require('/home/pi/CrimeCamera/models/cameras');
+var videoFilescam1 = []
+ var videoFilescam2 = []
+ var videoFilescam3 = []
 for(i=0;i<interfaceNames.length;i++){
     if(interfaceNames[i] === 'eth0'){
                 console.log(networkInterfaces[interfaceNames[i]][0].address)
@@ -24,8 +43,7 @@ if(interfaceNames[i] === 'eth1'){
 
             }
     if(interfaceNames[i].startsWith("z")){
-
-      
+ 
         for(j=0;j<networkInterfaces[interfaceNames[i]].length;j++){
             if(networkInterfaces[interfaceNames[i]][j].family === 'IPv4'){
                 console.log(networkInterfaces[interfaceNames[i]][j].address)
@@ -33,88 +51,16 @@ if(interfaceNames[i] === 'eth1'){
 
             }
         }
-
-
         }
-
-   
-
-
-
 }
-const si = require('systeminformation');
-var chokidar = require('chokidar');
-const moment = require('moment')
-var watcher = chokidar.watch('/home/pi/CrimeCamera/public/videos/cam1', {ignored: /^\./, persistent: true});
-const cams = require('/home/pi/CrimeCamera/models/cameras');
-var addedFIles = []
-watcher
-  .on('add', function(path) {
-    addedFIles.push(path)
-})
-function intervalFunc4() {
-  console.log(addedFIles)
-  addedFIles.length = 0
-}
-setInterval(intervalFunc4, 100000);
-
-
-
-
-
-
-
-
-
-const {
-exec
-} = require("child_process");
-
-require('events').EventEmitter.prototype._maxListeners = 100;
-
-const {
-    JSDOM
-} = require("jsdom");
-const {
-    window
-} = new JSDOM("");
-const $ = require("jquery")(window);
-const http = require('http');
-/* TRYING TO GET TIME UPDATED ON CAMERAS
-var currentDateTimeCamera = moment().format("YYYY-MM-DD HH:mm:ss")
-const url = "http://10.10.5.4/cgi-bin/global.cgi?action=setCurrentTime&time="+currentDateTimeCamera;
-  console.log(url)
-const request = http.request(url, (response) => {
-    let data = '';
-    response.on('data', (chunk) => {
-        data = data + chunk.toString();
-    });
-  
-    response.on('end', () => {
-        
-        console.log(response);
-    });
-})
-  
-request.on('error', (error) => {
-    console.log('An error', error);
-});
-  
-request.end() 
-
-
-//http://10.10.5.3/cgi-bin/global.cgi?action=setCurrentTime&time="+currentDateTimeCamera
-//http://10.10.5.4/cgi-bin/global.cgi?action=setCurrentTime&time="+currentDateTimeCamera
-
-*/
-
-
-
-
-var fileNameTImeStamp = moment().format("YYYY-MM-DD-HHmm");
-
-var spawn = require('child_process').spawn,
-    child = null;
+mongoose.connect('mongodb://localhost/cameras', function (err) {
+  if (err) throw err;
+  console.log('Successfully connected');
+const newestFile = glob.sync('/home/pi/CrimeCamera/public/videos/cam3/*mp4')
+  .map(name => ({name, ctime: fs.statSync(name).ctime}))
+  .sort((a, b) => b.ctime - a.ctime)[1].name
+//checkVidInDB(newestFile)
+const {exec} = require("child_process");
 var sysInfo = {
     'diskLayout': [],
     'osInfo': {},
@@ -122,17 +68,7 @@ var sysInfo = {
 
 
 }
-si.osInfo(function (data) {
-    sysInfo.osInfo.distro = data.distro
-    sysInfo.osInfo.release = data.release
-    sysInfo.osInfo.codename = data.codename
-    sysInfo.osInfo.kernel = data.kernel
-    sysInfo.osInfo.arch = data.arch
-    sysInfo.osInfo.hostname = data.hostname
-    sysInfo.osInfo.fqdn = data.fqdn
-})
-
-var systemInfo = {
+ var systemInfo = {
     "name": os.hostname(),
     'id': 'jhgwesd',
     "ip": "192.168.196.164",
@@ -144,18 +80,15 @@ var systemInfo = {
         'lng': -77.435076
     },
 }
-
-
-var perfmonPacket = {
-    'camera': os.hostname(),
-    'currentLoad': {
-        'cpus': []
-    },
-    'mem': {},
-    'cpuTemperature': {},
-    'fsSize': []
-}
-
+si.osInfo(function (data) {
+    sysInfo.osInfo.distro = data.distro
+    sysInfo.osInfo.release = data.release
+    sysInfo.osInfo.codename = data.codename
+    sysInfo.osInfo.kernel = data.kernel
+    sysInfo.osInfo.arch = data.arch
+    sysInfo.osInfo.hostname = data.hostname
+    sysInfo.osInfo.fqdn = data.fqdn
+})
 si.diskLayout(function (data) {
     for (var i = 0; i < data.length; i++) {
         sysInfo.diskLayout.push({
@@ -168,8 +101,6 @@ si.diskLayout(function (data) {
         })
     }
 })
-
-
 si.osInfo(function (data) {
     sysInfo.osInfo.distro = data.distro
     sysInfo.osInfo.release = data.release
@@ -179,45 +110,256 @@ si.osInfo(function (data) {
     sysInfo.osInfo.hostname = data.hostname
     sysInfo.osInfo.fqdn = data.fqdn
 })
-
-
-
-
-
 si.memLayout(function (data) {
     sysInfo.memLayout = data
 })
-
 si.cpu(function (data) {
     sysInfo.cpu = data
 })
-var socket2 = dreamHost('http://192.168.196.150:3001/cameras', {
+const sleep = (time) => {
+  return new Promise(resolve => setTimeout(resolve, time))
+}
+function checkVidInDB(path,camera){
+    vids.exists(
+        {
+          fileLocation: path,
+        },
+        function (err, doc) {
+          if (err) {console.log(err)
+          } else { console.log(doc)
+            if (!doc) {
+                  try {
+                    
+                 
+                  ffmpeg.ffprobe(path, function (err, metadata) {
+                 
+                   
+                           try {
+                             
+                           
+                            var date = metadata.format.filename;
+                            var sperateddate = date.split('/');
+                            var fileString = sperateddate[7];
+                            var splitFileString = fileString.split('_');
+                            var fileData = splitFileString[0];
+                            var fileTimewithExtention = splitFileString[1];
+                            var fileTimesplit = fileTimewithExtention.split('.');
+                            var fileTime = fileTimesplit[0];
+                            var fileTimeCelaned = fileTime.split('-');
+                            var dateTime = fileData + ' ' + fileTimeCelaned[0] + ':' + fileTimeCelaned[1] + ':00';
+                            var dateTimeString = moment(dateTime).toISOString();
+                           
+                            const vid = new vids({
+                              camera: camera,
+                              node: systemInfo.name,
+                              nodeID: systemInfo.id,
+                              fileLocation: metadata.format.filename,
+                              location: {
+                                lat: systemInfo.location.lat ,
+                                lng: systemInfo.location.lng,
+                              },
+                              start_pts: metadata.format.start_pts,
+                              start_time: metadata.format.start_time,
+                              duration: metadata.format.duration,
+                              bit_rate: metadata.format.bit_rate,
+                              height: metadata.streams[0].height,
+                              width: metadata.streams[0].width,
+                              size: metadata.format.size,
+                              DateTime: dateTimeString,
+                            });
+                            vid.save();
+                          
+                              } catch (error) { console.log(error)
+                             
+                           }
+
+                      if (err) {
+                         
+                      }
+                  });
+                  } catch (error) {
+                    
+                  }
+              }
+          }
+        }
+      );
+
+
+
+
+}
+const updateCam1 = async () => {
+  for (let i = 0; i < videoFilescam1.length; i++) {
+    await sleep(50)
+    checkVidInDB(videoFilescam1[i], 'cam1')
+    
+  }
+
+
+}
+const updateCam2 = async () => {
+  for (let i = 0; i < videoFilescam2.length; i++) {
+    await sleep(50)
+    checkVidInDB(videoFilescam2[i], 'cam2')
+    
+  }
+
+
+}
+const updateCam3 = async () => {
+  for (let i = 0; i < videoFilescam3.length; i++) {
+    await sleep(50)
+    checkVidInDB(videoFilescam3[i], 'cam3')
+   
+  }
+
+
+}
+function getVideoFiles(){
+    exec('ls /home/pi/CrimeCamera/public/videos/cam1', function (error, stdout, stderr) {
+        if (error) {
+        }
+        if (!error) {
+          videoFilescam1.length = 0
+            var newStringArray = stdout.split("\n")
+            //newStringArray = toString(newStringArray)
+            for (y = 0; y < newStringArray.length; y++) {
+                if (newStringArray[y]) {
+                    videoFilescam1.push("/home/pi/CrimeCamera/public/videos/cam1/" + newStringArray[y])
+                   
+                    ///checkVidInDB(videoPath)
+                }
+                if (y == newStringArray.length - 1) {
+                  updateCam1()
+                   setTimeout(() => {
+                     exec('ls /home/pi/CrimeCamera/public/videos/cam2', function (error, stdout, stderr) {
+                          if (error) {
+                          }
+                          if (!error) {
+                            videoFilescam2.length = 0
+                              var newStringArray = stdout.split("\n")
+                              //newStringArray = toString(newStringArray)
+                              for (y = 0; y < newStringArray.length; y++) {
+                                  if (newStringArray[y]) {
+                                      videoFilescam2.push("/home/pi/CrimeCamera/public/videos/cam2/" + newStringArray[y])
+                                    
+                                      ///checkVidInDB(videoPath)
+                                  }
+                                  if (y == newStringArray.length - 1) {
+                                    updateCam2()
+                                    setTimeout(() => {
+                                      exec('ls /home/pi/CrimeCamera/public/videos/cam3', function (error, stdout, stderr) {
+                                            if (error) {
+                                            }
+                                            if (!error) {
+                                              videoFilescam3.length = 0
+                                                var newStringArray = stdout.split("\n")
+                                                //newStringArray = toString(newStringArray)
+                                                for (y = 0; y < newStringArray.length; y++) {
+                                                    if (newStringArray[y]) {
+                                                        videoFilescam3.push("/home/pi/CrimeCamera/public/videos/cam3/" + newStringArray[y])
+                                                      
+                                                        ///checkVidInDB(videoPath)
+                                                    }
+                                                    if (y == newStringArray.length - 1) {
+                                                      updateCam3()
+                                                      
+
+                                                    }
+                                                }
+                                            }
+                                        })
+                                    }, 2000);
+
+                                  }
+                              }
+                          }
+                      })
+                   }, 2000);
+
+                }
+            }
+        }
+    })
+    }
+var spawn = require('child_process').spawn,
+    child = null;
+var perfmonPacket = {
+    'camera': os.hostname(),
+    'currentLoad': {
+        'cpus': []
+    },
+    'mem': {},
+    'cpuTemperature': {},
+    'fsSize': []
+}
+var socket2 = dreamHost('http://192.168.86.60:3001/cameras', {
     autoConnect: true
 });
+function upDateCamData() {
+  var dateNOW = moment().toISOString();
+    console.log(systemInfo)
+    cams.exists(
+      {
+        nodeName: systemInfo.name,
+      },
+      function (err, doc) {
+        if (err) {
+        } else {
+          if (doc == false) {
+            const cam = new cams({
+              nodeName: systemInfo.name,
+              id: systemInfo.id,
+              location: {
+                lat: systemInfo.location.lat,
+                lng: systemInfo.location.lng,
+              },
+              ip: systemInfo.ip,
+              numOfCams: systemInfo.numOfCams,
+              systemType: systemInfo.typs,
+              lastCheckIn: dateNOW,
+              sysInfo: systemInfo.sysInfo,
+            });
+            cam.save();
+          }
 
-function intervalFunc() {
-
-    socket2.emit('systemOnline', systemInfo)
+          if (doc == true) {
+            cams.findOneAndUpdate(
+              {
+                nodeName: systemInfo.name,
+              },
+              {
+                lastCheckIn: dateNOW,
+              },
+              null,
+              function (err, docs) {
+                if (err) {
+                } else {
+                }
+              }
+            );
+          }
+        }
+      }
+    );
 }
-
-setInterval(intervalFunc, 20000);
-
-function intervalFunc2() {
+function grabPerfMonData() {
     
     si.fsSize(function (data) {
-    for (var i = 0; i < data.length; i++) {
-        perfmonPacket.fsSize.push({
-            'fs': data[i].fs,
-            'type': data[i].type,
-            'size': data[i].size,
-            'used': data[i].used,
-            'available': data[i].available,
-            'mount': data[i].mount
-        })
+        for (var i = 0; i < data.length; i++) {
+            perfmonPacket.fsSize.push({
+                'fs': data[i].fs,
+                'type': data[i].type,
+                'size': data[i].size,
+                'used': data[i].used,
+                'available': data[i].available,
+                'mount': data[i].mount
+            })
 
-    }
+        }
 
-})
+    })
     si.cpuTemperature(function (data) {
         perfmonPacket['cpuTemperature'].main = data.main
     })
@@ -236,14 +378,11 @@ function intervalFunc2() {
             perfmonPacket.currentLoad.cpus.push(data.cpus[i].load)
         }
     })
-    socket2.emit('perfmonStats', perfmonPacket)
-perfmonPacket.fsSize.length = 0
+       const perf = new perfmons(perfmonPacket);
+    perf.save();
+    //socket2.emit('perfmonStats', perfmonPacket)
+        perfmonPacket.fsSize.length = 0
 }
-
-setInterval(intervalFunc2, 60000);
-
-
-
 function executeCommand(command) {
     exec(command, (error, stdout, stderr) => {
         if (error) {
@@ -254,7 +393,6 @@ function executeCommand(command) {
         }
     });
 }
-
 function setupFirewall() {
     executeCommand(`
     sudo sysctl net.ipv4.conf.eth0.forwarding=0 &&
@@ -292,12 +430,6 @@ function setupFirewall() {
     sudo iptables -t nat -A POSTROUTING -j MASQUERADE
   `)
 }
-
-setupFirewall()
-
-
-
-
 function createCameraItemDB(data){
     si.diskLayout(function (data) {
     for (var i = 0; i < data.length; i++) {
@@ -323,10 +455,6 @@ si.osInfo(function (data) {
     sysInfo.osInfo.fqdn = data.fqdn
 })
 
-
-
-
-
 si.memLayout(function (data) {
     sysInfo.memLayout = data
 })
@@ -334,34 +462,17 @@ si.memLayout(function (data) {
 si.cpu(function (data) {
     sysInfo.cpu = data
 })
-
-Object.keys(ifaces).forEach(function (ifname) {
-    var alias = 0;
-console.log(ifname)
-});
-
-const cam = new cams({
-              nodeName: data.name,
-              id: data.id,
-              location: {
-                lat: data.location.lat,
-                lng: data.location.lng,
-              },
-              ip: data.ip,
-              numOfCams: data.numOfCams,
-              systemType: data.typs,
-              sysInfo: data.sysInfo,
-            });
-
-            cam.save();
 }
+
+
+
 
 function Startrecording() {
     child = spawn("ffmpeg", [
         "-hide_banner", "-loglevel", "panic",
         "-i", "rtsp://admin:UUnv9njxg123@10.10.5.2:554/cam/realmonitor?channel=1&subtype=0",
         "-vcodec", "copy", "-f", "segment", "-strftime", "1",
-        "-segment_time", "100", "-segment_format", "mp4", "/home/pi/CrimeCamera/public/videos/cam1/%Y-%m-%d_%H-%M.mp4"
+        "-segment_time", "300", "-segment_format", "mp4", "/home/pi/CrimeCamera/public/videos/cam1/%Y-%m-%d_%H-%M.mp4"
     ]);
     child.stdout.on('data', (data) => {
     });
@@ -374,7 +485,7 @@ function Startrecording() {
         "-hide_banner", "-loglevel", "panic",
         "-i", "rtsp://admin:UUnv9njxg123@10.10.5.3:554/cam/realmonitor?channel=1&subtype=0",
         "-vcodec", "copy", "-f", "segment", "-strftime", "1",
-        "-segment_time", "100", "-segment_format", "mp4", "/home/pi/CrimeCamera/public/videos/cam2/%Y-%m-%d_%H-%M.mp4"
+        "-segment_time", "300", "-segment_format", "mp4", "/home/pi/CrimeCamera/public/videos/cam2/%Y-%m-%d_%H-%M.mp4"
     ]);
     child2.stdout.on('data', (data2) => {
     });
@@ -386,7 +497,7 @@ function Startrecording() {
         "-hide_banner", "-loglevel", "panic",
         "-i", "rtsp://admin:UUnv9njxg123@10.10.5.4:554/cam/realmonitor?channel=1&subtype=0",
         "-vcodec", "copy", "-f", "segment", "-strftime", "1",
-        "-segment_time", "100", "-segment_format", "mp4", "/home/pi/CrimeCamera/public/videos/cam3/%Y-%m-%d_%H-%M.mp4"
+        "-segment_time", "300", "-segment_format", "mp4", "/home/pi/CrimeCamera/public/videos/cam3/%Y-%m-%d_%H-%M.mp4"
     ]);
     child3.stdout.on('data', (data3) => {
     });
@@ -395,240 +506,19 @@ function Startrecording() {
 }
 
 
-//Stops and restarts recording every 4 hours. This id to eliminate hung recordings
-function intervalFunc3(){
-child.kill('SIGINT');
-child2.kill('SIGINT');
-child3.kill('SIGINT');
-setTimeout(() => {
-    Startrecording()
-}, 5000);
-
-
-}
-setInterval(intervalFunc3, 14400000);
+//Starts all functions
 Startrecording()
-
-
-var datestamp = "";
-
-
-function sendVideoandData() {
-    var y;
-    var videoFiles = []
-    var ffmpeg = require('fluent-ffmpeg');
-    exec('ls /home/pi/CrimeCamera/public/videos/cam1', function (error, stdout, stderr) {
-        if (error) {
-        }
-        if (!error) {
-
-            var newStringArray = stdout.split("\n")
-            //newStringArray = toString(newStringArray)
-            for (y = 0; y < newStringArray.length; y++) {
-                if (newStringArray[y]) {
-                    //WHY IS THIS NOT RIGHT... FIX ME
-                    ffmpeg.ffprobe('/mnt/drive/cam1/' + newStringArray[y], function (err, metadata) {
-                        var videoandData = {
-                            "fileName": newStringArray[y],
-                            "metaData": metadata
-                        }
-                        videoFiles.push(videoandData)
-                        socket2.emit("videoFileData", metadata)
-                        var numOfVideos = videoFiles.length + 1
-                        if (numOfVideos === newStringArray.length) {
-
-                            socket2.emit("videoFileDataDone", 'y')
-
-                        }
-
-                        if (err) {}
-                    });
-
-                }
-
-
-
-
-            }
-
-        }
-    })
-
-
-
-
-}
-
-function sendVideoInfo(file, camera) {
-    var ffmpeg = require('fluent-ffmpeg');
-    ffmpeg.ffprobe(file, function (err, metadata) {
-        var sendOBJ = {
-            cam: camera,
-            nodeinfo: systemInfo,
-            metadata: metadata
-
-        }
-        socket2.emit('videoInfo', sendOBJ)
-
-        if (err) {
-            console.log(err)
-        }
-    });
-}
-var videoFilescam1 = []
-var videoFilescam2 = []
-var videoFilescam3 = []
-//send em
-function sendVideoFiles() {
-
-    exec('ls /home/pi/CrimeCamera/public/videos/cam1', function (error, stdout, stderr) {
-        if (error) {
-        }
-        if (!error) {
-            var newStringArray = stdout.split("\n")
-            //newStringArray = toString(newStringArray)
-            for (y = 0; y < newStringArray.length; y++) {
-                if (newStringArray[y]) {
-                     socket2.emit("videoFilesCam1", newStringArray[y])
-                    videoFilescam1.push()
-                }
-                if (y == newStringArray.length - 1) {
-                   
-                    videoFilescam1.length = 0;
-                    
-                    
-                    setTimeout(() => {
-                        exec('ls /home/pi/CrimeCamera/public/videos/cam2', function (error, stdout, stderr) {
-                            if (error) {
-                            }
-                            if (!error) {
-                                var newStringArray = stdout.split("\n")
-                                //newStringArray = toString(newStringArray)
-                                for (y = 0; y < newStringArray.length; y++) {
-                                    if (newStringArray[y]) {
-                                        socket2.emit("videoFilesCam2", newStringArray[y])
-                                        videoFilescam2.push(newStringArray[y])
-                                    }
-                                    if (y == newStringArray.length - 1) {
-                                        
-                                        videoFilescam2.length = 0;
-                                        
-                                        
-                                        
-                                        setTimeout(() => {
-                                            exec('ls /home/pi/CrimeCamera/public/videos/cam3', function (error, stdout, stderr) {
-                                                if (error) {
-                                                }
-                                                if (!error) {
-                                                    var newStringArray = stdout.split("\n")
-                                                    //newStringArray = toString(newStringArray)
-                                                    for (y = 0; y < newStringArray.length; y++) {
-                                                        if (newStringArray[y]) {
-                                                            videoFilescam3.push(newStringArray[y])
-                                                            socket2.emit("videoFilesCam3", newStringArray[y])
-                                                        }
-                                                        if (y == newStringArray.length - 1) {
-                                                            
-                                                            videoFilescam3.length = 0;
-                                                        }
-
-
-
-                                                    }
-
-                                                }
-                                            })
-                                        }, 30000);
-
-                                    }
-
-
-
-                                }
-
-                            }
-
-                        })
-                    }, 30000);
-
-
-
-
-                }
-
-
-
-            }
-
-        }
-    })
-
-
-
-
-
-
-
-
-}
-
-
-socket2.on('getVideoInfoCam1', function (data) {
-    var fileURI = "/home/pi/CrimeCamera/public/videos/cam1/" + data
-    sendVideoInfo(fileURI, 'camera1')
-
-
-})
-socket2.on('getVideoInfoCam2', function (data) {
-    var fileURI = "/home/pi/CrimeCamera/public/videos/cam2/" + data
-    sendVideoInfo(fileURI, 'camera2')
-
-
-})
-socket2.on('getVideoInfoCam3', function (data) {
-    var fileURI = "/home/pi/CrimeCamera/public/videos/cam3/" + data
-    sendVideoInfo(fileURI, 'camera3')
-
-
-})
-socket2.on('getAllvideoandData', function (data) {
-    //sendVideoandData()
-})
-socket2.on('getVideos', function (data) {
-    sendVideoFiles()
-
-
-
-})
-socket2.on('status', function (data) {
-    if (data === 'sendData') {
-        sendData = 1
-
-    }
-
-
-})
-socket2.on('recording', function (data) {
-    if (data === "start") {
-
-       
-    }
-    if (data === "stop") {
-
-        child.kill('SIGINT');
-        setTimeout(() => {
-            sendVideoFiles()
-        }, 2000);
-
-
-    }
-})
-
-
-
-
-sendVideoFiles()
-
+setupFirewall()
+getVideoFiles()
+upDateCamData()
+//store perfmon data once a min
+setInterval(grabPerfMonData, 60000);
+//HEat BEat and check in every 5 min
+setInterval(upDateCamData, 300000);
+//get video files every 30 min
+setInterval(getVideoFiles, 1800000);
+
+});
 
 socketApi.io = io;
 
