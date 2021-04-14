@@ -16,9 +16,8 @@ const cams = require('/home/pi/CrimeCamera/models/cameras');
 const glob = require('glob')
 const fs = require("fs")
 const mongoose = require('mongoose');
- var ffmpeg = require('fluent-ffmpeg')
+var ffmpeg = require('fluent-ffmpeg')
 var interfaceNames = Object.keys(networkInterfaces)
-
 const {exec} = require("child_process");
 require('events').EventEmitter.prototype._maxListeners = 100;
 const {JSDOM} = require("jsdom");
@@ -29,12 +28,14 @@ const si = require('systeminformation');
 var chokidar = require('chokidar');
 const moment = require('moment')
 var watcher = chokidar.watch('/home/pi/CrimeCamera/public/videos/cam3', {ignored: /^\./, persistent: true});
-
+var spawn = require('child_process').spawn,
+child = null;
+var socket2 = dreamHost('http://192.168.86.60:3001/cameras', {
+  autoConnect: true
+});
 var videoFilescam1 = []
- var videoFilescam2 = []
- var videoFilescam3 = []
-
- console.log(process.env.setup)
+var videoFilescam2 = []
+var videoFilescam3 = []
 for(i=0;i<interfaceNames.length;i++){
     if(interfaceNames[i] === 'eth0'){
                 console.log(networkInterfaces[interfaceNames[i]][0].address)
@@ -60,31 +61,32 @@ if(interfaceNames[i] === 'eth1'){
 mongoose.connect('mongodb://localhost/cameras', function (err) {
   if (err) throw err;
   console.log('Successfully connected');
-const newestFile = glob.sync('/home/pi/CrimeCamera/public/videos/cam3/*mp4')
-  .map(name => ({name, ctime: fs.statSync(name).ctime}))
-  .sort((a, b) => b.ctime - a.ctime)[1].name
-//checkVidInDB(newestFile)
-const {exec} = require("child_process");
-var sysInfo = {
+  var sysInfo = {
     'diskLayout': [],
     'osInfo': {},
-
-
-
-}
- var systemInfo = {
-    "name": os.hostname(),
-    'id': 'jhgwesd',
-    "ip": "192.168.196.164",
-    "numOfCams": 3,
-    "typs": "standard",
-    'sysInfo': sysInfo,
-    'location': {
+  }
+    var systemInfo = {
+      "name": os.hostname(),
+      'id': 'jhgwesd',
+      "ip": "192.168.196.164",
+      "numOfCams": 3,
+      "typs": "standard",
+      'sysInfo': sysInfo,
+      'location': {
         'lat': 38.65456,
         'lng': -77.435076
     },
-}
-si.osInfo(function (data) {
+    }
+    var perfmonPacket = {
+      'camera': os.hostname(),
+      'currentLoad': {
+        'cpus': []
+      },
+      'mem': {},
+      'cpuTemperature': {},
+      'fsSize': []
+    }
+    si.osInfo(function (data) {
     sysInfo.osInfo.distro = data.distro
     sysInfo.osInfo.release = data.release
     sysInfo.osInfo.codename = data.codename
@@ -92,8 +94,8 @@ si.osInfo(function (data) {
     sysInfo.osInfo.arch = data.arch
     sysInfo.osInfo.hostname = data.hostname
     sysInfo.osInfo.fqdn = data.fqdn
-})
-si.diskLayout(function (data) {
+    })
+    si.diskLayout(function (data) {
     for (var i = 0; i < data.length; i++) {
         sysInfo.diskLayout.push({
             'device': data[i].device,
@@ -104,8 +106,8 @@ si.diskLayout(function (data) {
 
         })
     }
-})
-si.osInfo(function (data) {
+    })
+    si.osInfo(function (data) {
     sysInfo.osInfo.distro = data.distro
     sysInfo.osInfo.release = data.release
     sysInfo.osInfo.codename = data.codename
@@ -113,17 +115,17 @@ si.osInfo(function (data) {
     sysInfo.osInfo.arch = data.arch
     sysInfo.osInfo.hostname = data.hostname
     sysInfo.osInfo.fqdn = data.fqdn
-})
-si.memLayout(function (data) {
+    })
+    si.memLayout(function (data) {
     sysInfo.memLayout = data
-})
-si.cpu(function (data) {
+    })
+    si.cpu(function (data) {
     sysInfo.cpu = data
-})
-const sleep = (time) => {
+    })
+    const sleep = (time) => {
   return new Promise(resolve => setTimeout(resolve, time))
-}
-function checkVidInDB(path,camera){
+    }
+    function checkVidInDB(path,camera){
     vids.exists(
         {
           fileLocation: path,
@@ -192,8 +194,8 @@ function checkVidInDB(path,camera){
 
 
 
-}
-const updateCam1 = async () => {
+    }
+    const updateCam1 = async () => {
   for (let i = 0; i < videoFilescam1.length; i++) {
     await sleep(50)
     checkVidInDB(videoFilescam1[i], 'cam1')
@@ -201,8 +203,8 @@ const updateCam1 = async () => {
   }
 
 
-}
-const updateCam2 = async () => {
+    }
+    const updateCam2 = async () => {
   for (let i = 0; i < videoFilescam2.length; i++) {
     await sleep(50)
     checkVidInDB(videoFilescam2[i], 'cam2')
@@ -210,8 +212,8 @@ const updateCam2 = async () => {
   }
 
 
-}
-const updateCam3 = async () => {
+    }
+    const updateCam3 = async () => {
   for (let i = 0; i < videoFilescam3.length; i++) {
     await sleep(50)
     checkVidInDB(videoFilescam3[i], 'cam3')
@@ -219,8 +221,8 @@ const updateCam3 = async () => {
   }
 
 
-}
-function getVideoFiles(){
+    }
+    function getVideoFiles(){
     exec('ls /home/pi/CrimeCamera/public/videos/cam1', function (error, stdout, stderr) {
         if (error) {
         }
@@ -287,21 +289,7 @@ function getVideoFiles(){
         }
     })
     }
-var spawn = require('child_process').spawn,
-    child = null;
-var perfmonPacket = {
-    'camera': os.hostname(),
-    'currentLoad': {
-        'cpus': []
-    },
-    'mem': {},
-    'cpuTemperature': {},
-    'fsSize': []
-}
-var socket2 = dreamHost('http://192.168.86.60:3001/cameras', {
-    autoConnect: true
-});
-function upDateCamData() {
+    function upDateCamData() {
   var dateNOW = moment().toISOString();
     console.log(systemInfo)
     socket2.emit('systemOnline',systemInfo)
@@ -348,8 +336,8 @@ function upDateCamData() {
         }
       }
     );
-}
-function grabPerfMonData() {
+    }
+    function grabPerfMonData() {
     
     si.fsSize(function (data) {
         for (var i = 0; i < data.length; i++) {
@@ -387,8 +375,8 @@ function grabPerfMonData() {
     perf.save();
     //socket2.emit('perfmonStats', perfmonPacket)
         perfmonPacket.fsSize.length = 0
-}
-function executeCommand(command) {
+    }
+    function executeCommand(command) {
     exec(command, (error, stdout, stderr) => {
         if (error) {
             return;
@@ -397,8 +385,8 @@ function executeCommand(command) {
             return;
         }
     });
-}
-function setupFirewall() {
+    }
+    function setupFirewall() {
     executeCommand(`
     sudo sysctl net.ipv4.conf.eth0.forwarding=0 &&
     sudo sysctl net.ipv4.conf.wlan0.forwarding=0 &&
@@ -434,8 +422,8 @@ function setupFirewall() {
     sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 82 -j ACCEPT  &&
     sudo iptables -t nat -A POSTROUTING -j MASQUERADE
   `)
-}
-function createCameraItemDB(data){
+    }
+    function createCameraItemDB(data){
     si.diskLayout(function (data) {
     for (var i = 0; i < data.length; i++) {
         sysInfo.diskLayout.push({
@@ -467,11 +455,8 @@ si.memLayout(function (data) {
 si.cpu(function (data) {
     sysInfo.cpu = data
 })
-}
-
-
-
-function Startrecording() {
+    }
+    function Startrecording() {
     child = spawn("ffmpeg", [
         "-hide_banner", "-loglevel", "panic",
         "-i", "rtsp://admin:UUnv9njxg123@10.10.5.2:554/cam/realmonitor?channel=1&subtype=0",
@@ -507,9 +492,8 @@ function Startrecording() {
     });
     child3.stderr.on('data', (data3) => {
     });
-}
-
-function runCamera(){
+    }
+    function runCamera(){
 //Starts all functions
 Startrecording()
 setupFirewall()
@@ -521,17 +505,13 @@ setInterval(grabPerfMonData, 60000);
 setInterval(upDateCamData, 300000);
 //get video files every 30 min
 setInterval(getVideoFiles, 1800000);
-}
-
+    }
 });
+  function setupAP(){
+    console.log("SETTIGN UP ACCESS POINT")
+  }
 
-function setupAP(){
-  console.log("SETTIGN UP ACCESS POINT")
-
-
-}
-
-function checkCameraSetup(){
+  function checkCameraSetup(){
   cams.find({}, function (err, docs) {
       if (err) {
         console.log(err);
@@ -547,9 +527,7 @@ function checkCameraSetup(){
 
 
 
-}
+  }
 checkCameraSetup()
 socketApi.io = io;
-
-
 module.exports = socketApi;
