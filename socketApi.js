@@ -30,7 +30,7 @@ const moment = require('moment')
 var watcher = chokidar.watch('/home/pi/CrimeCamera/public/videos/cam3', {ignored: /^\./, persistent: true});
 var spawn = require('child_process').spawn,
 child = null;
-var socket2 = dreamHost('http://192.168.86.60:3001/cameras', {
+var socket2 = dreamHost('https://192.168.196.XXX:3001/cameras', {
   autoConnect: true
 });
 var videoFilescam1 = []
