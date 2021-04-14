@@ -1,6 +1,7 @@
 
 var socket = io();
 var cameraPi = io('//192.168.86.22:3000/');
+
 var camForm = `
 <div class="card text-center">
   <div class="card-header">
