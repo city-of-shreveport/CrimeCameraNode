@@ -21,9 +21,9 @@ app.set('port', port);
  */
 
 //var server = http.createServer(app);
-var server = https.createServer({
-  key: fs.readFileSync('/home/pi/CrimeCamera/bin/server.key'),
-  cert: fs.readFileSync('/home/pi/CrimeCamera/bin/server.cert')
+var server = http.createServer({
+  //key: fs.readFileSync('/home/pi/CrimeCamera/bin/server.key'),
+  //cert: fs.readFileSync('/home/pi/CrimeCamera/bin/server.cert')
 }, app)
 .listen(3000, function () {
   console.log('Example app listening on port 3000! Go to https://localhost:3000/')

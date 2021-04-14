@@ -2,11 +2,21 @@ const mongoose = require("mongoose")
 const schema = mongoose.Schema({
     'nodeName':String,
     'id': String,
-    'location':{'lat': Number, 'lng': Number},
+    'location':{
+        'lat': Number, 
+        'lng': Number
+    },
     'ip': String,
     'numOfCams': Number,
     'systemType': String,
     'lastCheckIn': Date,
+    'cameras':[{
+        'ip': String,
+        'direction': Number,
+        'useername': String,
+        'password': String,
+        'camType': String
+    }],
     'sysInfo':{
         'memLayout': [{ 
             'type': Map,

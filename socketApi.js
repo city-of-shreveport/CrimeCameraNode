@@ -1,3 +1,4 @@
+
 var socket_io = require('socket.io');
 var io = socket_io();
 var socketApi = {};
@@ -11,6 +12,7 @@ var eth1IP
 var networkInterfaces = os2.networkInterfaces();
 const vids = require('./models/videos');
 const perfmons = require('./models/perfmons');
+const cams = require('/home/pi/CrimeCamera/models/cameras');
 const glob = require('glob')
 const fs = require("fs")
 const mongoose = require('mongoose');
@@ -27,10 +29,12 @@ const si = require('systeminformation');
 var chokidar = require('chokidar');
 const moment = require('moment')
 var watcher = chokidar.watch('/home/pi/CrimeCamera/public/videos/cam3', {ignored: /^\./, persistent: true});
-const cams = require('/home/pi/CrimeCamera/models/cameras');
+
 var videoFilescam1 = []
  var videoFilescam2 = []
  var videoFilescam3 = []
+
+ console.log(process.env.setup)
 for(i=0;i<interfaceNames.length;i++){
     if(interfaceNames[i] === 'eth0'){
                 console.log(networkInterfaces[interfaceNames[i]][0].address)
@@ -126,7 +130,7 @@ function checkVidInDB(path,camera){
         },
         function (err, doc) {
           if (err) {console.log(err)
-          } else { console.log(doc)
+          } else { 
             if (!doc) {
                   try {
                     
@@ -300,6 +304,7 @@ var socket2 = dreamHost('http://192.168.86.60:3001/cameras', {
 function upDateCamData() {
   var dateNOW = moment().toISOString();
     console.log(systemInfo)
+    socket2.emit('systemOnline',systemInfo)
     cams.exists(
       {
         nodeName: systemInfo.name,
@@ -466,7 +471,6 @@ si.cpu(function (data) {
 
 
 
-
 function Startrecording() {
     child = spawn("ffmpeg", [
         "-hide_banner", "-loglevel", "panic",
@@ -505,7 +509,7 @@ function Startrecording() {
     });
 }
 
-
+function runCamera(){
 //Starts all functions
 Startrecording()
 setupFirewall()
@@ -517,9 +521,34 @@ setInterval(grabPerfMonData, 60000);
 setInterval(upDateCamData, 300000);
 //get video files every 30 min
 setInterval(getVideoFiles, 1800000);
+}
 
 });
 
+function setupAP(){
+  console.log("SETTIGN UP ACCESS POINT")
+
+
+}
+
+function checkCameraSetup(){
+  cams.find({}, function (err, docs) {
+      if (err) {
+        console.log(err);
+      } else {
+        if(docs.length == 0){
+          setupAP()
+
+        }
+        console.log(docs.length)
+        //res.send(docs);
+      }
+    });
+
+
+
+}
+checkCameraSetup()
 socketApi.io = io;
 
 
