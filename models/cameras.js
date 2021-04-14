@@ -8,7 +8,6 @@ const schema = mongoose.Schema({
     },
     'ip': String,
     'numOfCams': Number,
-    'systemType': String,
     'lastCheckIn': Date,
     'cameras':[{
         'ip': String,
