@@ -13,7 +13,7 @@ const schema = mongoose.Schema({
     'cameras':[{
         'ip': String,
         'direction': Number,
-        'useername': String,
+        'username': String,
         'password': String,
         'camType': String
     }],

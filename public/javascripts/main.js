@@ -47,7 +47,6 @@ var camForm = `
             <div class="col">
               <input type="text" class="form-control" placeholder="Server IP" aria-label="serverIP">
             </div>
-     
             <div class="col">
               <input type="text" class="form-control" placeholder="Number of Cameras" aria-label="numOfCams">
             </div>
@@ -137,6 +136,7 @@ var camForm = `
     </div>
   </div>
 </div>`
+
 
 $(function() {
     $('#mainDIV').html(camForm)
