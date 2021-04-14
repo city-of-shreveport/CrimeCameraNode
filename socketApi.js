@@ -512,22 +512,11 @@ setInterval(getVideoFiles, 1800000);
   }
 
   function checkCameraSetup(){
-  cams.find({}, function (err, docs) {
-      if (err) {
-        console.log(err);
-      } else {
-        if(docs.length == 0){
-          setupAP()
-
-        }
-        console.log(docs.length)
-        //res.send(docs);
-      }
-    });
+  //Get the file from /boot to get temp API key
 
 
 
   }
-checkCameraSetup()
+runCamera()
 socketApi.io = io;
 module.exports = socketApi;
