@@ -11,7 +11,7 @@ var eth1IP;
 var networkInterfaces = os2.networkInterfaces();
 const vids = require('./models/videos');
 const perfmons = require('./models/perfmons');
-const cams = require('/home/pi/CrimeCamera/models/cameras');
+const cams = require('/home/pi/CrimeCameraClient/models/cameras');
 const glob = require('glob');
 const fs = require('fs');
 const mongoose = require('mongoose');
@@ -26,7 +26,7 @@ const http = require('http');
 const si = require('systeminformation');
 var chokidar = require('chokidar');
 const moment = require('moment');
-var watcher = chokidar.watch('/home/pi/CrimeCamera/public/videos/cam3', { ignored: /^\./, persistent: true });
+var watcher = chokidar.watch('/home/pi/CrimeCameraClient/public/videos/cam3', { ignored: /^\./, persistent: true });
 var spawn = require('child_process').spawn,
   child = null;
 
@@ -197,7 +197,7 @@ mongoose.connect('mongodb://localhost/cameras', function (err) {
     }
   };
   function getVideoFiles() {
-    exec('ls /home/pi/CrimeCamera/public/videos/cam1', function (error, stdout, stderr) {
+    exec('ls /home/pi/CrimeCameraClient/public/videos/cam1', function (error, stdout, stderr) {
       if (error) {
       }
       if (!error) {
@@ -206,14 +206,14 @@ mongoose.connect('mongodb://localhost/cameras', function (err) {
         //newStringArray = toString(newStringArray)
         for (y = 0; y < newStringArray.length; y++) {
           if (newStringArray[y]) {
-            videoFilescam1.push('/home/pi/CrimeCamera/public/videos/cam1/' + newStringArray[y]);
+            videoFilescam1.push('/home/pi/CrimeCameraClient/public/videos/cam1/' + newStringArray[y]);
 
             ///checkVidInDB(videoPath)
           }
           if (y == newStringArray.length - 1) {
             updateCam1();
             setTimeout(() => {
-              exec('ls /home/pi/CrimeCamera/public/videos/cam2', function (error, stdout, stderr) {
+              exec('ls /home/pi/CrimeCameraClient/public/videos/cam2', function (error, stdout, stderr) {
                 if (error) {
                 }
                 if (!error) {
@@ -222,14 +222,14 @@ mongoose.connect('mongodb://localhost/cameras', function (err) {
                   //newStringArray = toString(newStringArray)
                   for (y = 0; y < newStringArray.length; y++) {
                     if (newStringArray[y]) {
-                      videoFilescam2.push('/home/pi/CrimeCamera/public/videos/cam2/' + newStringArray[y]);
+                      videoFilescam2.push('/home/pi/CrimeCameraClient/public/videos/cam2/' + newStringArray[y]);
 
                       ///checkVidInDB(videoPath)
                     }
                     if (y == newStringArray.length - 1) {
                       updateCam2();
                       setTimeout(() => {
-                        exec('ls /home/pi/CrimeCamera/public/videos/cam3', function (error, stdout, stderr) {
+                        exec('ls /home/pi/CrimeCameraClient/public/videos/cam3', function (error, stdout, stderr) {
                           if (error) {
                           }
                           if (!error) {
@@ -238,7 +238,9 @@ mongoose.connect('mongodb://localhost/cameras', function (err) {
                             //newStringArray = toString(newStringArray)
                             for (y = 0; y < newStringArray.length; y++) {
                               if (newStringArray[y]) {
-                                videoFilescam3.push('/home/pi/CrimeCamera/public/videos/cam3/' + newStringArray[y]);
+                                videoFilescam3.push(
+                                  '/home/pi/CrimeCameraClient/public/videos/cam3/' + newStringArray[y]
+                                );
 
                                 ///checkVidInDB(videoPath)
                               }
@@ -442,7 +444,7 @@ mongoose.connect('mongodb://localhost/cameras', function (err) {
       '300',
       '-segment_format',
       'mp4',
-      '/home/pi/CrimeCamera/public/videos/cam1/%Y-%m-%d_%H-%M.mp4',
+      '/home/pi/CrimeCameraClient/public/videos/cam1/%Y-%m-%d_%H-%M.mp4',
     ]);
     child.stdout.on('data', (data) => {});
     child.stderr.on('data', (data) => {});
@@ -463,7 +465,7 @@ mongoose.connect('mongodb://localhost/cameras', function (err) {
       '300',
       '-segment_format',
       'mp4',
-      '/home/pi/CrimeCamera/public/videos/cam2/%Y-%m-%d_%H-%M.mp4',
+      '/home/pi/CrimeCameraClient/public/videos/cam2/%Y-%m-%d_%H-%M.mp4',
     ]);
     child2.stdout.on('data', (data2) => {});
     child2.stderr.on('data', (data2) => {});
@@ -484,7 +486,7 @@ mongoose.connect('mongodb://localhost/cameras', function (err) {
       '300',
       '-segment_format',
       'mp4',
-      '/home/pi/CrimeCamera/public/videos/cam3/%Y-%m-%d_%H-%M.mp4',
+      '/home/pi/CrimeCameraClient/public/videos/cam3/%Y-%m-%d_%H-%M.mp4',
     ]);
     child3.stdout.on('data', (data3) => {});
     child3.stderr.on('data', (data3) => {});

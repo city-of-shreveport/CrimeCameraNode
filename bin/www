@@ -5,7 +5,7 @@
  */
 
 var app = require('../app');
-var debug = require('debug')('CrimeCamera:server');
+var debug = require('debug')('CrimeCameraClient:server');
 var https = require('https');
 var http = require('http');
 var fs = require('fs')
@@ -22,8 +22,8 @@ app.set('port', port);
 
 //var server = http.createServer(app);
 var server = http.createServer({
-  //key: fs.readFileSync('/home/pi/CrimeCamera/bin/server.key'),
-  //cert: fs.readFileSync('/home/pi/CrimeCamera/bin/server.cert')
+  //key: fs.readFileSync('/home/pi/CrimeCameraClient/bin/server.key'),
+  //cert: fs.readFileSync('/home/pi/CrimeCameraClient/bin/server.cert')
 }, app)
 .listen(3000, function () {
   console.log('Example app listening on port 3000! Go to https://localhost:3000/')
