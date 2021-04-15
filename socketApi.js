@@ -30,9 +30,7 @@ const moment = require('moment')
 var watcher = chokidar.watch('/home/pi/CrimeCamera/public/videos/cam3', {ignored: /^\./, persistent: true});
 var spawn = require('child_process').spawn,
 child = null;
-var socket2 = dreamHost('https://192.168.196.128:3001/cameras', {
-  autoConnect: true
-});
+
 var videoFilescam1 = []
 var videoFilescam2 = []
 var videoFilescam3 = []
@@ -58,9 +56,13 @@ if(interfaceNames[i] === 'eth1'){
         }
         }
 }
+  var socket2 = dreamHost('http://192.168.196.128:3001/cameras', {
+  autoConnect: true
+});
 mongoose.connect('mongodb://localhost/cameras', function (err) {
   if (err) throw err;
   console.log('Successfully connected');
+
   var sysInfo = {
     'diskLayout': [],
     'osInfo': {},
@@ -290,6 +292,10 @@ mongoose.connect('mongodb://localhost/cameras', function (err) {
     })
     }
     function upDateCamData() {
+      //Check if cameras HDDD is mounted to server
+      //if not mount it
+      //if so carry on
+      ///public/cameraVideos/CAMERANAME /cam1  /cam2 /cam3
   var dateNOW = moment().toISOString();
     console.log(systemInfo)
     socket2.emit('systemOnline',systemInfo)
@@ -493,19 +499,20 @@ si.cpu(function (data) {
     child3.stderr.on('data', (data3) => {
     });
     }
-    function runCamera(){
+
 //Starts all functions
+upDateCamData()
 Startrecording()
 setupFirewall()
 getVideoFiles()
-upDateCamData()
+
 //store perfmon data once a min
 setInterval(grabPerfMonData, 60000);
 //HEat BEat and check in every 5 min
 setInterval(upDateCamData, 300000);
 //get video files every 30 min
 setInterval(getVideoFiles, 1800000);
-    }
+
 });
   function setupAP(){
     console.log("SETTIGN UP ACCESS POINT")
@@ -517,6 +524,6 @@ setInterval(getVideoFiles, 1800000);
 
 
   }
-runCamera()
+
 socketApi.io = io;
 module.exports = socketApi;
