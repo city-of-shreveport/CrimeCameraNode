@@ -1,0 +1,9 @@
+*.log
+.DS_Store
+.env
+.vscode/CrimeCamBackEnd.code-workspace
+.vscode/sftp.json
+node_modules
+package-lock.json
+public/liveStream/
+public/videos/
