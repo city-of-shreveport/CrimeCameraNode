@@ -9,13 +9,13 @@ class Observer extends EventEmitter {
 
   watchFolder(folder) {
     try {
-      console.log(`[${new Date().toLocaleString()}] Watching for folder changes on: ${folder}`);
+      // console.log(`[${new Date().toLocaleString()}] Watching for folder changes on: ${folder}`);
 
       var watcher = chokidar.watch(folder, { persistent: true });
 
       watcher.on('add', async (filePath) => {
         if (filePath.includes('error.log')) {
-          console.log(`[${new Date().toLocaleString()}] ${filePath} has been added.`);
+          // console.log(`[${new Date().toLocaleString()}] ${filePath} has been added.`);
 
           // Read content of new file
           var fileContent = await fsExtra.readFile(filePath);
@@ -27,7 +27,7 @@ class Observer extends EventEmitter {
 
           // remove file error.log
           await fsExtra.unlink(filePath);
-          console.log(`[${new Date().toLocaleString()}] ${filePath} has been removed.`);
+          // console.log(`[${new Date().toLocaleString()}] ${filePath} has been removed.`);
         }
       });
     } catch (error) {
