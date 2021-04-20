@@ -10,6 +10,9 @@ const io = socketApi.io;
 const got = require('got');
 require('dotenv').config();
 
+/**
+ * Bootstrap and start app.
+ */
 bootstrapApp().then(() => {
   app.set('port', normalizePort(process.env.PORT || '3000'));
 
