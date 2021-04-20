@@ -49,8 +49,8 @@ async function bootstrapApp() {
         echo '${config.videoDriveEncryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat /dev/sda1;
         echo '${config.videoDriveEncryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen /dev/sda1 ${config.videoDriveEncryptionKey};
         yes | sudo mkfs.ext4 -q /dev/mapper/${config.videoDriveEncryptionKey};
-        sudo mount /dev/mapper/${config.videoDriveEncryptionKey} /home/pi/CrimeCameraClient/public/videos;
-        sudo chmod 755 -R /home/pi/CrimeCameraClient/public/videos;
+        sudo mount /dev/mapper/${config.videoDriveEncryptionKey} ${config.videoDriveMountPath};
+        sudo chmod 755 -R ${config.videoDriveMountPath};
       `,
         (error, stdout, stderr) => {
           if (error) {
