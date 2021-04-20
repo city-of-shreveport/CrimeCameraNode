@@ -135,7 +135,7 @@ mongoose.connect(
         },
         function (err, doc) {
           if (err) {
-            console.log(err);
+            // console.log(err);
           } else {
             if (!doc) {
               try {
@@ -173,7 +173,7 @@ mongoose.connect(
                     });
                     vid.save();
                   } catch (error) {
-                    console.log(error);
+                    // console.log(error);
                   }
 
                   if (err) {

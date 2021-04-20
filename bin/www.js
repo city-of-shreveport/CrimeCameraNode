@@ -37,21 +37,48 @@ async function bootstrapApp() {
     var config = JSON.parse(JSON.parse(response.body));
 
     console.log('Idempotently setting up encryption on video storage device...');
-    let driveIsEncrypted = execSync(`lsblk -o NAME,TYPE,SIZE,MODEL | grep ${config.videoDriveEncryptionKey}`)
-      .toString()
-      .includes(config.videoDriveEncryptionKey);
+    var driveIsEncrypted = false;
+
+    // Check lsblk to see if the virtual partition exists.
+    try {
+      driveIsEncrypted = execSync(`lsblk -o NAME,TYPE,SIZE,MODEL | grep ${config.videoDriveEncryptionKey}`)
+        .toString()
+        .includes(config.videoDriveEncryptionKey);
+    } catch (error) {}
+
+    // If the lsblk virtual partition does not exist, check blkid to see if the drive is formatted correctly.
+    try {
+      if (!driveIsEncrypted) {
+        driveIsEncrypted = execSync(`blkid ${config.videoDrivePath} | grep crypto_LUKS`)
+          .toString()
+          .includes('crypto_LUKS');
+      }
+    } catch (error) {}
+
+    // Attempt to mount the virtual partition.
+    try {
+      if (driveIsEncrypted) {
+        execSync(
+          `
+            echo '${config.videoDriveEncryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${config.videoDrivePath} ${config.videoDriveEncryptionKey};
+            sudo mount /dev/mapper/${config.videoDriveEncryptionKey} ${config.videoDriveMountPath};
+          `
+        );
+      }
+    } catch (error) {}
 
     if (driveIsEncrypted) {
       console.log('The video drive is already encrypted!');
     } else {
+      // Setup and mount encrypted virtual partition.
       execSync(
         `
-        echo '${config.videoDriveEncryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat /dev/sda1;
-        echo '${config.videoDriveEncryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen /dev/sda1 ${config.videoDriveEncryptionKey};
-        yes | sudo mkfs.ext4 -q /dev/mapper/${config.videoDriveEncryptionKey};
-        sudo mount /dev/mapper/${config.videoDriveEncryptionKey} ${config.videoDriveMountPath};
-        sudo chmod 755 -R ${config.videoDriveMountPath};
-      `,
+          echo '${config.videoDriveEncryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${config.videoDrivePath};
+          echo '${config.videoDriveEncryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${config.videoDrivePath} ${config.videoDriveEncryptionKey};
+          yes | sudo mkfs.ext4 -q /dev/mapper/${config.videoDriveEncryptionKey};
+          sudo mount /dev/mapper/${config.videoDriveEncryptionKey} ${config.videoDriveMountPath};
+          sudo chmod 755 -R ${config.videoDriveMountPath};
+        `,
         (error, stdout, stderr) => {
           if (error) {
             console.log(`error: ${error.message}`);
@@ -68,6 +95,7 @@ async function bootstrapApp() {
   } catch (error) {
     console.log('Failed to get configuration information from remote server.');
     console.log(error);
+    process.exit();
   }
 }
 
