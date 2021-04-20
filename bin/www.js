@@ -8,6 +8,7 @@ const fs = require('fs');
 const socketApi = require('../socketApi');
 const io = socketApi.io;
 const got = require('got');
+const { execSync } = require('child_process');
 require('dotenv').config();
 
 /**
@@ -34,9 +35,36 @@ async function bootstrapApp() {
     );
 
     var config = JSON.parse(JSON.parse(response.body));
-    console.log('Checking encryption on video storage device...');
 
-    console.log('Mounting video storage device...');
+    console.log('Idempotently setting up encryption on video storage device...');
+    let driveIsEncrypted = execSync(`lsblk -o NAME,TYPE,SIZE,MODEL | grep ${config.videoDriveEncryptionKey}`)
+      .toString()
+      .includes(config.videoDriveEncryptionKey);
+
+    if (driveIsEncrypted) {
+      console.log('The video drive is already encrypted!');
+    } else {
+      execSync(
+        `
+        echo '${config.videoDriveEncryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat /dev/sda1;
+        echo '${config.videoDriveEncryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen /dev/sda1 ${config.videoDriveEncryptionKey};
+        yes | sudo mkfs.ext4 -q /dev/mapper/${config.videoDriveEncryptionKey};
+        sudo mount /dev/mapper/${config.videoDriveEncryptionKey} /home/pi/CrimeCameraClient/public/videos;
+        sudo chmod 755 -R /home/pi/CrimeCameraClient/public/videos;
+      `,
+        (error, stdout, stderr) => {
+          if (error) {
+            console.log(`error: ${error.message}`);
+            return;
+          }
+          if (stderr) {
+            console.log(`stderr: ${stderr}`);
+            return;
+          }
+          console.log(`stdout: ${stdout}`);
+        }
+      );
+    }
   } catch (error) {
     console.log('Failed to get configuration information from remote server.');
     console.log(error);
