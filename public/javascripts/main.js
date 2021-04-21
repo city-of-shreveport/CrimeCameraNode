@@ -1,4 +1,3 @@
-
 var socket = io();
 var cameraPi = io('//192.168.86.22:3000/');
 
@@ -135,9 +134,8 @@ var camForm = `
       </div>
     </div>
   </div>
-</div>`
+</div>`;
 
-
-$(function() {
-    $('#mainDIV').html(camForm)
-})
+$(function () {
+  $('#mainDIV').html(camForm);
+});

@@ -9,31 +9,25 @@ class Observer extends EventEmitter {
 
   watchFolder(folder) {
     try {
-      console.log(
-        `[${new Date().toLocaleString()}] Watching for folder changes on: ${folder}`
-      );
+      // console.log(`[${new Date().toLocaleString()}] Watching for folder changes on: ${folder}`);
 
       var watcher = chokidar.watch(folder, { persistent: true });
 
-      watcher.on('add', async filePath => {
+      watcher.on('add', async (filePath) => {
         if (filePath.includes('error.log')) {
-          console.log(
-            `[${new Date().toLocaleString()}] ${filePath} has been added.`
-          );
+          // console.log(`[${new Date().toLocaleString()}] ${filePath} has been added.`);
 
           // Read content of new file
           var fileContent = await fsExtra.readFile(filePath);
 
           // emit an event when new file has been added
           this.emit('file-added', {
-            message: fileContent.toString()
+            message: fileContent.toString(),
           });
 
           // remove file error.log
           await fsExtra.unlink(filePath);
-          console.log(
-            `[${new Date().toLocaleString()}] ${filePath} has been removed.`
-          );
+          // console.log(`[${new Date().toLocaleString()}] ${filePath} has been removed.`);
         }
       });
     } catch (error) {
