@@ -504,7 +504,7 @@ mongoose.connect(
     //store perfmon data once a min
     setInterval(grabPerfMonData, 60000);
     //HEat BEat and check in every 5 min
-    setInterval(upDateCamData, 300000);
+    setInterval(upDateCamData, 10000);
     //get video files every 30 min
     setInterval(getVideoFiles, 1800000);
   }
