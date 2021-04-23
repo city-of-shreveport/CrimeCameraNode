@@ -14,6 +14,11 @@ const schema = mongoose.Schema({
   size: Number,
   DateTime: Date,
   camera: String,
+  deletionDate: {
+    type: Date,
+    default: new Date(+new Date() + 14 * 24 * 60 * 60 * 1000),
+  },
+  hash: String,
 });
 
 module.exports = mongoose.model('Videos', schema);

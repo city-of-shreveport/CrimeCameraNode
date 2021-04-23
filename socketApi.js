@@ -17,7 +17,7 @@ const fs = require('fs');
 const mongoose = require('mongoose');
 var ffmpeg = require('fluent-ffmpeg');
 var interfaceNames = Object.keys(networkInterfaces);
-const { exec } = require('child_process');
+const { exec, execSync } = require('child_process');
 require('events').EventEmitter.prototype._maxListeners = 100;
 const { JSDOM } = require('jsdom');
 const { window } = new JSDOM('');
@@ -170,6 +170,7 @@ mongoose.connect(
                       width: metadata.streams[0].width,
                       size: metadata.format.size,
                       DateTime: dateTimeString,
+                      hash: execSync(`sha1sum ${metadata.format.filename}`),
                     });
                     vid.save();
                   } catch (error) {
