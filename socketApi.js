@@ -269,12 +269,7 @@ mongoose.connect(
       });
     }
     function upDateCamData() {
-      //Check if cameras HDDD is mounted to server
-      //if not mount it
-      //if so carry on
-      ///public/cameraVideos/CAMERANAME /cam1  /cam2 /cam3
       var dateNOW = moment().toISOString();
-      // console.log(systemInfo);
       socket2.emit('systemOnline', systemInfo);
       cams.exists(
         {
@@ -507,19 +502,11 @@ mongoose.connect(
     //store perfmon data once a min
     setInterval(grabPerfMonData, 60000);
     //HEat BEat and check in every 5 min
-    setInterval(upDateCamData, 300000);
+    setInterval(upDateCamData, 10000);
     //get video files every 30 min
     setInterval(getVideoFiles, 1800000);
   }
 );
-
-function setupAP() {
-  // console.log('SETTIGN UP ACCESS POINT');
-}
-
-function checkCameraSetup() {
-  //Get the file from /boot to get temp API key
-}
 
 socketApi.io = io;
 

@@ -95,7 +95,6 @@ async function bootstrapApp() {
   } catch (error) {
     console.log('Failed to get configuration information from remote server.');
     console.log(error);
-    process.exit();
   }
 }
 
