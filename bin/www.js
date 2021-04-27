@@ -34,22 +34,24 @@ async function bootstrapApp() {
       `${process.env.CAMERA_SERVER}/api/get-config?token=${process.env.API_KEY}&camera=${process.env.CAMERA_IDENTIFIER}`
     );
 
-    var config = JSON.parse(JSON.parse(response.body));
+    var config = JSON.parse(response.body);
 
     console.log('Idempotently setting up encryption on video storage device...');
     var driveIsEncrypted = false;
 
     // Check lsblk to see if the virtual partition exists.
     try {
-      driveIsEncrypted = execSync(`lsblk -o NAME,TYPE,SIZE,MODEL | grep ${config.videoDriveEncryptionKey}`)
+      driveIsEncrypted = execSync(
+        `lsblk -o NAME,TYPE,SIZE,MODEL | grep ${config.cameraConfiguration.videoDriveEncryptionKey}`
+      )
         .toString()
-        .includes(config.videoDriveEncryptionKey);
+        .includes(config.cameraConfiguration.videoDriveEncryptionKey);
     } catch (error) {}
 
     // If the lsblk virtual partition does not exist, check blkid to see if the drive is formatted correctly.
     try {
       if (!driveIsEncrypted) {
-        driveIsEncrypted = execSync(`blkid ${config.videoDrivePath} | grep crypto_LUKS`)
+        driveIsEncrypted = execSync(`blkid ${config.cameraConfiguration.videoDrivePath} | grep crypto_LUKS`)
           .toString()
           .includes('crypto_LUKS');
       }
@@ -60,8 +62,9 @@ async function bootstrapApp() {
       if (driveIsEncrypted) {
         execSync(
           `
-            echo '${config.videoDriveEncryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${config.videoDrivePath} ${config.videoDriveEncryptionKey};
-            sudo mount /dev/mapper/${config.videoDriveEncryptionKey} ${config.videoDriveMountPath};
+            sudo mkdir -p ${config.cameraConfiguration.videoDriveMountPath};
+            echo '${config.cameraConfiguration.videoDriveEncryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${config.cameraConfiguration.videoDrivePath} ${config.cameraConfiguration.videoDriveEncryptionKey};
+            sudo mount /dev/mapper/${config.cameraConfiguration.videoDriveEncryptionKey} ${config.cameraConfiguration.videoDriveMountPath};
           `
         );
       }
@@ -73,11 +76,12 @@ async function bootstrapApp() {
       // Setup and mount encrypted virtual partition.
       execSync(
         `
-          echo '${config.videoDriveEncryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${config.videoDrivePath};
-          echo '${config.videoDriveEncryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${config.videoDrivePath} ${config.videoDriveEncryptionKey};
-          yes | sudo mkfs.ext4 -q /dev/mapper/${config.videoDriveEncryptionKey};
-          sudo mount /dev/mapper/${config.videoDriveEncryptionKey} ${config.videoDriveMountPath};
-          sudo chmod 755 -R ${config.videoDriveMountPath};
+          echo '${config.cameraConfiguration.videoDriveEncryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${config.cameraConfiguration.videoDrivePath};
+          echo '${config.cameraConfiguration.videoDriveEncryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${config.cameraConfiguration.videoDrivePath} ${config.cameraConfiguration.videoDriveEncryptionKey};
+          yes | sudo mkfs.ext4 -q /dev/mapper/${config.cameraConfiguration.videoDriveEncryptionKey};
+          sudo mkdir -p ${config.cameraConfiguration.videoDriveMountPath};
+          sudo mount /dev/mapper/${config.cameraConfiguration.videoDriveEncryptionKey} ${config.cameraConfiguration.videoDriveMountPath};
+          sudo chmod 755 -R ${config.cameraConfiguration.videoDriveMountPath};
         `,
         (error, stdout, stderr) => {
           if (error) {
