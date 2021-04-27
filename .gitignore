@@ -1,13 +1,6 @@
 *.log
-*videos
 .DS_Store
 .env
-.vscode/CrimeCamBackEnd.code-workspace
-.vscode/sftp.json
-/.vscode
-/node-rtsp-rtmp-server
-/socketIO
+.vscode/
 node_modules
-package-lock.json
-public/liveStream/
 public/videos/
