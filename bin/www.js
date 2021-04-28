@@ -10,6 +10,7 @@ const io = socketApi.io;
 const got = require('got');
 const { execSync } = require('child_process');
 require('dotenv').config();
+const dedent = require('dedent-js');
 
 /**
  * Get port from environment and store in Express.
@@ -118,10 +119,11 @@ function onListening() {
 
 function setupStorageDrive(devicePath, mountPath, encryptionKey) {
   var driveIsEncrypted = false;
+  var driveIsFormatted = false;
 
   // Check lsblk to see if the virtual partition exists.
   try {
-    driveIsEncrypted = execSync(`lsblk -o NAME,TYPE,SIZE,MODEL | grep ${encryptionKey}`)
+    driveIsEncrypted = execSync(dedent`lsblk -o NAME,TYPE,SIZE,MODEL | grep ${encryptionKey}`)
       .toString()
       .includes(encryptionKey);
   } catch (error) {}
@@ -129,18 +131,24 @@ function setupStorageDrive(devicePath, mountPath, encryptionKey) {
   // If the lsblk virtual partition does not exist, check blkid to see if the drive is formatted correctly.
   try {
     if (!driveIsEncrypted) {
-      driveIsEncrypted = execSync(`blkid ${mountPath} | grep crypto_LUKS`).toString().includes('crypto_LUKS');
+      driveIsFormatted = execSync(dedent`blkid ${devicePath} | grep crypto_LUKS`)
+        .toString()
+        .includes('crypto_LUKS');
+
+      if (!driveIsFormatted) {
+        execSync(dedent`echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${devicePath};`);
+      }
     }
   } catch (error) {}
 
   // Attempt to mount the virtual partition.
   try {
     if (driveIsEncrypted) {
-      execSync(
-        `sudo mkdir -p ${mountPath};
+      execSync(dedent`
+        sudo mkdir -p ${mountPath};
         echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${devicePath} ${encryptionKey};
-        sudo mount /dev/mapper/${encryptionKey} ${mountPath}`
-      );
+        sudo mount /dev/mapper/${encryptionKey} ${mountPath}
+      `);
     }
   } catch (error) {}
 
@@ -148,13 +156,20 @@ function setupStorageDrive(devicePath, mountPath, encryptionKey) {
     console.log(`${devicePath} is already encrypted!`);
   } else {
     // Setup and mount encrypted virtual partition.
-    execSync(
-      `echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${devicePath};
+    execSync(dedent`
       echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${devicePath} ${encryptionKey};
-      yes | sudo mkfs.ext4 -q /dev/mapper/${encryptionKey};
+    `);
+
+    if (!driveIsFormatted) {
+      execSync(dedent`
+        yes | sudo mkfs.ext4 -q /dev/mapper/${encryptionKey};
+      `);
+    }
+
+    execSync(dedent`
       sudo mkdir -p ${mountPath};
       sudo mount /dev/mapper/${encryptionKey} ${mountPath};
-      sudo chmod 755 -R ${mountPath}`
-    );
+      sudo chmod 755 -R ${mountPath}
+    `);
   }
 }
