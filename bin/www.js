@@ -57,49 +57,9 @@ async function bootstrapApp() {
       }
     } catch (error) {}
 
-    console.log('Idempotently setting up encryption on video storage device...');
-    var driveIsEncrypted = false;
-
-    // Check lsblk to see if the virtual partition exists.
-    try {
-      driveIsEncrypted = execSync(`lsblk -o NAME,TYPE,SIZE,MODEL | grep ${config.videoDriveEncryptionKey}`)
-        .toString()
-        .includes(config.videoDriveEncryptionKey);
-    } catch (error) {}
-
-    // If the lsblk virtual partition does not exist, check blkid to see if the drive is formatted correctly.
-    try {
-      if (!driveIsEncrypted) {
-        driveIsEncrypted = execSync(`blkid ${config.videoDrivePath} | grep crypto_LUKS`)
-          .toString()
-          .includes('crypto_LUKS');
-      }
-    } catch (error) {}
-
-    // Attempt to mount the virtual partition.
-    try {
-      if (driveIsEncrypted) {
-        execSync(
-          `sudo mkdir -p ${config.videoDriveMountPath};
-          echo '${config.videoDriveEncryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${config.videoDrivePath} ${config.videoDriveEncryptionKey};
-          sudo mount /dev/mapper/${config.videoDriveEncryptionKey} ${config.videoDriveMountPath}`
-        );
-      }
-    } catch (error) {}
-
-    if (driveIsEncrypted) {
-      console.log('The video drive is already encrypted!');
-    } else {
-      // Setup and mount encrypted virtual partition.
-      execSync(
-        `echo '${config.videoDriveEncryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${config.videoDrivePath};
-        echo '${config.videoDriveEncryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${config.videoDrivePath} ${config.videoDriveEncryptionKey};
-        yes | sudo mkfs.ext4 -q /dev/mapper/${config.videoDriveEncryptionKey};
-        sudo mkdir -p ${config.videoDriveMountPath};
-        sudo mount /dev/mapper/${config.videoDriveEncryptionKey} ${config.videoDriveMountPath};
-        sudo chmod 755 -R ${config.videoDriveMountPath}`
-      );
-    }
+    console.log('Idempotently setting up encryption on video storage devices...');
+    setupStorageDrive(config.videoDriveDevicePath, config.videoDriveMountPath, config.videoDriveEncryptionKey);
+    setupStorageDrive(config.buddyDriveDevicePath, config.buddyDriveMountPath, config.buddyDriveEncryptionKey);
   } catch (error) {
     console.log('Failed to get configuration information from remote server.');
     console.log(error);
@@ -154,4 +114,47 @@ function onListening() {
   var addr = server.address();
   var bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
   debug('Listening on ' + bind);
+}
+
+function setupStorageDrive(devicePath, mountPath, encryptionKey) {
+  var driveIsEncrypted = false;
+
+  // Check lsblk to see if the virtual partition exists.
+  try {
+    driveIsEncrypted = execSync(`lsblk -o NAME,TYPE,SIZE,MODEL | grep ${encryptionKey}`)
+      .toString()
+      .includes(encryptionKey);
+  } catch (error) {}
+
+  // If the lsblk virtual partition does not exist, check blkid to see if the drive is formatted correctly.
+  try {
+    if (!driveIsEncrypted) {
+      driveIsEncrypted = execSync(`blkid ${mountPath} | grep crypto_LUKS`).toString().includes('crypto_LUKS');
+    }
+  } catch (error) {}
+
+  // Attempt to mount the virtual partition.
+  try {
+    if (driveIsEncrypted) {
+      execSync(
+        `sudo mkdir -p ${mountPath};
+        echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${devicePath} ${encryptionKey};
+        sudo mount /dev/mapper/${encryptionKey} ${mountPath}`
+      );
+    }
+  } catch (error) {}
+
+  if (driveIsEncrypted) {
+    console.log(`${devicePath} is already encrypted!`);
+  } else {
+    // Setup and mount encrypted virtual partition.
+    execSync(
+      `echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${devicePath};
+      echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${devicePath} ${encryptionKey};
+      yes | sudo mkfs.ext4 -q /dev/mapper/${encryptionKey};
+      sudo mkdir -p ${mountPath};
+      sudo mount /dev/mapper/${encryptionKey} ${mountPath};
+      sudo chmod 755 -R ${mountPath}`
+    );
+  }
 }
