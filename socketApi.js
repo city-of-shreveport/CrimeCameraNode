@@ -399,8 +399,8 @@ mongoose.connect(
         sysInfo.cpu = data;
       });
     }
+
     function Startrecording() {
-      console.log('I AM RECORDING');
       child = spawn('ffmpeg', [
         '-hide_banner',
 

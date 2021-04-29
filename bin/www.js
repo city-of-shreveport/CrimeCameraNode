@@ -45,54 +45,54 @@ async function bootstrapApp() {
       console.log('Unable to parse configuration information. Please ensure that config is valid JSON.');
     }
 
-    console.log('Optionally setting up and joining ZeroTier network...');
     try {
       if (config.zeroTierNetworkID) {
-        execSync(
-          `curl -s 'https://raw.githubusercontent.com/zerotier/ZeroTierOne/master/doc/contact%40zerotier.com.gpg' | gpg --import --quiet;
-          if z=$(curl -s 'https://install.zerotier.com/' | gpg --quiet); then echo "$z" | sudo bash; fi;
+        console.log('Joining ZeroTier network...');
+        execSync(dedent`
+          curl -s https://install.zerotier.com | sudo bash;
+          sudo zerotier-cli join ${config.zeroTierNetworkID};
           sudo chmod 755 -R /var/lib/zerotier-one;
           sudo service zerotier-one restart;
-          sudo zerotier-cli join ${config.zeroTierNetworkID};`
-        );
+        `);
       }
     } catch (error) {}
 
     execSync(dedent`
-      sudo sysctl net.ipv4.conf.eth1.forwarding=0 &&
-      sudo sysctl net.ipv4.conf.wlan0.forwarding=0 &&
-      sudo sysctl net.ipv4.conf.ztuga7sx7i.forwarding=0 &&
-      sudo iptables -P INPUT ACCEPT &&
-      sudo iptables -P FORWARD ACCEPT &&
-      sudo iptables -P OUTPUT ACCEPT  &&
-      sudo iptables -t nat -F &&
-      sudo iptables -t mangle -F &&
-      sudo iptables -t raw -F &&
-      sudo iptables -F &&
-      sudo iptables -X &&
-      sudo sysctl net.ipv4.conf.eth1.forwarding=1 &&
-      sudo sysctl net.ipv4.conf.wlan0.forwarding=1 &&
-      sudo sysctl net.ipv4.conf.ztuga7sx7i.forwarding=1 &&
-      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 554 -j DNAT --to 10.10.5.2:554 &&
-      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 554 -j ACCEPT  &&
-      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 81 -j DNAT --to 10.10.5.2:80 &&
-      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 80 -j ACCEPT  &&
-      sudo iptables -t nat -A POSTROUTING -j MASQUERADE &&
-      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 555 -j DNAT --to 10.10.5.3:554 &&
-      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 555 -j ACCEPT  &&
-      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 82 -j DNAT --to 10.10.5.3:80 &&
-      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 81 -j ACCEPT  &&
-      sudo iptables -t nat -A POSTROUTING -j MASQUERADE &&
-      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 556 -j DNAT --to 10.10.5.4:554 &&
-      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 556 -j ACCEPT  &&
-      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 83 -j DNAT --to 10.10.5.4:80 &&
-      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 82 -j ACCEPT  &&
-      sudo iptables -t nat -A POSTROUTING -j MASQUERADE
+        sudo iptables -P INPUT ACCEPT &&
+        sudo iptables -P FORWARD ACCEPT &&
+        sudo iptables -P OUTPUT ACCEPT  &&
+        sudo iptables -t nat -F &&
+        sudo iptables -t mangle -F &&
+        sudo iptables -t raw -F &&
+        sudo iptables -F &&
+        sudo iptables -X &&
+        sudo sysctl net.ipv4.conf.eth1.forwarding=1 &&
+        sudo sysctl net.ipv4.conf.wlan0.forwarding=1 &&
+        sudo sysctl net.ipv4.conf.ztuga7sx7i.forwarding=1 &&
+        sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 554 -j DNAT --to 10.10.5.2:554 &&
+        sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 554 -j ACCEPT  &&
+        sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 81 -j DNAT --to 10.10.5.2:80 &&
+        sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 80 -j ACCEPT  &&
+        sudo iptables -t nat -A POSTROUTING -j MASQUERADE &&
+        sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 555 -j DNAT --to 10.10.5.3:554 &&
+        sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 555 -j ACCEPT  &&
+        sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 82 -j DNAT --to 10.10.5.3:80 &&
+        sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 81 -j ACCEPT  &&
+        sudo iptables -t nat -A POSTROUTING -j MASQUERADE &&
+        sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 556 -j DNAT --to 10.10.5.4:554 &&
+        sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 556 -j ACCEPT  &&
+        sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 83 -j DNAT --to 10.10.5.4:80 &&
+        sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 82 -j ACCEPT  &&
+        sudo iptables -t nat -A POSTROUTING -j MASQUERADE
     `);
 
     console.log('Idempotently setting up encryption on video storage devices...');
     setupStorageDrive(config.videoDriveDevicePath, config.videoDriveMountPath, config.videoDriveEncryptionKey);
     setupStorageDrive(config.buddyDriveDevicePath, config.buddyDriveMountPath, config.buddyDriveEncryptionKey);
+
+    execSync(`sudo mkdir -p /home/pi/videos/cam1;`);
+    execSync(`sudo mkdir -p /home/pi/videos/cam2;`);
+    execSync(`sudo mkdir -p /home/pi/videos/cam3;`);
   } catch (error) {
     console.log('Failed to get configuration information from remote server.');
     console.log(error);
@@ -149,6 +149,9 @@ function onListening() {
   debug('Listening on ' + bind);
 }
 
+/**
+ * Helper functions.
+ */
 function setupStorageDrive(devicePath, mountPath, encryptionKey) {
   var driveIsEncrypted = false;
   var driveIsFormatted = false;
@@ -163,11 +166,10 @@ function setupStorageDrive(devicePath, mountPath, encryptionKey) {
   // If the lsblk virtual partition does not exist, check blkid to see if the drive is formatted correctly.
   try {
     if (!driveIsEncrypted) {
-      driveIsFormatted = execSync(dedent`blkid ${devicePath} | grep crypto_LUKS`)
-        .toString()
-        .includes('crypto_LUKS');
+      driveIsFormatted = execSync(`blkid ${devicePath} | grep crypto_LUKS`).toString().includes('crypto_LUKS');
 
       if (!driveIsFormatted) {
+        console.log('Formatting drive...');
         execSync(dedent`echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${devicePath};`);
       }
     }
