@@ -58,6 +58,38 @@ async function bootstrapApp() {
       }
     } catch (error) {}
 
+    execSync(dedent`
+      sudo sysctl net.ipv4.conf.eth1.forwarding=0 &&
+      sudo sysctl net.ipv4.conf.wlan0.forwarding=0 &&
+      sudo sysctl net.ipv4.conf.ztuga7sx7i.forwarding=0 &&
+      sudo iptables -P INPUT ACCEPT &&
+      sudo iptables -P FORWARD ACCEPT &&
+      sudo iptables -P OUTPUT ACCEPT  &&
+      sudo iptables -t nat -F &&
+      sudo iptables -t mangle -F &&
+      sudo iptables -t raw -F &&
+      sudo iptables -F &&
+      sudo iptables -X &&
+      sudo sysctl net.ipv4.conf.eth1.forwarding=1 &&
+      sudo sysctl net.ipv4.conf.wlan0.forwarding=1 &&
+      sudo sysctl net.ipv4.conf.ztuga7sx7i.forwarding=1 &&
+      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 554 -j DNAT --to 10.10.5.2:554 &&
+      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 554 -j ACCEPT  &&
+      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 81 -j DNAT --to 10.10.5.2:80 &&
+      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 80 -j ACCEPT  &&
+      sudo iptables -t nat -A POSTROUTING -j MASQUERADE &&
+      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 555 -j DNAT --to 10.10.5.3:554 &&
+      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 555 -j ACCEPT  &&
+      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 82 -j DNAT --to 10.10.5.3:80 &&
+      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 81 -j ACCEPT  &&
+      sudo iptables -t nat -A POSTROUTING -j MASQUERADE &&
+      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 556 -j DNAT --to 10.10.5.4:554 &&
+      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 556 -j ACCEPT  &&
+      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 83 -j DNAT --to 10.10.5.4:80 &&
+      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 82 -j ACCEPT  &&
+      sudo iptables -t nat -A POSTROUTING -j MASQUERADE
+    `);
+
     console.log('Idempotently setting up encryption on video storage devices...');
     setupStorageDrive(config.videoDriveDevicePath, config.videoDriveMountPath, config.videoDriveEncryptionKey);
     setupStorageDrive(config.buddyDriveDevicePath, config.buddyDriveMountPath, config.buddyDriveEncryptionKey);

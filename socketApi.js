@@ -72,7 +72,7 @@ mongoose.connect(
     var systemInfo = {
       name: os.hostname(),
       id: 'jhgwesd',
-      ip: '192.168.196.164',
+      ip: '10.10.10.100',
       numOfCams: 3,
       typs: 'standard',
       sysInfo: sysInfo,
@@ -361,39 +361,7 @@ mongoose.connect(
         }
       });
     }
-    function setupFirewall() {
-      //     executeCommand(`
-      //   sudo sysctl net.ipv4.conf.eth0.forwarding=0 &&
-      //   sudo sysctl net.ipv4.conf.wlan0.forwarding=0 &&
-      //   sudo sysctl net.ipv4.conf.ztr2q2q3ib.forwarding=0 &&
-      //   sudo iptables -P INPUT ACCEPT &&
-      //   sudo iptables -P FORWARD ACCEPT &&
-      //   sudo iptables -P OUTPUT ACCEPT  &&
-      //   sudo iptables -t nat -F &&
-      //   sudo iptables -t mangle -F &&
-      //   sudo iptables -t raw -F &&
-      //   sudo iptables -F &&
-      //   sudo iptables -X &&
-      //   sudo sysctl net.ipv4.conf.eth0.forwarding=1 &&
-      //   sudo sysctl net.ipv4.conf.wlan0.forwarding=1 &&
-      //   sudo sysctl net.ipv4.conf.ztr2q2q3ib.forwarding=1 &&
-      //   sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d 192.168.196.164 --dport 554 -j DNAT --to 10.10.5.2:554 &&
-      //   sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 554 -j ACCEPT  &&
-      //   sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d 192.168.196.164 --dport 80 -j DNAT --to 10.10.5.2:80 &&
-      //   sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 80 -j ACCEPT  &&
-      //   sudo iptables -t nat -A POSTROUTING -j MASQUERADE &&
-      //   sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d 192.168.196.164 --dport 555 -j DNAT --to 10.10.5.3:554 &&
-      //   sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 555 -j ACCEPT  &&
-      //   sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d 192.168.196.164 --dport 81 -j DNAT --to 10.10.5.3:80 &&
-      //   sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 81 -j ACCEPT  &&
-      //   sudo iptables -t nat -A POSTROUTING -j MASQUERADE &&
-      //   sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d 192.168.196.164 --dport 556 -j DNAT --to 10.10.5.4:554 &&
-      //   sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 556 -j ACCEPT  &&
-      //   sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d 192.168.196.164 --dport 82 -j DNAT --to 10.10.5.4:80 &&
-      //   sudo iptables -A FORWARD -p tcp -d 192.168.196.164 --dport 82 -j ACCEPT  &&
-      //   sudo iptables -t nat -A POSTROUTING -j MASQUERADE
-      // `);
-    }
+
     function createCameraItemDB(data) {
       si.diskLayout(function (data) {
         for (var i = 0; i < data.length; i++) {
@@ -493,7 +461,6 @@ mongoose.connect(
     //Starts all functions
     upDateCamData();
     Startrecording();
-    setupFirewall();
     getVideoFiles();
 
     //store perfmon data once a min
