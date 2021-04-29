@@ -143,11 +143,11 @@ mongoose.connect(
                   try {
                     if (metadata) {
                       var date = metadata.format.filename;
-                      console.log(date);
+                      // console.log(date);
                       var sperateddate = date.split('/');
-                      console.log(sperateddate[5]);
+                      // console.log(sperateddate[5]);
                       var fileString = sperateddate[5];
-                      console.log(fileString);
+                      // console.log(fileString);
                       var splitFileString = fileString.split('_');
                       var fileData = splitFileString[0];
                       var fileTimewithExtention = splitFileString[1];
