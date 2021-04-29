@@ -13,11 +13,11 @@ router.get('/allVideos', async (req, res) => {
     if (err) {
       console.log(err);
     } else {
+      //
+
       res.send(docs);
     }
   });
-
-  //
 });
 
 router.get('/getCamConfig', async (req, res) => {

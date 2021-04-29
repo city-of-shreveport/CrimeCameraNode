@@ -26,7 +26,7 @@ const http = require('http');
 const si = require('systeminformation');
 var chokidar = require('chokidar');
 const moment = require('moment');
-var watcher = chokidar.watch('/home/pi/CrimeCameraClient/public/videos/cam3', { ignored: /^\./, persistent: true });
+var watcher = chokidar.watch('/home/pi//videos/cam3', { ignored: /^\./, persistent: true });
 var spawn = require('child_process').spawn,
   child = null;
 
@@ -51,7 +51,7 @@ for (i = 0; i < interfaceNames.length; i++) {
     }
   }
 }
-var socket2 = dreamHost('http://192.168.196.128:3001/cameras', {
+var socket2 = dreamHost('http://10.10.10.52:3001/cameras', {
   autoConnect: true,
 });
 
@@ -134,53 +134,60 @@ mongoose.connect(
           fileLocation: path,
         },
         function (err, doc) {
+          //console.log(doc)
           if (err) {
-            // console.log(err);
           } else {
             if (!doc) {
               try {
                 ffmpeg.ffprobe(path, function (err, metadata) {
                   try {
-                    var date = metadata.format.filename;
-                    var sperateddate = date.split('/');
-                    var fileString = sperateddate[7];
-                    var splitFileString = fileString.split('_');
-                    var fileData = splitFileString[0];
-                    var fileTimewithExtention = splitFileString[1];
-                    var fileTimesplit = fileTimewithExtention.split('.');
-                    var fileTime = fileTimesplit[0];
-                    var fileTimeCelaned = fileTime.split('-');
-                    var dateTime = fileData + ' ' + fileTimeCelaned[0] + ':' + fileTimeCelaned[1] + ':00';
-                    var dateTimeString = moment(dateTime).toISOString();
+                    if (metadata) {
+                      var date = metadata.format.filename;
+                      console.log(date);
+                      var sperateddate = date.split('/');
+                      console.log(sperateddate[5]);
+                      var fileString = sperateddate[5];
+                      console.log(fileString);
+                      var splitFileString = fileString.split('_');
+                      var fileData = splitFileString[0];
+                      var fileTimewithExtention = splitFileString[1];
+                      var fileTimesplit = fileTimewithExtention.split('.');
+                      var fileTime = fileTimesplit[0];
+                      var fileTimeCelaned = fileTime.split('-');
+                      var dateTime = fileData + ' ' + fileTimeCelaned[0] + ':' + fileTimeCelaned[1] + ':00';
+                      var dateTimeString = moment(dateTime).toISOString();
 
-                    const vid = new vids({
-                      camera: camera,
-                      node: systemInfo.name,
-                      nodeID: systemInfo.id,
-                      fileLocation: metadata.format.filename,
-                      location: {
-                        lat: systemInfo.location.lat,
-                        lng: systemInfo.location.lng,
-                      },
-                      start_pts: metadata.format.start_pts,
-                      start_time: metadata.format.start_time,
-                      duration: metadata.format.duration,
-                      bit_rate: metadata.format.bit_rate,
-                      height: metadata.streams[0].height,
-                      width: metadata.streams[0].width,
-                      size: metadata.format.size,
-                      DateTime: dateTimeString,
-                      hash: execSync(`sha1sum ${metadata.format.filename}`),
-                    });
-                    vid.save();
+                      const vid = new vids({
+                        camera: camera,
+                        node: systemInfo.name,
+                        nodeID: systemInfo.id,
+                        fileLocation: metadata.format.filename,
+                        location: {
+                          lat: systemInfo.location.lat,
+                          lng: systemInfo.location.lng,
+                        },
+                        start_pts: metadata.format.start_pts,
+                        start_time: metadata.format.start_time,
+                        duration: metadata.format.duration,
+                        bit_rate: metadata.format.bit_rate,
+                        height: metadata.streams[0].height,
+                        width: metadata.streams[0].width,
+                        size: metadata.format.size,
+                        DateTime: dateTimeString,
+                        //rshash: execSync(`sha1sum ${metadata.format.filename}`),
+                      });
+                      vid.save();
+                    }
                   } catch (error) {
-                    // console.log(error);
+                    //console.log(error)
                   }
 
                   if (err) {
                   }
                 });
-              } catch (error) {}
+              } catch (error) {
+                //console.log(error)
+              }
             }
           }
         }
@@ -188,40 +195,41 @@ mongoose.connect(
     }
     const updateCam1 = async () => {
       for (let i = 0; i < videoFilescam1.length; i++) {
-        await sleep(50);
+        await sleep(100);
         checkVidInDB(videoFilescam1[i], 'cam1');
       }
     };
     const updateCam2 = async () => {
       for (let i = 0; i < videoFilescam2.length; i++) {
-        await sleep(50);
+        await sleep(100);
         checkVidInDB(videoFilescam2[i], 'cam2');
       }
     };
     const updateCam3 = async () => {
       for (let i = 0; i < videoFilescam3.length; i++) {
-        await sleep(50);
+        await sleep(100);
         checkVidInDB(videoFilescam3[i], 'cam3');
       }
     };
     function getVideoFiles() {
-      exec('ls /home/pi/CrimeCameraClient/public/videos/cam1', function (error, stdout, stderr) {
+      exec('ls /home/pi/videos/cam1', function (error, stdout, stderr) {
         if (error) {
+          console.log(error);
         }
         if (!error) {
           videoFilescam1.length = 0;
           var newStringArray = stdout.split('\n');
           //newStringArray = toString(newStringArray)
+
           for (y = 0; y < newStringArray.length; y++) {
             if (newStringArray[y]) {
-              videoFilescam1.push('/home/pi/CrimeCameraClient/public/videos/cam1/' + newStringArray[y]);
-
+              videoFilescam1.push('/home/pi/videos/cam1/' + newStringArray[y]);
               ///checkVidInDB(videoPath)
             }
             if (y == newStringArray.length - 1) {
               updateCam1();
               setTimeout(() => {
-                exec('ls /home/pi/CrimeCameraClient/public/videos/cam2', function (error, stdout, stderr) {
+                exec('ls /home/pi/videos/cam2', function (error, stdout, stderr) {
                   if (error) {
                   }
                   if (!error) {
@@ -230,14 +238,14 @@ mongoose.connect(
                     //newStringArray = toString(newStringArray)
                     for (y = 0; y < newStringArray.length; y++) {
                       if (newStringArray[y]) {
-                        videoFilescam2.push('/home/pi/CrimeCameraClient/public/videos/cam2/' + newStringArray[y]);
+                        videoFilescam2.push('/home/pi/videos/cam2/' + newStringArray[y]);
 
                         ///checkVidInDB(videoPath)
                       }
                       if (y == newStringArray.length - 1) {
                         updateCam2();
                         setTimeout(() => {
-                          exec('ls /home/pi/CrimeCameraClient/public/videos/cam3', function (error, stdout, stderr) {
+                          exec('ls /home/pi/videos/cam3', function (error, stdout, stderr) {
                             if (error) {
                             }
                             if (!error) {
@@ -246,9 +254,7 @@ mongoose.connect(
                               //newStringArray = toString(newStringArray)
                               for (y = 0; y < newStringArray.length; y++) {
                                 if (newStringArray[y]) {
-                                  videoFilescam3.push(
-                                    '/home/pi/CrimeCameraClient/public/videos/cam3/' + newStringArray[y]
-                                  );
+                                  videoFilescam3.push('/home/pi/videos/cam3/' + newStringArray[y]);
 
                                   ///checkVidInDB(videoPath)
                                 }
@@ -258,12 +264,12 @@ mongoose.connect(
                               }
                             }
                           });
-                        }, 2000);
+                        }, 3000);
                       }
                     }
                   }
                 });
-              }, 2000);
+              }, 3000);
             }
           }
         }
@@ -394,12 +400,12 @@ mongoose.connect(
       });
     }
     function Startrecording() {
+      console.log('I AM RECORDING');
       child = spawn('ffmpeg', [
         '-hide_banner',
-        '-loglevel',
-        'panic',
+
         '-i',
-        'rtsp://admin:UUnv9njxg123@10.10.5.2:554/cam/realmonitor?channel=1&subtype=0',
+        'rtsp://admin:UUnv9njxg@10.10.5.2:554/cam/realmonitor?channel=1&subtype=0',
         '-vcodec',
         'copy',
         '-f',
@@ -410,17 +416,16 @@ mongoose.connect(
         '300',
         '-segment_format',
         'mp4',
-        '/home/pi/CrimeCameraClient/public/videos/cam1/%Y-%m-%d_%H-%M.mp4',
+        '/home/pi/videos/cam1/%Y-%m-%d_%H-%M.mp4',
       ]);
       child.stdout.on('data', (data) => {});
       child.stderr.on('data', (data) => {});
 
       child2 = spawn('ffmpeg', [
         '-hide_banner',
-        '-loglevel',
-        'panic',
+
         '-i',
-        'rtsp://admin:UUnv9njxg123@10.10.5.3:554/cam/realmonitor?channel=1&subtype=0',
+        'rtsp://admin:UUnv9njxg@10.10.5.3:554/cam/realmonitor?channel=1&subtype=0',
         '-vcodec',
         'copy',
         '-f',
@@ -431,17 +436,16 @@ mongoose.connect(
         '300',
         '-segment_format',
         'mp4',
-        '/home/pi/CrimeCameraClient/public/videos/cam2/%Y-%m-%d_%H-%M.mp4',
+        '/home/pi/videos/cam2/%Y-%m-%d_%H-%M.mp4',
       ]);
       child2.stdout.on('data', (data2) => {});
       child2.stderr.on('data', (data2) => {});
 
       child3 = spawn('ffmpeg', [
         '-hide_banner',
-        '-loglevel',
-        'panic',
+
         '-i',
-        'rtsp://admin:UUnv9njxg123@10.10.5.4:554/cam/realmonitor?channel=1&subtype=0',
+        'rtsp://admin:UUnv9njxg@10.10.5.4:554/cam/realmonitor?channel=1&subtype=0',
         '-vcodec',
         'copy',
         '-f',
@@ -452,7 +456,7 @@ mongoose.connect(
         '300',
         '-segment_format',
         'mp4',
-        '/home/pi/CrimeCameraClient/public/videos/cam3/%Y-%m-%d_%H-%M.mp4',
+        '/home/pi/videos/cam3/%Y-%m-%d_%H-%M.mp4',
       ]);
       child3.stdout.on('data', (data3) => {});
       child3.stderr.on('data', (data3) => {});
@@ -461,14 +465,16 @@ mongoose.connect(
     //Starts all functions
     upDateCamData();
     Startrecording();
-    getVideoFiles();
 
+    setTimeout(() => {
+      getVideoFiles();
+    }, 5000);
     //store perfmon data once a min
     setInterval(grabPerfMonData, 60000);
     //HEat BEat and check in every 5 min
     setInterval(upDateCamData, 10000);
     //get video files every 30 min
-    setInterval(getVideoFiles, 1800000);
+    setInterval(getVideoFiles, 900000);
   }
 );
 
