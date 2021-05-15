@@ -2,7 +2,7 @@
  * Module dependencies.
  */
 const app = require('../app');
-const debug = require('debug')('CrimeCameraClient:server');
+const debug = require('debug')('CrimeCameraNode:server');
 const http = require('http');
 const fs = require('fs');
 const socketApi = require('../socketApi');
@@ -15,7 +15,7 @@ const dedent = require('dedent-js');
 /**
  * Get port from environment and store in Express.
  */
-var port = normalizePort(process.env.PORT || '3000');
+var port = normalizePort(process.env.PORT || '80');
 app.set('port', port);
 
 /**

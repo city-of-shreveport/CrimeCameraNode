@@ -2,5 +2,5 @@
 .DS_Store
 .env
 .vscode/
-node_modules
+node_modules/
 public/videos/

@@ -11,7 +11,7 @@ var eth1IP;
 var networkInterfaces = os2.networkInterfaces();
 const vids = require('./models/videos');
 const perfmons = require('./models/perfmons');
-const cams = require('/home/pi/CrimeCameraClient/models/cameras');
+const cams = require('./models/cameras');
 const glob = require('glob');
 const fs = require('fs');
 const mongoose = require('mongoose');
@@ -29,10 +29,10 @@ const moment = require('moment');
 var watcher = chokidar.watch('/home/pi//videos/cam3', { ignored: /^\./, persistent: true });
 var spawn = require('child_process').spawn,
   child = null;
-
 var videoFilescam1 = [];
 var videoFilescam2 = [];
 var videoFilescam3 = [];
+
 for (i = 0; i < interfaceNames.length; i++) {
   if (interfaceNames[i] === 'eth0') {
     // console.log(networkInterfaces[interfaceNames[i]][0].address);
