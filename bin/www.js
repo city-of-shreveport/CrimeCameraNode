@@ -3,17 +3,17 @@
  */
 const app = require('../app');
 const debug = require('debug')('CrimeCameraNode:server');
-const http = require('http');
+const dedent = require('dedent-js');
+const execCommand = require('../helperFunctions');
 const fs = require('fs');
 const got = require('got');
-const { exec } = require('child_process');
+const http = require('http');
 require('dotenv').config();
-const dedent = require('dedent-js');
 
 /**
  * Get port from environment and store in Express.
  */
-var port = normalizePort(process.env.PORT || '80');
+const port = normalizePort(process.env.PORT || '80');
 app.set('port', port);
 
 /**
@@ -23,7 +23,7 @@ bootstrapApp().then(() => {
   const socketApi = require('../socketApi');
   const io = socketApi.io;
 
-  var server = http
+  const server = http
     .createServer({}, app)
     .listen(port, function () {
       console.log(`App listening on port ${port}!`);
@@ -148,54 +148,29 @@ function onListening() {
  * Helper functions.
  */
 async function setupStorageDrive(devicePath, mountPath, encryptionKey) {
-  var driveIsEncrypted = false;
-  var driveIsFormatted = false;
+  var driveIsEncrypted = await execCommand(`lsblk -o NAME,TYPE,SIZE,MODEL | grep ${encryptionKey}`);
 
-  // Check lsblk to see if the virtual partition exists.
-  driveIsEncrypted = await execCommand(dedent`lsblk -o NAME,TYPE,SIZE,MODEL | grep ${encryptionKey}`)
-    .toString()
-    .includes(encryptionKey);
-
-  // If the lsblk virtual partition does not exist, check blkid to see if the drive is formatted correctly.
-  if (!driveIsEncrypted) {
-    driveIsFormatted = await execCommand(`blkid ${devicePath} | grep crypto_LUKS`).toString().includes('crypto_LUKS');
-    if (!driveIsFormatted) {
-      console.log(`Formatting drive with key ${encryptionKey}...`);
-      await execCommand(dedent`echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${devicePath}`);
-    }
-  }
-
-  if (driveIsEncrypted) {
-    // Attempt to mount the virtual partition.
-    await execCommand(dedent`
-      sudo mkdir -p ${mountPath};
-      echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${devicePath} ${encryptionKey};
-      sudo mount /dev/mapper/${encryptionKey} ${mountPath}
-    `);
+  if (driveIsEncrypted.includes(encryptionKey)) {
+    mountStorageDrive(devicePath, mountPath, encryptionKey);
   } else {
-    // Open and mount encrypted virtual partition.
-    await execCommand(
-      dedent`echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${devicePath} ${encryptionKey}`
-    );
+    var driveIsFormatted = await execCommand(`blkid ${devicePath} | grep crypto_LUKS`);
 
-    // Create filesystem on virtual partition.
-    if (!driveIsFormatted) {
-      await execCommand(dedent`yes | sudo mkfs.ext4 -q /dev/mapper/${encryptionKey}`);
+    if (!driveIsFormatted.includes('crypto_LUKS')) {
+      console.log(`Formatting ${devicePath}...`);
+      await execCommand(`echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${devicePath}`);
+      await execCommand(`yes | sudo mkfs.ext4 -q /dev/mapper/${encryptionKey}`);
     }
 
-    // Mount virtual partition.
-    await execCommand(dedent`
-      sudo mkdir -p ${mountPath};
-      sudo mount /dev/mapper/${encryptionKey} ${mountPath};
-      sudo chmod 755 -R ${mountPath}
-    `);
+    mountStorageDrive(devicePath, mountPath, encryptionKey);
   }
 }
 
-function execCommand(command) {
-  return new Promise((resolve, reject) => {
-    exec(command, (error, stdout, stderr) => {
-      resolve(stdout ? stdout : stderr);
-    });
-  });
+async function mountStorageDrive(devicePath, mountPath, encryptionKey) {
+  console.log(`Mounting ${devicePath} to ${mountPath}...`);
+  await execCommand(dedent`
+    sudo mkdir -p ${mountPath};
+    echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${devicePath} ${encryptionKey};
+    sudo mount /dev/mapper/${encryptionKey} ${mountPath};
+    sudo chmod 755 -R ${mountPath}
+  `);
 }
