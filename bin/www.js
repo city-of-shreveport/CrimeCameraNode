@@ -50,6 +50,8 @@ async function bootstrapApp() {
         sudo chmod 755 -R /var/lib/zerotier-one;
         sudo service zerotier-one restart;
       `);
+
+      await execCommand(`sudo sysctl net.ipv4.conf.ztuga7sx7i.forwarding=1 &&`);
     }
 
     await execCommand(dedent`
@@ -61,9 +63,8 @@ async function bootstrapApp() {
       sudo iptables -t raw -F &&
       sudo iptables -F &&
       sudo iptables -X &&
-      sudo sysctl net.ipv4.conf.eth1.forwarding=1 &&
+      sudo sysctl net.ipv4.conf.eth0.forwarding=1 &&
       sudo sysctl net.ipv4.conf.wlan0.forwarding=1 &&
-      sudo sysctl net.ipv4.conf.ztuga7sx7i.forwarding=1 &&
       sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 554 -j DNAT --to 10.10.5.2:554 &&
       sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 554 -j ACCEPT  &&
       sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 81 -j DNAT --to 10.10.5.2:80 &&
