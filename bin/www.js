@@ -48,37 +48,38 @@ async function bootstrapApp() {
         curl -s https://install.zerotier.com | sudo bash;
         sudo zerotier-cli join ${config.zeroTierNetworkID};
         sudo chmod 755 -R /var/lib/zerotier-one;
-        sudo service zerotier-one restart;
+        sudo service zerotier-one restart
       `);
 
-      await execCommand(`sudo sysctl net.ipv4.conf.ztuga7sx7i.forwarding=1 &&`);
+      await execCommand(`sudo sysctl net.ipv4.conf.ztuga7sx7i.forwarding=1;`);
     }
 
     await execCommand(dedent`
-      sudo iptables -P INPUT ACCEPT &&
-      sudo iptables -P FORWARD ACCEPT &&
-      sudo iptables -P OUTPUT ACCEPT  &&
-      sudo iptables -t nat -F &&
-      sudo iptables -t mangle -F &&
-      sudo iptables -t raw -F &&
-      sudo iptables -F &&
-      sudo iptables -X &&
-      sudo sysctl net.ipv4.conf.eth0.forwarding=1 &&
-      sudo sysctl net.ipv4.conf.wlan0.forwarding=1 &&
-      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 554 -j DNAT --to 10.10.5.2:554 &&
-      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 554 -j ACCEPT  &&
-      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 81 -j DNAT --to 10.10.5.2:80 &&
-      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 80 -j ACCEPT  &&
-      sudo iptables -t nat -A POSTROUTING -j MASQUERADE &&
-      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 555 -j DNAT --to 10.10.5.3:554 &&
-      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 555 -j ACCEPT  &&
-      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 82 -j DNAT --to 10.10.5.3:80 &&
-      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 81 -j ACCEPT  &&
-      sudo iptables -t nat -A POSTROUTING -j MASQUERADE &&
-      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 556 -j DNAT --to 10.10.5.4:554 &&
-      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 556 -j ACCEPT  &&
-      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 83 -j DNAT --to 10.10.5.4:80 &&
-      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 82 -j ACCEPT  &&
+      sudo iptables -P INPUT ACCEPT;
+      sudo iptables -P FORWARD ACCEPT;
+      sudo iptables -P OUTPUT ACCEPT;
+      sudo iptables -t nat -F;
+      sudo iptables -t mangle -F;
+      sudo iptables -t raw -F;
+      sudo iptables -F;
+      sudo iptables -X;
+      sudo sysctl net.ipv4.conf.eth0.forwarding=1;
+      sudo sysctl net.ipv4.conf.eth1.forwarding=1;
+      sudo sysctl net.ipv4.conf.wlan0.forwarding=1;
+      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 554 -j DNAT --to 10.10.5.2:554;
+      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 554 -j ACCEPT;
+      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 81 -j DNAT --to 10.10.5.2:80;
+      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 80 -j ACCEPT;
+      sudo iptables -t nat -A POSTROUTING -j MASQUERADE;
+      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 555 -j DNAT --to 10.10.5.3:554;
+      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 555 -j ACCEPT;
+      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 82 -j DNAT --to 10.10.5.3:80;
+      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 81 -j ACCEPT;
+      sudo iptables -t nat -A POSTROUTING -j MASQUERADE;
+      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 556 -j DNAT --to 10.10.5.4:554;
+      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 556 -j ACCEPT;
+      sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.zeroTierIP} --dport 83 -j DNAT --to 10.10.5.4:80;
+      sudo iptables -A FORWARD -p tcp -d ${config.zeroTierIP} --dport 82 -j ACCEPT;
       sudo iptables -t nat -A POSTROUTING -j MASQUERADE
     `);
 
@@ -86,9 +87,11 @@ async function bootstrapApp() {
     await setupStorageDrive(config.videoDriveDevicePath, config.videoDriveMountPath, config.videoDriveEncryptionKey);
     await setupStorageDrive(config.buddyDriveDevicePath, config.buddyDriveMountPath, config.buddyDriveEncryptionKey);
 
-    await execCommand(`sudo mkdir -p /home/pi/videos/cam1;`);
-    await execCommand(`sudo mkdir -p /home/pi/videos/cam2;`);
-    await execCommand(`sudo mkdir -p /home/pi/videos/cam3;`);
+    await execCommand(dedent`
+      sudo mkdir -p /home/pi/videos/cam1
+      sudo mkdir -p /home/pi/videos/cam2
+      sudo mkdir -p /home/pi/videos/cam3
+    `);
   } catch (error) {
     console.log('Failed to get configuration information from remote server.');
     console.log(error);
@@ -158,8 +161,11 @@ async function setupStorageDrive(devicePath, mountPath, encryptionKey) {
 
     if (!driveIsFormatted.includes('crypto_LUKS')) {
       console.log(`Formatting ${devicePath}...`);
-      await execCommand(`echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${devicePath}`);
-      await execCommand(`yes | sudo mkfs.ext4 -q /dev/mapper/${encryptionKey}`);
+      await execCommand(dedent`
+        echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${devicePath};
+        echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${devicePath} ${encryptionKey};
+        yes | sudo mkfs -t ext4 /dev/mapper/${encryptionKey}
+      `);
     }
 
     mountStorageDrive(devicePath, mountPath, encryptionKey);
@@ -172,6 +178,7 @@ async function mountStorageDrive(devicePath, mountPath, encryptionKey) {
     sudo mkdir -p ${mountPath};
     echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${devicePath} ${encryptionKey};
     sudo mount /dev/mapper/${encryptionKey} ${mountPath};
+    sudo chown -R pi:pi ${mountPath};
     sudo chmod 755 -R ${mountPath}
   `);
 }
