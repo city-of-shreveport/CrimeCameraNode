@@ -37,7 +37,7 @@ async function bootstrapApp() {
   console.log('Getting configuration information from remote server...');
   try {
     var response = await got(
-      `${process.env.CAMERA_SERVER}/api/get-config?token=${process.env.API_KEY}&camera=${process.env.CAMERA_IDENTIFIER}`
+      `${process.env.CAMERA_SERVER}/nodes/getConfig?token=${process.env.API_KEY}&camera=${process.env.CAMERA_IDENTIFIER}`
     );
 
     var config = JSON.parse(response.body).cameraConfiguration;

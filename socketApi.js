@@ -1,7 +1,7 @@
 // require basic
 const $ = require('jquery')(window);
 const { window } = new JSDOM('');
-const serverSocket = require('socket.io-client');
+const socket = require('socket.io-client');
 const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
 const glob = require('glob');
@@ -28,7 +28,7 @@ var videoFilesCamera1 = [];
 var videoFilesCamera2 = [];
 var videoFilesCamera3 = [];
 
-var serverSocket = server('https://crime-camera-system-api.shreveport-it.org', {
+var serverSocket = socket('https://crime-camera-system-api.shreveport-it.org', {
   autoConnect: true,
 });
 
