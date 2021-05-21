@@ -1,19 +1,28 @@
 const mongoose = require('mongoose');
+const { Schema } = require('mongoose');
 
 const schema = mongoose.Schema({
-  camera: String,
-  upDated: { type: Date, default: Date.now },
+  node: {
+    type: Schema.Types.ObjectId,
+    ref: 'Nodes',
+    required: true,
+  },
   currentLoad: {
-    avgLoad: Number,
-    currentLoad: Number,
-    currentLoadUser: Number,
-    currentLoadSystem: Number,
+    avgLoad: { type: Number, default: 0 },
+    currentLoad: { type: Number, default: 0 },
+    currentLoadUser: { type: Number, default: 0 },
+    currentLoadSystem: { type: Number, default: 0 },
   },
   cpus: {
     type: Map,
-    of: String,
+    of: { type: String, default: '' },
   },
-  mem: { total: Number, free: Number, used: Number, available: Number },
+  mem: {
+    total: { type: Number, default: 0 },
+    free: { type: Number, default: 0 },
+    used: { type: Number, default: 0 },
+    available: Number,
+  },
   cpuTemperature: { main: Number },
   fsSize: [
     {
@@ -21,6 +30,10 @@ const schema = mongoose.Schema({
       of: mongoose.Schema.Types.Mixed,
     },
   ],
+
+  // Default properties.
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: Date,
 });
 
 module.exports = mongoose.model('PerfMons', schema);

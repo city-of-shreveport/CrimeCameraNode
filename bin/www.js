@@ -4,7 +4,7 @@
 const app = require('../app');
 const debug = require('debug')('CrimeCameraNode:server');
 const dedent = require('dedent-js');
-const execCommand = require('../helperFunctions');
+const { execCommand } = require('../helperFunctions');
 const fs = require('fs');
 const got = require('got');
 const http = require('http');
@@ -88,9 +88,9 @@ async function bootstrapApp() {
     await setupStorageDrive(config.buddyDriveDevicePath, config.buddyDriveMountPath, config.buddyDriveEncryptionKey);
 
     await execCommand(dedent`
-      sudo mkdir -p /home/pi/videos/cam1
-      sudo mkdir -p /home/pi/videos/cam2
-      sudo mkdir -p /home/pi/videos/cam3
+      sudo mkdir -p /home/pi/videos/camera1
+      sudo mkdir -p /home/pi/videos/camera2
+      sudo mkdir -p /home/pi/videos/camera3
     `);
   } catch (error) {
     console.log('Failed to get configuration information from remote server.');
