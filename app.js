@@ -1,21 +1,37 @@
-// basic requires
-const Express = require('express');
-const apiRouter = require('./routes/api');
-const app = Express();
+// require basic
+const express = require('express');
+const app = express();
 const cookieParser = require('cookie-parser');
 const createError = require('http-errors');
 const logger = require('morgan');
+const mongoose = require('mongoose');
 const path = require('path');
+
+// require routers
+const apiRouter = require('./routes/api');
+
+// establish database connection
+mongoose.connect(
+  'mongodb://localhost/CrimeCameraSystem',
+  {
+    useFindAndModify: false,
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  },
+  function (err) {
+    if (err) throw err;
+  }
+);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use(logger('dev'));
-app.use(Express.json());
-app.use(Express.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(Express.static(path.join(__dirname, 'public')));
-app.use('/', apiRouter);
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/api', apiRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

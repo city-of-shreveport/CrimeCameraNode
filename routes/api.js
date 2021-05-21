@@ -1,5 +1,8 @@
+// require basic
 const Express = require('express');
 const Router = Express.Router();
+
+// require models
 const Videos = require('../models/videos');
 
 Router.get('/allVideos', async (req, res) => {

@@ -1,6 +1,5 @@
 *.log
 .DS_Store
-.env
-.vscode/
-node_modules/
-public/videos/
+.env*
+/.vscode
+/node_modules

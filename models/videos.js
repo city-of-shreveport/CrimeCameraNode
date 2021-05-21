@@ -2,11 +2,7 @@ const mongoose = require('mongoose');
 const { Schema } = require('mongoose');
 
 const schema = mongoose.Schema({
-  node: {
-    type: Schema.Types.ObjectId,
-    ref: 'Nodes',
-    required: true,
-  },
+  node: { type: String, default: '' },
   fileLocation: { type: String, default: '' },
   location: { lat: { type: Number, default: 0 }, lng: { type: Number, default: 0 } },
   startPts: { type: Number, default: 0 },

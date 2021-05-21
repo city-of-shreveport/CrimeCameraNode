@@ -254,34 +254,10 @@ mongoose.connect(
     }
 
     function updateCameraData() {
-      serverSocket.emit(
-        Nodes.exists({
-          node: systemInfo.name,
-        }),
-        function (err, doc) {
-          if (err) {
-          } else {
-            if (doc == false) {
-              const node = new Nodes({
-                node: systemInfo.name,
-                sysInfo: systemInfo.sysInfo,
-              }).save();
-            }
-
-            if (doc == true) {
-              Nodes.findOneAndUpdate(
-                {
-                  node: systemInfo.name,
-                },
-                {
-                  lastCheckIn: moment().toISOString(),
-                },
-                null
-              );
-            }
-          }
-        }
-      );
+      serverSocket.emit({
+        node: systemInfo.name,
+        sysInfo: systemInfo.sysInfo,
+      });
     }
 
     function grabPerfMonData() {
