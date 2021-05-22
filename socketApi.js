@@ -2,6 +2,7 @@ var socket_io = require('socket.io');
 var io = socket_io();
 var socketApi = {};
 const dreamHost = require('socket.io-client');
+const fetch = require('node-fetch');
 var os = require('os');
 var ifaces = os.networkInterfaces();
 var os2 = require('os');
@@ -277,7 +278,15 @@ mongoose.connect(
     }
     function upDateCamData() {
       var dateNOW = moment().toISOString();
-      socket2.emit('systemOnline', systemInfo);
+
+      const requestOptions = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(systemInfo.sysInfo)
+    };
+    fetch('https://crime-camera-system-API.shreveport-it.org/api/upDateNode/' +  systemInfo.name + '?token=IgyJtHFsZbQdLY5Cy26HRkn7HOqcJx5', requestOptions)
+        .then(response => response.json())
+        .then(data => console.log(data));
       cams.exists(
         {
           nodeName: systemInfo.name,
@@ -288,14 +297,6 @@ mongoose.connect(
             if (doc == false) {
               const cam = new cams({
                 nodeName: systemInfo.name,
-                id: systemInfo.id,
-                location: {
-                  lat: systemInfo.location.lat,
-                  lng: systemInfo.location.lng,
-                },
-                ip: systemInfo.ip,
-                numOfCams: systemInfo.numOfCams,
-                systemType: systemInfo.typs,
                 lastCheckIn: dateNOW,
                 sysInfo: systemInfo.sysInfo,
               });
@@ -310,7 +311,10 @@ mongoose.connect(
                 {
                   lastCheckIn: dateNOW,
                 },
-                null,
+                {
+                  sysInfo: systemInfo.sysInfo
+                }
+,                null,
                 function (err, docs) {
                   if (err) {
                   } else {
