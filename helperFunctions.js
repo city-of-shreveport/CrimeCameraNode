@@ -8,4 +8,4 @@ execCommand = (command) => {
   });
 };
 
-module.exports = execCommand;
+module.exports = { execCommand };

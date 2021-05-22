@@ -1,43 +1,110 @@
+#!/usr/bin/env node
+
 /**
  * Module dependencies.
  */
-const app = require('../app');
-const debug = require('debug')('CrimeCameraNode:server');
+
+var app = require('../app');
+var debug = require('debug')('CrimeCameraNode:server');
+var http = require('http');
 const dedent = require('dedent-js');
-const execCommand = require('../helperFunctions');
-const fs = require('fs');
 const got = require('got');
-const http = require('http');
+const { execCommand } = require('../helperFunctions');
+
 require('dotenv').config();
 
 /**
  * Get port from environment and store in Express.
  */
-const port = normalizePort(process.env.PORT || '80');
+
+var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
-/**
- * Bootstrap and start app.
- */
 bootstrapApp().then(() => {
-  const socketApi = require('../socketApi');
-  const io = socketApi.io;
+  /**
+   * Create HTTP server.
+   */
 
-  const server = http
-    .createServer({}, app)
-    .listen(port, function () {
-      console.log(`App listening on port ${port}!`);
-    })
-    .on('error', onError);
+  var server = http.createServer(app);
 
-  io.attach(server);
+  /**
+   * Listen on provided port, on all network interfaces.
+   */
+
+  server.listen(port);
+  server.on('error', onError);
+  server.on('listening', onListening);
 });
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}
+
+/**
+ * Helper functions.
+ */
 
 async function bootstrapApp() {
   console.log('Getting configuration information from remote server...');
   try {
     var response = await got(
-      `${process.env.CAMERA_SERVER}/api/get-config?token=${process.env.API_KEY}&camera=${process.env.CAMERA_IDENTIFIER}`
+      `${process.env.CAMERA_SERVER}/nodes/getConfig?token=${process.env.API_KEY}&camera=${process.env.CAMERA_IDENTIFIER}`
     );
 
     var config = JSON.parse(response.body).cameraConfiguration;
@@ -88,9 +155,9 @@ async function bootstrapApp() {
     await setupStorageDrive(config.buddyDriveDevicePath, config.buddyDriveMountPath, config.buddyDriveEncryptionKey);
 
     await execCommand(dedent`
-      sudo mkdir -p /home/pi/videos/cam1
-      sudo mkdir -p /home/pi/videos/cam2
-      sudo mkdir -p /home/pi/videos/cam3
+      sudo mkdir -p /home/pi/videos/camera1
+      sudo mkdir -p /home/pi/videos/camera2
+      sudo mkdir -p /home/pi/videos/camera3
     `);
   } catch (error) {
     console.log('Failed to get configuration information from remote server.');
@@ -98,59 +165,6 @@ async function bootstrapApp() {
   }
 }
 
-/**
- * Normalize a port into a number, string, or false.
- */
-function normalizePort(val) {
-  var port = parseInt(val, 10);
-
-  if (isNaN(port)) {
-    return val;
-  }
-
-  if (port >= 0) {
-    return port;
-  }
-
-  return false;
-}
-
-/**
- * Event listener for HTTP server "error" event.
- */
-function onError(error) {
-  if (error.syscall !== 'listen') {
-    throw error;
-  }
-
-  var bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port;
-
-  switch (error.code) {
-    case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
-      process.exit(1);
-      break;
-    case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
-      process.exit(1);
-      break;
-    default:
-      throw error;
-  }
-}
-
-/**
- * Event listener for HTTP server "listening" event.
- */
-function onListening() {
-  var addr = server.address();
-  var bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
-  debug('Listening on ' + bind);
-}
-
-/**
- * Helper functions.
- */
 async function setupStorageDrive(devicePath, mountPath, encryptionKey) {
   var driveIsEncrypted = await execCommand(`lsblk -o NAME,TYPE,SIZE,MODEL | grep ${encryptionKey}`);
 
