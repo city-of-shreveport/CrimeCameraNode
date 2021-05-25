@@ -1,3 +1,5 @@
+const dedent = require('dedent-js');
+const got = require('got');
 const { exec } = require('child_process');
 
 execCommand = (command) => {

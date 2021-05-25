@@ -7,8 +7,6 @@
 var app = require('../app');
 var debug = require('debug')('CrimeCameraNode:server');
 var http = require('http');
-const dedent = require('dedent-js');
-const got = require('got');
 const { execCommand, bootstrapApp, setupStorageDrive, mountStorageDrive } = require('../helperFunctions');
 
 require('dotenv').config();
