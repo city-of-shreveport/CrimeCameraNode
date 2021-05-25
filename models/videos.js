@@ -25,4 +25,4 @@ const schema = mongoose.Schema({
   updatedAt: Date,
 });
 
-module.exports = mongoose.model('Videos', schema);
+module.exports = mongoose.model('videos', schema);

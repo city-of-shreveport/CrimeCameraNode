@@ -1,14 +1,13 @@
 // require basic
-const express = require('express');
-const router = express.router();
+const router = require('express').Router();
 const spawn = require('child_process').spawn,
   child = null;
 
 // require models
-const Videos = require('../models/videos');
+const videos = require('../models/videos');
 
-Router.get('/videos', async (req, res) => {
-  Videos.find({}, function (err, docs) {
+router.get('/videos', async (req, res) => {
+  videos.find({}, function (err, docs) {
     if (err) {
       console.log(err);
       res.send('error');
@@ -18,7 +17,7 @@ Router.get('/videos', async (req, res) => {
   });
 });
 
-Router.get('/recording/start', async (req, res) => {
+router.get('/recording/start', async (req, res) => {
   cameraRecording1 = spawn('ffmpeg', [
     '-hide_banner',
     '-i',
@@ -80,4 +79,4 @@ Router.get('/recording/start', async (req, res) => {
   cameraRecording3.stderr.on('data', (data) => {});
 });
 
-module.exports = Router;
+module.exports = router;
