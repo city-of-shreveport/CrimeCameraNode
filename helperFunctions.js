@@ -3,6 +3,8 @@ const got = require('got');
 const { exec } = require('child_process');
 
 execCommand = (command) => {
+  console.log(`Executing command: \n${command}\n`);
+
   return new Promise((resolve, reject) => {
     exec(command, (error, stdout, stderr) => {
       resolve(stdout ? stdout : stderr);
