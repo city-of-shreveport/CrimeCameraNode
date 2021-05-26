@@ -73,12 +73,12 @@ bootstrapApp = async () => {
 };
 
 setupStorageDrive = async (devicePath, mountPath, encryptionKey) => {
-  var driveIsEncrypted = await execCommand(`lsblk -o NAME,TYPE,SIZE,MODEL | grep ${encryptionKey}`);
+  var driveIsEncrypted = await execCommand(`sudo lsblk -o NAME,TYPE,SIZE,MODEL | grep ${encryptionKey}`);
 
   if (driveIsEncrypted.includes(encryptionKey)) {
     mountStorageDrive(devicePath, mountPath, encryptionKey);
   } else {
-    var driveIsFormatted = await execCommand(`blkid ${devicePath} | grep crypto_LUKS`);
+    var driveIsFormatted = await execCommand(`sudo blkid ${devicePath} | grep crypto_LUKS`);
 
     if (!driveIsFormatted.includes('crypto_LUKS')) {
       console.log(`Formatting ${devicePath}...`);
