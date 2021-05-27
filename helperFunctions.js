@@ -1,16 +1,17 @@
 // require basic
 const dedent = require('dedent-js');
+const ffmpeg = require('fluent-ffmpeg');
 const fs = require('@mh-cbon/sudo-fs');
-const got = require('got');
 const moment = require('moment');
+const si = require('systeminformation');
 const { exec, execSync, spawn } = require('child_process');
 
 // require models
-const videos = require('../models/videos');
+const videos = require('./models/videos');
 
 // require environment
-require('events').EventEmitter.defaultMaxListeners = 100;
 require('dotenv').config();
+require('events').EventEmitter.defaultMaxListeners = 100;
 
 const execCommand = (command) => {
   return new Promise((resolve, reject) => {
@@ -32,7 +33,7 @@ const writeFile = (file, text) => {
   fs.writeFile(file, text, function (error) {});
 };
 
-const bootstrapApp = async () => {
+const bootstrapApp = async (config) => {
   try {
     console.log('Resetting firewall and routing rules...');
     await execCommand(dedent`
@@ -46,13 +47,6 @@ const bootstrapApp = async () => {
       sudo iptables -X;
       sudo route del -net default gw 10.10.5.1 netmask 0.0.0.0 dev eth0 metric 202;
     `);
-
-    console.log('Getting configuration information from remote server...');
-    var response = await got(
-      `${process.env.CAMERA_SERVER}/api/nodes/${process.env.CAMERA_IDENTIFIER}?token=${process.env.API_KEY}`
-    );
-
-    var config = JSON.parse(response.body).config;
 
     console.log('Setting hostname...');
     await execCommand(`sudo hostname ${config.hostName}`);
@@ -236,52 +230,141 @@ const stopRecording = async () => {
   await execCommand(`sudo killall ffmpeg`);
 };
 
-const updatePerfMons = async () => {};
+const uploadSysInfo = async (config) => {
+  var sysInfo = {
+    diskLayout: [],
+    osInfo: {},
+  };
 
-const updateVideos = async () => {
-  const fileList = await execCommand('ls /home/pi/videos/camera1');
-  const videoFiles = fileList.split('\n').filter((file) => file !== '');
+  await si.diskLayout(function (data) {
+    for (var i = 0; i < data.length; i++) {
+      sysInfo.diskLayout.push({
+        device: data[i].device,
+        type: data[i].type,
+        type: data[i].name,
+        vendor: data[i].vendor,
+        size: data[i].size,
+      });
+    }
+  });
 
-  for (var i = 0; i < videoFiles.length; i++) {
-    ffmpeg.ffprobe(`/home/pi/videos/camera1/${videoFiles[i]}`, function (error, metadata) {
-      let dateTimePart1 = metadata.format.filename.split('/')[7].split('_')[0];
-      let dateTimePart2 = metadata.format.filename.split('/')[7].split('_')[1].split('.')[0].split('-')[0];
-      let dateTimePart3 = metadata.format.filename.split('/')[7].split('_')[1].split('.')[0].split('-')[1];
-      let dateTime = moment(`${dateTimePart1} ${dateTimePart2}:${dateTimePart3}:00`).unix();
+  await si.osInfo(function (data) {
+    sysInfo.osInfo.distro = data.distro;
+    sysInfo.osInfo.release = data.release;
+    sysInfo.osInfo.codename = data.codename;
+    sysInfo.osInfo.kernel = data.kernel;
+    sysInfo.osInfo.arch = data.arch;
+    sysInfo.osInfo.hostname = data.hostname;
+    sysInfo.osInfo.fqdn = data.fqdn;
+  });
 
-      videos.findOneAndUpdate(
-        {
-          fileLocation: metadata.format.filename,
-        },
-        {
-          node: systemInfo.name,
-          fileLocation: metadata.format.filename,
-          location: {
-            lat: systemInfo.location.lat,
-            lng: systemInfo.location.lng,
+  await si.cpu(function (data) {
+    sysInfo.cpu = data;
+  });
+
+  await si.memLayout(function (data) {
+    sysInfo.memLayout = data;
+  });
+
+  console.log(sysInfo);
+};
+
+const uploadPerfMon = async (config) => {
+  var perfMon = {
+    camera: config.hostName,
+    currentLoad: {
+      cpus: [],
+    },
+    mem: {},
+    cpuTemperature: {},
+    fsSize: [],
+  };
+
+  await si.currentLoad(function (data) {
+    perfMon.currentLoad.cpus = [];
+    perfMon.currentLoad.avgLoad = data.avgLoad;
+    perfMon.currentLoad.currentLoad = data.currentLoad;
+    perfMon.currentLoad.currentLoadUser = data.currentLoadUser;
+
+    for (var i = 0; i < data.cpus.length; i++) {
+      perfMon.currentLoad.cpus.push(data.cpus[i].load);
+    }
+  });
+
+  await si.mem(function (data) {
+    perfMon['mem']['total'] = data.total;
+    perfMon['mem']['free'] = data.free;
+    perfMon['mem']['used'] = data.used;
+    perfMon['mem']['available'] = data.available;
+  });
+
+  await si.cpuTemperature(function (data) {
+    perfMon['cpuTemperature'].main = data.main;
+  });
+
+  await si.fsSize(function (data) {
+    for (var i = 0; i < data.length; i++) {
+      perfMon.fsSize.push({
+        fs: data[i].fs,
+        type: data[i].type,
+        size: data[i].size,
+        used: data[i].used,
+        available: data[i].available,
+        mount: data[i].mount,
+      });
+    }
+  });
+
+  console.log(perfMon);
+};
+
+const uploadVideos = async (config) => {
+  const cameras = ['camera1', 'camera2', 'camera3'];
+
+  for (var c = 0; c < cameras.length; c++) {
+    const fileList = await execCommand(`ls /home/pi/videos/${cameras[c]}`);
+    const videoFiles = fileList.split('\n').filter((file) => file !== '');
+
+    for (var v = 0; v < videoFiles.length; v++) {
+      ffmpeg.ffprobe(`/home/pi/videos/${cameras[c]}/${videoFiles[v]}`, function (error, metadata) {
+        let yearMonthDay = metadata.format.filename.split('/')[5].split('_')[0];
+        let hour = metadata.format.filename.split('/')[5].split('_')[1].split('.')[0].split('-')[0];
+        let minute = metadata.format.filename.split('/')[5].split('_')[1].split('.')[0].split('-')[1];
+        let dateTime = moment(`${yearMonthDay} ${hour}:${minute}:00`).unix();
+
+        videos.findOneAndUpdate(
+          {
+            node: config.hostName,
+            fileLocation: metadata.format.filename,
           },
-          startPts: metadata.format.start_pts,
-          startTime: metadata.format.start_time,
-          duration: metadata.format.duration,
-          bitRate: metadata.format.bit_rate,
-          height: metadata.streams[0].height,
-          width: metadata.streams[0].width,
-          size: metadata.format.size,
-          dateTime: dateTime,
-          camera: 'camera1',
-          hash: execSync(`sha1sum ${metadata.format.filename}`),
-        },
-        { upsert: true },
-        function (err, doc) {
-          if (err) {
-            console.log(err);
-          } else {
-            console.log(doc);
-          }
-        }
-      );
-    });
+          {
+            node: config.hostName,
+            fileLocation: metadata.format.filename,
+            location: {
+              lat: config.locationLat,
+              lng: config.locationLong,
+            },
+            startPts: metadata.streams[0].start_pts,
+            startTime: metadata.streams[0].start_time,
+            duration: metadata.format.duration,
+            bitRate: metadata.format.bit_rate,
+            height: metadata.streams[0].height,
+            width: metadata.streams[0].width,
+            size: metadata.format.size,
+            dateTime: dateTime,
+            camera: `${cameras[c]}`,
+            hash: execSync(`sha1sum ${metadata.format.filename}`).toString(),
+          },
+          { upsert: true }
+        );
+      });
+    }
   }
+
+  videos.find({}, function (err, docs) {
+    console.log(docs.length);
+    console.log(docs[0]);
+  });
 };
 
 module.exports = {
@@ -292,6 +375,7 @@ module.exports = {
   setupStorageDrive,
   startRecording,
   stopRecording,
-  updatePerfMons,
-  updateVideos,
+  uploadPerfMon,
+  uploadSysInfo,
+  uploadVideos,
 };

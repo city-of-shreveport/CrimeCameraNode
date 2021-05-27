@@ -7,6 +7,8 @@
 var app = require('../app');
 var debug = require('debug')('CrimeCameraNode:server');
 var http = require('http');
+var got = require('got');
+var config = {}
 
 module.exports = {
   bootstrapApp,
@@ -16,11 +18,21 @@ module.exports = {
   setupStorageDrive,
   startRecording,
   stopRecording,
-  updatePerfMons,
-  updateVideos,
+  uploadPerfMon,
+  uploadSysInfo,
+  uploadVideos,
 } = require('../helperFunctions');
 
 require('dotenv').config();
+
+async function getConfig() {
+  console.log('Getting configuration information from remote server...');
+  var response = await got(
+    `${process.env.CAMERA_SERVER}/api/nodes/${process.env.CAMERA_IDENTIFIER}?token=${process.env.API_KEY}`
+  );
+
+  config = JSON.parse(response.body).config;
+}
 
 /**
  * Get port from environment and store in Express.
@@ -39,16 +51,20 @@ var server = http.createServer(app);
  * Listen on provided port, on all network interfaces.
  */
 
-// bootstrapApp().then(() => {
-  // server.listen(port);
-  // console.log(`App listenting on port ${port}!`)
-  // server.on('error', onError);
-  // server.on('listening', onListening);
-  // setInterval(updatePerfMons, 60000);
-  // setInterval(updateVideos, 900000);
-  // startRecording();
-  updateVideos()
-// });
+getConfig().then(() => {
+  bootstrapApp(config).then(() => {
+    server.listen(port);
+    console.log(`App listenting on port ${port}!`)
+    server.on('error', onError);
+    server.on('listening', onListening);
+    // setInterval(uploadPerfMon(config), 60000);
+    // setInterval(uploadVideos(config), 900000);
+    // uploadPerfMon(config)
+    // uploadVideos(config)
+    // uploadSysInfo(config)
+    // startRecording();
+  });
+})
 
 /**
  * Normalize a port into a number, string, or false.
