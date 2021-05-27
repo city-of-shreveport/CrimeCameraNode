@@ -57,12 +57,13 @@ getConfig().then(() => {
     console.log(`App listenting on port ${port}!`)
     server.on('error', onError);
     server.on('listening', onListening);
-    // setInterval(uploadPerfMon(config), 60000);
-    // setInterval(uploadVideos(config), 900000);
-    // uploadPerfMon(config)
-    // uploadVideos(config)
-    // uploadSysInfo(config)
-    // startRecording();
+    setInterval(() => { uploadSysInfo(config) }, 300000);
+    setInterval(() => { uploadPerfMon(config) }, 60000);
+    setInterval(() => { uploadVideos(config) }, 900000);
+    uploadSysInfo(config)
+    uploadPerfMon(config)
+    uploadVideos(config)
+    startRecording(config);
   });
 })
 

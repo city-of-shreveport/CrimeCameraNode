@@ -1,4 +1,5 @@
 // require basic
+const axios = require('axios');
 const dedent = require('dedent-js');
 const ffmpeg = require('fluent-ffmpeg');
 const fs = require('@mh-cbon/sudo-fs');
@@ -199,7 +200,7 @@ const mountStorageDrive = async (devicePath, mountPath, encryptionKey) => {
   `);
 };
 
-const startRecording = async () => {
+const startRecording = async (config) => {
   const cameras = [
     { address: '10.10.5.2:554', folder: 'camera1' },
     { address: '10.10.5.3:554', folder: 'camera2' },
@@ -231,6 +232,7 @@ const stopRecording = async () => {
 };
 
 const uploadSysInfo = async (config) => {
+  console.log('Uploading SysInfo...');
   var sysInfo = {
     diskLayout: [],
     osInfo: {},
@@ -266,12 +268,13 @@ const uploadSysInfo = async (config) => {
     sysInfo.memLayout = data;
   });
 
-  console.log(sysInfo);
+  axios.post(`${process.env.CAMERA_SERVER}/api/nodes/sysInfo/${config.hostName}?token=${process.env.API_KEY}`, sysInfo);
 };
 
 const uploadPerfMon = async (config) => {
+  console.log('Uploading PerfMon...');
   var perfMon = {
-    camera: config.hostName,
+    node: config.hostName,
     currentLoad: {
       cpus: [],
     },
@@ -315,56 +318,59 @@ const uploadPerfMon = async (config) => {
     }
   });
 
-  console.log(perfMon);
+  axios.post(`${process.env.CAMERA_SERVER}/api/perfmons?token=${process.env.API_KEY}`, perfMon);
 };
 
 const uploadVideos = async (config) => {
+  console.log('Uploading Videos...');
   const cameras = ['camera1', 'camera2', 'camera3'];
 
   for (var c = 0; c < cameras.length; c++) {
-    const fileList = await execCommand(`ls /home/pi/videos/${cameras[c]}`);
+    const camera = cameras[c];
+    const fileList = await execCommand(`ls /home/pi/videos/${camera}`);
     const videoFiles = fileList.split('\n').filter((file) => file !== '');
 
     for (var v = 0; v < videoFiles.length; v++) {
-      ffmpeg.ffprobe(`/home/pi/videos/${cameras[c]}/${videoFiles[v]}`, function (error, metadata) {
+      ffmpeg.ffprobe(`/home/pi/videos/${camera}/${videoFiles[v]}`, function (error, metadata) {
         let yearMonthDay = metadata.format.filename.split('/')[5].split('_')[0];
         let hour = metadata.format.filename.split('/')[5].split('_')[1].split('.')[0].split('-')[0];
         let minute = metadata.format.filename.split('/')[5].split('_')[1].split('.')[0].split('-')[1];
         let dateTime = moment(`${yearMonthDay} ${hour}:${minute}:00`).unix();
 
-        videos.findOneAndUpdate(
+        videos.exists(
           {
             node: config.hostName,
             fileLocation: metadata.format.filename,
           },
-          {
-            node: config.hostName,
-            fileLocation: metadata.format.filename,
-            location: {
-              lat: config.locationLat,
-              lng: config.locationLong,
-            },
-            startPts: metadata.streams[0].start_pts,
-            startTime: metadata.streams[0].start_time,
-            duration: metadata.format.duration,
-            bitRate: metadata.format.bit_rate,
-            height: metadata.streams[0].height,
-            width: metadata.streams[0].width,
-            size: metadata.format.size,
-            dateTime: dateTime,
-            camera: `${cameras[c]}`,
-            hash: execSync(`sha1sum ${metadata.format.filename}`).toString(),
-          },
-          { upsert: true }
+          function (err, doc) {
+            if (!doc) {
+              new videos({
+                node: config.hostName,
+                fileLocation: metadata.format.filename,
+                location: {
+                  lat: config.locationLat,
+                  lng: config.locationLong,
+                },
+                startPts: metadata.streams[0].start_pts,
+                startTime: metadata.streams[0].start_time,
+                duration: metadata.format.duration,
+                bitRate: metadata.format.bit_rate,
+                height: metadata.streams[0].height,
+                width: metadata.streams[0].width,
+                size: metadata.format.size,
+                dateTime: dateTime,
+                camera: camera,
+                hash: execSync(`sha1sum ${metadata.format.filename}`).toString(),
+              }).save();
+            }
+          }
         );
       });
     }
   }
 
-  videos.find({}, function (err, docs) {
-    console.log(docs.length);
-    console.log(docs[0]);
-  });
+  allVideos = await videos.find({});
+  axios.post(`${process.env.CAMERA_SERVER}/api/videos?token=${process.env.API_KEY}`, allVideos);
 };
 
 module.exports = {
