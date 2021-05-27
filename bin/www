@@ -8,13 +8,16 @@ var app = require('../app');
 var debug = require('debug')('CrimeCameraNode:server');
 var http = require('http');
 
-const {
+module.exports = {
   bootstrapApp,
   execCommand,
   formatArguments,
   mountStorageDrive,
   setupStorageDrive,
-  startRecording
+  startRecording,
+  stopRecording,
+  updatePerfMons,
+  updateVideos,
 } = require('../helperFunctions');
 
 require('dotenv').config();
@@ -36,13 +39,16 @@ var server = http.createServer(app);
  * Listen on provided port, on all network interfaces.
  */
 
-bootstrapApp().then(() => {
-  server.listen(port);
-  console.log(`App listenting on port ${port}!`)
-  server.on('error', onError);
-  server.on('listening', onListening);
-  startRecording();
-});
+// bootstrapApp().then(() => {
+  // server.listen(port);
+  // console.log(`App listenting on port ${port}!`)
+  // server.on('error', onError);
+  // server.on('listening', onListening);
+  // setInterval(updatePerfMons, 60000);
+  // setInterval(updateVideos, 900000);
+  // startRecording();
+  updateVideos()
+// });
 
 /**
  * Normalize a port into a number, string, or false.

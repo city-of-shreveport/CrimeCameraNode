@@ -1,8 +1,14 @@
+// require basic
 const dedent = require('dedent-js');
 const fs = require('@mh-cbon/sudo-fs');
 const got = require('got');
-const { exec, spawn } = require('child_process');
+const moment = require('moment');
+const { exec, execSync, spawn } = require('child_process');
 
+// require models
+const videos = require('../models/videos');
+
+// require environment
 require('events').EventEmitter.defaultMaxListeners = 100;
 require('dotenv').config();
 
@@ -230,6 +236,54 @@ const stopRecording = async () => {
   await execCommand(`sudo killall ffmpeg`);
 };
 
+const updatePerfMons = async () => {};
+
+const updateVideos = async () => {
+  const fileList = await execCommand('ls /home/pi/videos/camera1');
+  const videoFiles = fileList.split('\n').filter((file) => file !== '');
+
+  for (var i = 0; i < videoFiles.length; i++) {
+    ffmpeg.ffprobe(`/home/pi/videos/camera1/${videoFiles[i]}`, function (error, metadata) {
+      let dateTimePart1 = metadata.format.filename.split('/')[7].split('_')[0];
+      let dateTimePart2 = metadata.format.filename.split('/')[7].split('_')[1].split('.')[0].split('-')[0];
+      let dateTimePart3 = metadata.format.filename.split('/')[7].split('_')[1].split('.')[0].split('-')[1];
+      let dateTime = moment(`${dateTimePart1} ${dateTimePart2}:${dateTimePart3}:00`).unix();
+
+      videos.findOneAndUpdate(
+        {
+          fileLocation: metadata.format.filename,
+        },
+        {
+          node: systemInfo.name,
+          fileLocation: metadata.format.filename,
+          location: {
+            lat: systemInfo.location.lat,
+            lng: systemInfo.location.lng,
+          },
+          startPts: metadata.format.start_pts,
+          startTime: metadata.format.start_time,
+          duration: metadata.format.duration,
+          bitRate: metadata.format.bit_rate,
+          height: metadata.streams[0].height,
+          width: metadata.streams[0].width,
+          size: metadata.format.size,
+          dateTime: dateTime,
+          camera: 'camera1',
+          hash: execSync(`sha1sum ${metadata.format.filename}`),
+        },
+        { upsert: true },
+        function (err, doc) {
+          if (err) {
+            console.log(err);
+          } else {
+            console.log(doc);
+          }
+        }
+      );
+    });
+  }
+};
+
 module.exports = {
   bootstrapApp,
   execCommand,
@@ -238,4 +292,6 @@ module.exports = {
   setupStorageDrive,
   startRecording,
   stopRecording,
+  updatePerfMons,
+  updateVideos,
 };
