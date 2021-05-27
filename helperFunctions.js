@@ -1,14 +1,12 @@
 const dedent = require('dedent-js');
 const fs = require('@mh-cbon/sudo-fs');
 const got = require('got');
-const { exec } = require('child_process');
+const { exec, spawn } = require('child_process');
 
 require('events').EventEmitter.defaultMaxListeners = 100;
 require('dotenv').config();
 
 const execCommand = (command) => {
-  console.log(`Executing command: \n${command}\n`);
-
   return new Promise((resolve, reject) => {
     exec(command, (error, stdout, stderr) => {
       resolve(stdout ? stdout : stderr);
@@ -25,14 +23,12 @@ const formatArguments = (template) => {
 };
 
 const writeFile = (file, text) => {
-  console.log(`writing file ${file}...\n`);
-
   fs.writeFile(file, text, function (error) {});
 };
 
 const bootstrapApp = async () => {
   try {
-    console.log('resetting firewall and routing rules...');
+    console.log('Resetting firewall and routing rules...');
     await execCommand(dedent`
       sudo iptables -P INPUT ACCEPT;
       sudo iptables -P FORWARD ACCEPT;
@@ -52,10 +48,10 @@ const bootstrapApp = async () => {
 
     var config = JSON.parse(response.body).config;
 
-    console.log('setting hostname...');
+    console.log('Setting hostname...');
     await execCommand(`sudo hostname ${config.hostName}`);
 
-    console.log('updating /etc/hosts...');
+    console.log('Updating /etc/hosts...');
     writeFile(
       '/etc/hosts',
       dedent`
@@ -70,7 +66,26 @@ const bootstrapApp = async () => {
       `
     );
 
-    console.log('updating /etc/dhcp/dhcpd.conf...');
+    console.log('Updating /etc/dhcpcd.conf...');
+    writeFile(
+      '/etc/dhcpcd.conf',
+      dedent`
+        hostname
+        clientid
+        persistent
+        option rapid_commit
+        option domain_name_servers, domain_name, domain_search, host_name
+        option classless_static_routes
+        option interface_mtu
+        require dhcp_server_identifier
+        slaac private
+        interface eth0
+        static ip_address=10.10.5.1/24
+        static routers=10.10.5.1/24
+      `
+    );
+
+    console.log('Updating /etc/dhcp/dhcpd.conf...');
     writeFile(
       '/etc/dhcp/dhcpd.conf',
       dedent`
@@ -90,88 +105,14 @@ const bootstrapApp = async () => {
       `
     );
 
-    console.log('updating /etc/dhcpcd.conf...');
-    writeFile(
-      '/etc/dhcpcd.conf',
-      dedent`
-        hostname
-        clientid
-        persistent
-        option rapid_commit
-        option domain_name_servers, domain_name, domain_search, host_name
-        option classless_static_routes
-        option interface_mtu
-        require dhcp_server_identifier
-        slaac private
-        interface eth0
-        static ip_address=10.10.5.1/24
-        static routers=10.10.5.1/24
-      `
-    );
-
-    console.log('updating /etc/default/isc-dhcp-server...');
-    writeFile(
-      '/etc/dhcpcd.conf',
-      dedent`
-        hostname
-        clientid
-        persistent
-        option rapid_commit
-        option domain_name_servers, domain_name, domain_search, host_name
-        option classless_static_routes
-        option interface_mtu
-        require dhcp_server_identifier
-        slaac private
-        interface eth0
-        static ip_address=10.10.5.1/24
-        static routers=10.10.5.1/24
-      `
-    );
-
-    console.log('updating /etc/default/isc-dhcp-server...');
-    writeFile(
-      '/etc/default/isc-dhcp-server',
-      dedent`
-        # Defaults for isc-dhcp-server (sourced by /etc/init.d/isc-dhcp-server)
-
-        # Path to dhcpd's config file (default: /etc/dhcp/dhcpd.conf).
-        #DHCPDv4_CONF=/etc/dhcp/dhcpd.conf
-        #DHCPDv6_CONF=/etc/dhcp/dhcpd6.conf
-
-        # Path to dhcpd's PID file (default: /var/run/dhcpd.pid).
-        #DHCPDv4_PID=/var/run/dhcpd.pid
-        #DHCPDv6_PID=/var/run/dhcpd6.pid
-
-        # Additional options to start dhcpd with.
-        # Don't use options -cf or -pf here; use DHCPD_CONF/ DHCPD_PID instead
-        #OPTIONS=""
-
-        # On what interfaces should the DHCP server (dhcpd) serve DHCP requests?
-        # Separate multiple interfaces with spaces, e.g. "eth0 eth1".
-        INTERFACESv4="eth0"
-      `
-    );
+    console.log('Updating /etc/default/isc-dhcp-server...');
+    writeFile('/etc/default/isc-dhcp-server', 'INTERFACESv4="eth0"');
 
     if (config.zeroTierNetworkID) {
       console.log('Joining ZeroTier network...');
       await execCommand(dedent`
         curl -s https://install.zerotier.com | sudo bash;
         sudo zerotier-cli join ${config.zeroTierNetworkID};
-        sudo service zerotier-one restart;
-      `);
-    } else {
-      console.log('uninstalling existing zerotier instance...');
-      await execCommand(dedent`
-        sudo zerotier-cli leave ${config.zeroTierNetworkID};
-        sudo service zerotier-one stop;
-        sudo apt remove -y zerotier-one;
-        sudo find / -iname "*zerotier*" -exec sudo rm -rf {};
-      `);
-
-      console.log('installing zerotier...');
-      await execCommand(dedent`
-        curl -s https://install.zerotier.com | sudo bash
-        sudo zerotier-cli join ${config.zeroTierNetworkID}
         sudo service zerotier-one restart;
       `);
     }
