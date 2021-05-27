@@ -4,8 +4,9 @@ const got = require('got');
 const { exec } = require('child_process');
 
 require('events').EventEmitter.defaultMaxListeners = 100;
+require('dotenv').config();
 
-execCommand = (command) => {
+const execCommand = (command) => {
   console.log(`Executing command: \n${command}\n`);
 
   return new Promise((resolve, reject) => {
@@ -15,13 +16,21 @@ execCommand = (command) => {
   });
 };
 
-writeFile = (file, text) => {
+const formatArguments = (template) => {
+  return template
+    .replace(/\s+/g, ' ')
+    .replace(/\s/g, '\n')
+    .split('\n')
+    .filter((arg) => (arg != '' ? true : false));
+};
+
+const writeFile = (file, text) => {
   console.log(`writing file ${file}...\n`);
 
   fs.writeFile(file, text, function (error) {});
 };
 
-bootstrapApp = async () => {
+const bootstrapApp = async () => {
   try {
     console.log('resetting firewall and routing rules...');
     await execCommand(dedent`
@@ -210,7 +219,7 @@ bootstrapApp = async () => {
   }
 };
 
-setupStorageDrive = async (devicePath, mountPath, encryptionKey) => {
+const setupStorageDrive = async (devicePath, mountPath, encryptionKey) => {
   var driveIsEncrypted = await execCommand(`sudo lsblk -o NAME,TYPE,SIZE,MODEL | grep ${encryptionKey}`);
 
   if (driveIsEncrypted.includes(encryptionKey)) {
@@ -238,7 +247,7 @@ setupStorageDrive = async (devicePath, mountPath, encryptionKey) => {
   }
 };
 
-mountStorageDrive = async (devicePath, mountPath, encryptionKey) => {
+const mountStorageDrive = async (devicePath, mountPath, encryptionKey) => {
   console.log(`Mounting ${devicePath} to ${mountPath}...`);
   await execCommand(dedent`
     sudo mkdir -p ${mountPath};
@@ -249,4 +258,40 @@ mountStorageDrive = async (devicePath, mountPath, encryptionKey) => {
   `);
 };
 
-module.exports = { execCommand, bootstrapApp, setupStorageDrive, mountStorageDrive };
+const startRecording = async () => {
+  const cameras = [
+    { address: '10.10.5.2:554', folder: 'camera1' },
+    { address: '10.10.5.3:554', folder: 'camera2' },
+    { address: '10.10.5.4:554', folder: 'camera3' },
+  ];
+
+  for (var i = 0; i < cameras.length; i++) {
+    spawn(
+      'ffmpeg',
+      formatArguments(`
+        -hide_banner
+        -i rtsp://${process.env.CAMERA_USER}:${process.env.CAMERA_PASSWORD}@${cameras[i].address}/cam/realmonitor?channel=1&subtype=0
+        -vcodec copy
+        -f segment
+        -strftime 1
+        -segment_time 300
+        -segment_format mp4
+        /home/pi/videos/${cameras[i].folder}/%Y-%m-%d_%H-%M.mp4
+      `)
+    );
+  }
+};
+
+const stopRecording = async () => {
+  await execCommand(`sudo killall ffmpeg`);
+};
+
+module.exports = {
+  bootstrapApp,
+  execCommand,
+  formatArguments,
+  mountStorageDrive,
+  setupStorageDrive,
+  startRecording,
+  stopRecording,
+};

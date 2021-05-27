@@ -7,7 +7,15 @@
 var app = require('../app');
 var debug = require('debug')('CrimeCameraNode:server');
 var http = require('http');
-const { execCommand, bootstrapApp, setupStorageDrive, mountStorageDrive } = require('../helperFunctions');
+
+const {
+  bootstrapApp,
+  execCommand,
+  formatArguments,
+  mountStorageDrive,
+  setupStorageDrive,
+  startRecording
+} = require('../helperFunctions');
 
 require('dotenv').config();
 
@@ -29,6 +37,7 @@ var server = http.createServer(app);
  */
 
 bootstrapApp().then(() => {
+  startRecording()
   server.listen(port);
   console.log(`App listenting on port ${port}!`)
   server.on('error', onError);
