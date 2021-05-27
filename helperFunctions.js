@@ -207,6 +207,9 @@ const startRecording = async () => {
   ];
 
   for (var i = 0; i < cameras.length; i++) {
+    console.log(`Spawning ffmpeg for ${cameras[i].folder}/${cameras[i].address}...`);
+    await execCommand(`mkdir -p /home/pi/videos/${cameras[i].folder}/`);
+
     spawn(
       'ffmpeg',
       formatArguments(`
