@@ -318,8 +318,8 @@ const uploadVideos = async (config) => {
     const videoFiles = fileList.split('\n').filter((file) => file !== '');
 
     for (var v = 0; v < videoFiles.length; v++) {
-      try {
-        ffmpeg.ffprobe(`/home/pi/videos/${camera}/${videoFiles[v]}`, function (error, metadata) {
+      ffmpeg.ffprobe(`/home/pi/videos/${camera}/${videoFiles[v]}`, function (error, metadata) {
+        try {
           let yearMonthDay = metadata.format.filename.split('/')[5].split('_')[0];
           let hour = metadata.format.filename.split('/')[5].split('_')[1].split('.')[0].split('-')[0];
           let minute = metadata.format.filename.split('/')[5].split('_')[1].split('.')[0].split('-')[1];
@@ -353,8 +353,8 @@ const uploadVideos = async (config) => {
               }
             }
           );
-        });
-      } catch (error) {}
+        } catch (error) {}
+      });
     }
   }
 
