@@ -67,7 +67,7 @@ const bootstrapApp = async (config) => {
         option interface_mtu
         require dhcp_server_identifier
         slaac private
-        interface eth0
+        interface eth1
         static ip_address=10.10.5.1/24
         static routers=10.10.5.1/24
       `
@@ -94,7 +94,7 @@ const bootstrapApp = async (config) => {
     );
 
     console.log('Updating /etc/default/isc-dhcp-server...');
-    writeFile('/etc/default/isc-dhcp-server', 'INTERFACESv4="eth0"');
+    writeFile('/etc/default/isc-dhcp-server', 'INTERFACESv4="eth1"');
 
     if (config.zeroTierNetworkID) {
       console.log('Joining ZeroTier network...');
@@ -116,7 +116,7 @@ const bootstrapApp = async (config) => {
       sudo iptables -F;
       sudo iptables -X;
 
-      sudo sysctl net.ipv4.conf.eth0.forwarding=1;
+      sudo sysctl net.ipv4.conf.eth1.forwarding=1;
       sudo sysctl net.ipv4.conf.eth1.forwarding=1;
       sudo sysctl net.ipv4.conf.wlan0.forwarding=1;
       sudo sysctl net.ipv4.conf.ztuga7sx7i.forwarding=1;
@@ -255,7 +255,7 @@ const uploadSysInfo = async (config) => {
     sysInfo.memLayout = data;
   });
 
-  axios.post(`${process.env.CAMERA_SERVER}/api/nodes/sysInfo/${config.hostName}?token=${process.env.API_KEY}`, sysInfo);
+  axios.post(`${process.env.CAMERA_SERVER}/api/nodes/sysInfo/${config.hostName}`, sysInfo);
 };
 
 const uploadPerfMon = async (config) => {
@@ -305,7 +305,7 @@ const uploadPerfMon = async (config) => {
     }
   });
 
-  axios.post(`${process.env.CAMERA_SERVER}/api/perfmons?token=${process.env.API_KEY}`, perfMon);
+  axios.post(`${process.env.CAMERA_SERVER}/api/perfmons`, perfMon);
 };
 
 const uploadVideos = async (config) => {
@@ -359,7 +359,7 @@ const uploadVideos = async (config) => {
   }
 
   allVideos = await videos.find({});
-  axios.post(`${process.env.CAMERA_SERVER}/api/videos?token=${process.env.API_KEY}`, allVideos);
+  axios.post(`${process.env.CAMERA_SERVER}/api/videos`, allVideos);
 };
 
 module.exports = {
