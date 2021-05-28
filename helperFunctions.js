@@ -36,19 +36,6 @@ const writeFile = (file, text) => {
 
 const bootstrapApp = async (config) => {
   try {
-    console.log('Resetting firewall and routing rules...');
-    await execCommand(dedent`
-      sudo iptables -P INPUT ACCEPT;
-      sudo iptables -P FORWARD ACCEPT;
-      sudo iptables -P OUTPUT ACCEPT ;
-      sudo iptables -t nat -F;
-      sudo iptables -t mangle -F;
-      sudo iptables -t raw -F;
-      sudo iptables -F;
-      sudo iptables -X;
-      sudo route del -net default gw 10.10.5.1 netmask 0.0.0.0 dev eth0 metric 202;
-    `);
-
     console.log('Setting hostname...');
     await execCommand(`sudo hostname ${config.hostName}`);
 
@@ -331,41 +318,43 @@ const uploadVideos = async (config) => {
     const videoFiles = fileList.split('\n').filter((file) => file !== '');
 
     for (var v = 0; v < videoFiles.length; v++) {
-      ffmpeg.ffprobe(`/home/pi/videos/${camera}/${videoFiles[v]}`, function (error, metadata) {
-        let yearMonthDay = metadata.format.filename.split('/')[5].split('_')[0];
-        let hour = metadata.format.filename.split('/')[5].split('_')[1].split('.')[0].split('-')[0];
-        let minute = metadata.format.filename.split('/')[5].split('_')[1].split('.')[0].split('-')[1];
-        let dateTime = moment(`${yearMonthDay} ${hour}:${minute}:00`).unix();
+      try {
+        ffmpeg.ffprobe(`/home/pi/videos/${camera}/${videoFiles[v]}`, function (error, metadata) {
+          let yearMonthDay = metadata.format.filename.split('/')[5].split('_')[0];
+          let hour = metadata.format.filename.split('/')[5].split('_')[1].split('.')[0].split('-')[0];
+          let minute = metadata.format.filename.split('/')[5].split('_')[1].split('.')[0].split('-')[1];
+          let dateTime = moment(`${yearMonthDay} ${hour}:${minute}:00`).unix();
 
-        videos.exists(
-          {
-            node: config.hostName,
-            fileLocation: metadata.format.filename,
-          },
-          function (err, doc) {
-            if (!doc) {
-              new videos({
-                node: config.hostName,
-                fileLocation: metadata.format.filename,
-                location: {
-                  lat: config.locationLat,
-                  lng: config.locationLong,
-                },
-                startPts: metadata.streams[0].start_pts,
-                startTime: metadata.streams[0].start_time,
-                duration: metadata.format.duration,
-                bitRate: metadata.format.bit_rate,
-                height: metadata.streams[0].height,
-                width: metadata.streams[0].width,
-                size: metadata.format.size,
-                dateTime: dateTime,
-                camera: camera,
-                hash: execSync(`sha1sum ${metadata.format.filename}`).toString(),
-              }).save();
+          videos.exists(
+            {
+              node: config.hostName,
+              fileLocation: metadata.format.filename,
+            },
+            function (err, doc) {
+              if (!doc) {
+                new videos({
+                  node: config.hostName,
+                  fileLocation: metadata.format.filename,
+                  location: {
+                    lat: config.locationLat,
+                    lng: config.locationLong,
+                  },
+                  startPts: metadata.streams[0].start_pts,
+                  startTime: metadata.streams[0].start_time,
+                  duration: metadata.format.duration,
+                  bitRate: metadata.format.bit_rate,
+                  height: metadata.streams[0].height,
+                  width: metadata.streams[0].width,
+                  size: metadata.format.size,
+                  dateTime: dateTime,
+                  camera: camera,
+                  hash: execSync(`sha1sum ${metadata.format.filename}`).toString(),
+                }).save();
+              }
             }
-          }
-        );
-      });
+          );
+        });
+      } catch (error) {}
     }
   }
 
