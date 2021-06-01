@@ -37,8 +37,6 @@ async function getConfig() {
     sudo iptables -t raw -F;
     sudo iptables -F;
     sudo iptables -X;
-    sudo route del -net default gw 10.10.5.1 netmask 0.0.0.0 dev eth0 metric 202;
-    sudo route del -net default gw 10.10.5.1 netmask 0.0.0.0 dev eth1 metric 203;
   `);
 
   console.log('Getting configuration information from remote server...');

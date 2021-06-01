@@ -38,7 +38,6 @@ const bootstrapApp = async (config) => {
   try {
     console.log('Setting hostname...');
     await execCommand(`sudo hostname ${config.hostName}`);
-    await execCommand(`sudo hostnamectl set-hostname ${config.hostName}`);
 
     console.log('Updating /etc/hosts...');
     writeFile(
@@ -70,7 +69,6 @@ const bootstrapApp = async (config) => {
         slaac private
         interface eth1
         static ip_address=10.10.5.1/24
-        static routers=10.10.5.1/24
       `
     );
 
@@ -108,16 +106,7 @@ const bootstrapApp = async (config) => {
 
     console.log('Setting up firewall rules...');
     await execCommand(dedent`
-      sudo iptables -P INPUT ACCEPT;
-      sudo iptables -P FORWARD ACCEPT;
-      sudo iptables -P OUTPUT ACCEPT;
-      sudo iptables -t nat -F;
-      sudo iptables -t mangle -F;
-      sudo iptables -t raw -F;
-      sudo iptables -F;
-      sudo iptables -X;
-
-      sudo sysctl net.ipv4.conf.eth1.forwarding=1;
+      sudo sysctl net.ipv4.conf.eth0.forwarding=1;
       sudo sysctl net.ipv4.conf.eth1.forwarding=1;
       sudo sysctl net.ipv4.conf.wlan0.forwarding=1;
       sudo sysctl net.ipv4.conf.ztuga7sx7i.forwarding=1;
