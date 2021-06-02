@@ -37,7 +37,7 @@ const writeFile = (file, text) => {
 const bootstrapApp = async (config) => {
   try {
     console.log('Setting hostname...');
-    await execCommand(`sudo hostname ${config.hostName}`);
+    await execCommand(`sudo hostnamectl set-hostname ${config.hostName}`);
 
     console.log('Updating /etc/hosts...');
     writeFile(
