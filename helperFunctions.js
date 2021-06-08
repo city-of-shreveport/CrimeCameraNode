@@ -4,6 +4,7 @@ const dedent = require('dedent-js');
 const ffmpeg = require('fluent-ffmpeg');
 const fs = require('@mh-cbon/sudo-fs');
 const moment = require('moment');
+const promise = require('promise');
 const si = require('systeminformation');
 const { exec, execSync, spawn } = require('child_process');
 
@@ -176,31 +177,54 @@ const mountStorageDrive = async (devicePath, mountPath, encryptionKey) => {
   `);
 };
 
+var recordingInterval;
+
+const startRecordingInterval = async () => {
+  recordingInterval = setInterval(function () {
+    var minutes = new Date().getMinutes();
+    var seconds = new Date().getSeconds();
+
+    if (minutes == 0 || minutes % 15 == 0) {
+      console.log('Starting recording!');
+
+      const cameras = [
+        { address: '10.10.5.2:554', folder: 'camera1' },
+        { address: '10.10.5.3:554', folder: 'camera2' },
+        { address: '10.10.5.4:554', folder: 'camera3' },
+      ];
+
+      for (var i = 0; i < cameras.length; i++) {
+        console.log(`Spawning ffmpeg for ${cameras[i].folder}/${cameras[i].address}...`);
+        execCommand(`mkdir -p /home/pi/videos/${cameras[i].folder}/`);
+
+        spawn(
+          'ffmpeg',
+          formatArguments(`
+            -hide_banner
+            -i rtsp://${process.env.CAMERA_USER}:${process.env.CAMERA_PASSWORD}@${cameras[i].address}/cam/realmonitor?channel=1&subtype=0
+            -vcodec copy
+            -f segment
+            -strftime 1
+            -segment_time 900
+            -segment_format mp4
+            /home/pi/videos/${cameras[i].folder}/%Y-%m-%d_%H-%M.mp4
+          `)
+        );
+      }
+
+      stopRecordingInterval();
+    } else {
+      console.log(`Time: ${minutes}:${seconds}. Waiting for 15-minute recording interval...`);
+    }
+  }, 1000);
+};
+
+const stopRecordingInterval = async () => {
+  clearInterval(recordingInterval);
+};
+
 const startRecording = async (config) => {
-  const cameras = [
-    { address: '10.10.5.2:554', folder: 'camera1' },
-    { address: '10.10.5.3:554', folder: 'camera2' },
-    { address: '10.10.5.4:554', folder: 'camera3' },
-  ];
-
-  for (var i = 0; i < cameras.length; i++) {
-    console.log(`Spawning ffmpeg for ${cameras[i].folder}/${cameras[i].address}...`);
-    await execCommand(`mkdir -p /home/pi/videos/${cameras[i].folder}/`);
-
-    spawn(
-      'ffmpeg',
-      formatArguments(`
-        -hide_banner
-        -i rtsp://${process.env.CAMERA_USER}:${process.env.CAMERA_PASSWORD}@${cameras[i].address}/cam/realmonitor?channel=1&subtype=0
-        -vcodec copy
-        -f segment
-        -strftime 1
-        -segment_time 300
-        -segment_format mp4
-        /home/pi/videos/${cameras[i].folder}/%Y-%m-%d_%H-%M.mp4
-      `)
-    );
-  }
+  startRecordingInterval();
 };
 
 const stopRecording = async () => {
@@ -358,7 +382,9 @@ module.exports = {
   mountStorageDrive,
   setupStorageDrive,
   startRecording,
+  startRecordingInterval,
   stopRecording,
+  stopRecordingInterval,
   uploadPerfMon,
   uploadSysInfo,
   uploadVideos,
