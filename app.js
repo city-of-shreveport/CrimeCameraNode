@@ -1,14 +1,14 @@
 // require basic
-const express = require('express');
-const app = express();
-const cookieParser = require('cookie-parser');
-const createError = require('http-errors');
-const logger = require('morgan');
-const mongoose = require('mongoose');
-const path = require('path');
+var express = require('express');
+var app = express();
+var cookieParser = require('cookie-parser');
+var createError = require('http-errors');
+var logger = require('morgan');
+var mongoose = require('mongoose');
+var path = require('path');
 
 // require routers
-const apiRouter = require('./routes/api');
+var apiRouter = require('./routes/api');
 
 // establish database connection
 mongoose.connect(

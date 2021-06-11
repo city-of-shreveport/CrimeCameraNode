@@ -1,13 +1,15 @@
 // require basic
-const router = require('express').Router();
-const spawn = require('child_process').spawn,
+var express = require('express');
+var router = express.Router();
+var spawn = require('child_process').spawn,
   child = null;
-const { startRecording, stopRecording } = require('../helperFunctions');
-
-require('dotenv').config();
+var { startRecording, stopRecording } = require('../helperFunctions');
 
 // require models
-const videos = require('../models/videos');
+var videos = require('../models/videos');
+
+// require environment
+require('dotenv').config();
 
 router.get('/videos', async (req, res) => {
   videos.find({}, function (err, docs) {

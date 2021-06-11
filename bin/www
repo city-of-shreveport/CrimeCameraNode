@@ -43,7 +43,7 @@ async function getConfig() {
 
   console.log('Getting configuration information from remote server...');
   var response = await got(
-    `${process.env.CAMERA_SERVER}/api/nodes/${process.env.CAMERA_IDENTIFIER}`
+    `${process.env.NODE_SERVER}/api/nodes/${process.env.NODE_IDENTIFIER}`
   );
 
   config = JSON.parse(response.body).config;

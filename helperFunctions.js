@@ -268,7 +268,7 @@ const uploadSysInfo = async (config) => {
     sysInfo.memLayout = data;
   });
 
-  axios.post(`${process.env.CAMERA_SERVER}/api/nodes/sysInfo/${config.hostName}`, sysInfo);
+  axios.post(`${process.env.NODE_SERVER}/api/nodes/sysInfo/${config.hostName}`, sysInfo);
 };
 
 const uploadPerfMon = async (config) => {
@@ -318,7 +318,7 @@ const uploadPerfMon = async (config) => {
     }
   });
 
-  axios.post(`${process.env.CAMERA_SERVER}/api/perfmons`, perfMon);
+  axios.post(`${process.env.NODE_SERVER}/api/perfmons`, perfMon);
 };
 
 const uploadVideos = async (config) => {
@@ -372,7 +372,7 @@ const uploadVideos = async (config) => {
   }
 
   allVideos = await videos.find({});
-  axios.post(`${process.env.CAMERA_SERVER}/api/videos`, allVideos);
+  axios.post(`${process.env.NODE_SERVER}/api/videos`, allVideos);
 };
 
 module.exports = {
