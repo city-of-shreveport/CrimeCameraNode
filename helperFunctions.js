@@ -184,7 +184,7 @@ const startRecordingInterval = async () => {
     var minutes = new Date().getMinutes();
     var seconds = new Date().getSeconds();
 
-    if (minutes == 0 || minutes % 15 == 0) {
+    if ((minutes == 0 && seconds == 0) || (minutes % 15 == 0 && seconds == 0)) {
       console.log('Starting recording!');
 
       const cameras = [
