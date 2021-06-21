@@ -202,12 +202,12 @@ const startRecordingInterval = async () => {
           formatArguments(`
             -hide_banner
             -i rtsp://${process.env.CAMERA_USER}:${process.env.CAMERA_PASSWORD}@${cameras[i].address}/cam/realmonitor?channel=1&subtype=0
-            -vcodec copy
+            -codec copy
             -f segment
-            -strftime 1
-            -segment_time 900
+            -segment_time 10
             -segment_format mp4
-            /home/pi/videos/${cameras[i].folder}/%Y-%m-%d_%H-%M.mp4
+            -strftime 1
+            /home/pi/videos/${cameras[i].folder}/%s.mp4
           `)
         );
       }
