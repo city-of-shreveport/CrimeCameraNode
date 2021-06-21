@@ -197,7 +197,7 @@ const startRecordingInterval = async () => {
         console.log(`Spawning ffmpeg for ${cameras[i].folder}/${cameras[i].address}...`);
         execCommand(`mkdir -p /home/pi/videos/${cameras[i].folder}/`);
 
-        spawn(
+        child = spawn(
           'ffmpeg',
           formatArguments(`
             -hide_banner
@@ -210,6 +210,14 @@ const startRecordingInterval = async () => {
             /home/pi/videos/${cameras[i].folder}/%s.mp4
           `)
         );
+
+        child.stdout.on('data', (data) => {
+          console.log(`${data}`);
+        });
+
+        child.stderr.on('data', (data) => {
+          console.error(`${data}`);
+        });
       }
 
       stopRecordingInterval();
