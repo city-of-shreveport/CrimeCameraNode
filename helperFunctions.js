@@ -184,22 +184,22 @@ const startRecordingInterval = async () => {
     var minutes = new Date().getMinutes();
     var seconds = new Date().getSeconds();
 
-    if ((minutes == 0 && seconds == 0) || (minutes % 15 == 0 && seconds == 0)) {
-      console.log('Starting recording!');
+    // if ((minutes == 0 && seconds == 0) || (minutes % 15 == 0 && seconds == 0)) {
+    console.log('Starting recording!');
 
-      const cameras = [
-        { address: '10.10.5.2:554', folder: 'camera1' },
-        { address: '10.10.5.3:554', folder: 'camera2' },
-        { address: '10.10.5.4:554', folder: 'camera3' },
-      ];
+    const cameras = [
+      { address: '10.10.5.2:554', folder: 'camera1' },
+      { address: '10.10.5.3:554', folder: 'camera2' },
+      { address: '10.10.5.4:554', folder: 'camera3' },
+    ];
 
-      for (var i = 0; i < cameras.length; i++) {
-        console.log(`Spawning ffmpeg for ${cameras[i].folder}/${cameras[i].address}...`);
-        execCommand(`mkdir -p /home/pi/videos/${cameras[i].folder}/`);
+    for (var i = 0; i < cameras.length; i++) {
+      console.log(`Spawning ffmpeg for ${cameras[i].folder}/${cameras[i].address}...`);
+      execCommand(`mkdir -p /home/pi/videos/${cameras[i].folder}/`);
 
-        spawn(
-          'ffmpeg',
-          formatArguments(`
+      spawn(
+        'ffmpeg',
+        formatArguments(`
             -hide_banner
             -i rtsp://${process.env.CAMERA_USER}:${process.env.CAMERA_PASSWORD}@${cameras[i].address}/cam/realmonitor?channel=1&subtype=0
             -codec copy
@@ -209,13 +209,13 @@ const startRecordingInterval = async () => {
             -strftime 1
             /home/pi/videos/${cameras[i].folder}/%s.mp4
           `)
-        );
-      }
-
-      stopRecordingInterval();
-    } else {
-      console.log(`Time: ${minutes}:${seconds}. Waiting for 15-minute recording interval...`);
+      );
     }
+
+    stopRecordingInterval();
+    // } else {
+    //   console.log(`Time: ${minutes}:${seconds}. Waiting for 15-minute recording interval...`);
+    // }
   }, 1000);
 };
 
