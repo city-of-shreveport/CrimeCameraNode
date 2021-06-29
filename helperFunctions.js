@@ -184,46 +184,46 @@ const startRecordingInterval = async () => {
     var minutes = new Date().getMinutes();
     var seconds = new Date().getSeconds();
 
-    if ((minutes == 0 && seconds == 0) || (minutes % 15 == 0 && seconds == 0)) {
-      console.log('Starting recording!');
+    // if ((minutes == 0 && seconds == 0) || (minutes % 15 == 0 && seconds == 0)) {
+    console.log('Starting recording!');
 
-      const cameras = [
-        { address: '10.10.5.2:554', folder: 'camera1' },
-        { address: '10.10.5.3:554', folder: 'camera2' },
-        { address: '10.10.5.4:554', folder: 'camera3' },
-      ];
+    const cameras = [
+      { address: '10.10.5.2:554', folder: 'camera1' },
+      { address: '10.10.5.3:554', folder: 'camera2' },
+      { address: '10.10.5.4:554', folder: 'camera3' },
+    ];
 
-      for (var i = 0; i < cameras.length; i++) {
-        console.log(`Spawning ffmpeg for ${cameras[i].folder}/${cameras[i].address}...`);
-        execCommand(`mkdir -p /home/pi/videos/${cameras[i].folder}/`);
+    for (var i = 0; i < cameras.length; i++) {
+      console.log(`Spawning ffmpeg for ${cameras[i].folder}/${cameras[i].address}...`);
+      execCommand(`mkdir -p /home/pi/videos/${cameras[i].folder}/`);
 
-        child = spawn(
-          'ffmpeg',
-          formatArguments(`
+      child = spawn(
+        'ffmpeg',
+        formatArguments(`
             -hide_banner
             -i rtsp://${process.env.CAMERA_USER}:${process.env.CAMERA_PASSWORD}@${cameras[i].address}/cam/realmonitor?channel=1&subtype=0
             -codec copy
             -f segment
-            -segment_time 900
+            -segment_time 60
             -segment_format mp4
             -strftime 1
             /home/pi/videos/${cameras[i].folder}/%Y-%m-%d-%H-%M.mp4
           `)
-        );
+      );
 
-        child.stdout.on('data', (data) => {
-          console.log(`${data}`);
-        });
+      child.stdout.on('data', (data) => {
+        // console.log(`${data}`);
+      });
 
-        child.stderr.on('data', (data) => {
-          console.error(`${data}`);
-        });
-      }
-
-      stopRecordingInterval();
-    } else {
-      console.log(`Time: ${minutes}:${seconds}. Waiting for 15-minute recording interval...`);
+      child.stderr.on('data', (data) => {
+        // console.error(`${data}`);
+      });
     }
+
+    stopRecordingInterval();
+    // } else {
+    //   console.log(`Time: ${minutes}:${seconds}. Waiting for 15-minute recording interval...`);
+    // }
   }, 1000);
 };
 
@@ -338,51 +338,53 @@ const uploadVideos = async (config) => {
     const fileList = await execCommand(`ls /home/pi/videos/${camera}`);
     const videoFiles = fileList.split('\n').filter((file) => file !== '');
 
-    videoFiles.forEach(async function (videoFile) {
-      try {
-        ffmpeg.ffprobe(`/home/pi/videos/${camera}/${videoFile}`, function (error, metadata) {
-          if (videoFiles != undefined && metadata != undefined) {
-            let year = metadata.format.filename.split('/')[5].split('-')[0];
-            let month = metadata.format.filename.split('/')[5].split('-')[1];
-            let day = metadata.format.filename.split('/')[5].split('-')[2];
-            let hour = metadata.format.filename.split('/')[5].split('-')[3];
-            let minute = metadata.format.filename.split('/')[5].split('-')[4];
-            let dateTime = moment({ year: year, month: month, day: day, hour: hour, minute: minute });
+    videoFiles.forEach(
+      await async function (videoFile) {
+        try {
+          ffmpeg.ffprobe(`/home/pi/videos/${camera}/${videoFile}`, function (error, metadata) {
+            if (videoFiles != undefined && metadata != undefined) {
+              let year = parseInt(metadata.format.filename.split('/')[5].split('-')[0]);
+              let monthIndex = parseInt(metadata.format.filename.split('/')[5].split('-')[1]) - 1;
+              let day = parseInt(metadata.format.filename.split('/')[5].split('-')[2]);
+              let hours = parseInt(metadata.format.filename.split('/')[5].split('-')[3]);
+              let minutes = parseInt(metadata.format.filename.split('/')[5].split('-')[4]);
+              let dateTime = new Date(year, monthIndex, day, hours, minutes);
 
-            videos.exists(
-              {
-                node: config.hostName,
-                fileLocation: metadata.format.filename,
-              },
-              function (err, doc) {
-                if (!doc) {
-                  new videos({
-                    node: config.hostName,
-                    fileLocation: `${camera}/${videoFile}`,
-                    location: {
-                      lat: config.locationLat,
-                      lng: config.locationLong,
-                    },
-                    startPts: metadata.streams[0].start_pts,
-                    startTime: metadata.streams[0].start_time,
-                    duration: metadata.format.duration,
-                    bitRate: metadata.format.bit_rate,
-                    height: metadata.streams[0].height,
-                    width: metadata.streams[0].width,
-                    size: metadata.format.size,
-                    camera: camera,
-                    hash: execSync(`sha1sum ${metadata.format.filename}`).toString().split(' ')[0],
-                    dateTime: dateTime,
-                  }).save();
+              videos.exists(
+                {
+                  node: config.hostName,
+                  fileLocation: metadata.format.filename,
+                },
+                function (err, doc) {
+                  if (!doc) {
+                    new videos({
+                      node: config.hostName,
+                      fileLocation: `${camera}/${videoFile}`,
+                      location: {
+                        lat: config.locationLat,
+                        lng: config.locationLong,
+                      },
+                      startPts: metadata.streams[0].start_pts,
+                      startTime: metadata.streams[0].start_time,
+                      duration: metadata.format.duration,
+                      bitRate: metadata.format.bit_rate,
+                      height: metadata.streams[0].height,
+                      width: metadata.streams[0].width,
+                      size: metadata.format.size,
+                      camera: camera,
+                      hash: execSync(`sha1sum ${metadata.format.filename}`).toString().split(' ')[0],
+                      dateTime: dateTime,
+                    }).save();
+                  }
                 }
-              }
-            );
-          }
-        });
-      } catch (error) {
-        console.log(error);
+              );
+            }
+          });
+        } catch (error) {
+          console.log(error);
+        }
       }
-    });
+    );
   }
 
   allVideos = await videos.find({});
