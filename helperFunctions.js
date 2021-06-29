@@ -338,45 +338,51 @@ const uploadVideos = async (config) => {
     const fileList = await execCommand(`ls /home/pi/videos/${camera}`);
     const videoFiles = fileList.split('\n').filter((file) => file !== '');
 
-    for (var v = 0; v < videoFiles.length; v++) {
-      ffmpeg.ffprobe(`/home/pi/videos/${camera}/${videoFiles[v]}`, function (error, metadata) {
-        try {
-          let yearMonthDay = metadata.format.filename.split('/')[5].split('_')[0];
-          let hour = metadata.format.filename.split('/')[5].split('_')[1].split('.')[0].split('-')[0];
-          let minute = metadata.format.filename.split('/')[5].split('_')[1].split('.')[0].split('-')[1];
-          let dateTime = moment(`${yearMonthDay} ${hour}:${minute}:00`).unix();
+    videoFiles.forEach(async function (videoFile) {
+      try {
+        ffmpeg.ffprobe(`/home/pi/videos/${camera}/${videoFile}`, function (error, metadata) {
+          if (videoFiles != undefined && metadata != undefined) {
+            let year = metadata.format.filename.split('/')[5].split('-')[0];
+            let month = metadata.format.filename.split('/')[5].split('-')[1];
+            let day = metadata.format.filename.split('/')[5].split('-')[2];
+            let hour = metadata.format.filename.split('/')[5].split('-')[3];
+            let minute = metadata.format.filename.split('/')[5].split('-')[4];
+            let dateTime = moment({ year: year, month: month, day: day, hour: hour, minute: minute });
 
-          videos.exists(
-            {
-              node: config.hostName,
-              fileLocation: metadata.format.filename,
-            },
-            function (err, doc) {
-              if (!doc) {
-                new videos({
-                  node: config.hostName,
-                  fileLocation: metadata.format.filename,
-                  location: {
-                    lat: config.locationLat,
-                    lng: config.locationLong,
-                  },
-                  startPts: metadata.streams[0].start_pts,
-                  startTime: metadata.streams[0].start_time,
-                  duration: metadata.format.duration,
-                  bitRate: metadata.format.bit_rate,
-                  height: metadata.streams[0].height,
-                  width: metadata.streams[0].width,
-                  size: metadata.format.size,
-                  dateTime: dateTime,
-                  camera: camera,
-                  hash: execSync(`sha1sum ${metadata.format.filename}`).toString(),
-                }).save();
+            videos.exists(
+              {
+                node: config.hostName,
+                fileLocation: metadata.format.filename,
+              },
+              function (err, doc) {
+                if (!doc) {
+                  new videos({
+                    node: config.hostName,
+                    fileLocation: `${camera}/${videoFile}`,
+                    location: {
+                      lat: config.locationLat,
+                      lng: config.locationLong,
+                    },
+                    startPts: metadata.streams[0].start_pts,
+                    startTime: metadata.streams[0].start_time,
+                    duration: metadata.format.duration,
+                    bitRate: metadata.format.bit_rate,
+                    height: metadata.streams[0].height,
+                    width: metadata.streams[0].width,
+                    size: metadata.format.size,
+                    camera: camera,
+                    hash: execSync(`sha1sum ${metadata.format.filename}`).toString().split(' ')[0],
+                    dateTime: dateTime,
+                  }).save();
+                }
               }
-            }
-          );
-        } catch (error) {}
-      });
-    }
+            );
+          }
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    });
   }
 
   allVideos = await videos.find({});
