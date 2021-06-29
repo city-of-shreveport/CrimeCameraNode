@@ -12,17 +12,17 @@ const schema = mongoose.Schema({
   height: { type: Number, default: 0 },
   width: { type: Number, default: 0 },
   size: { type: Number, default: 0 },
-  dateTime: Date,
   camera: { type: String, default: '' },
-  deletionDate: {
+  hash: { type: String, default: '' },
+  dateTime: { type: Date, default: Date.now },
+  deleteAt: {
     type: Date,
     default: new Date(+new Date() + 14 * 24 * 60 * 60 * 1000),
   },
-  hash: { type: String, default: '' },
 
-  // Default properties.
+  // Default
   createdAt: { type: Date, default: Date.now },
-  updatedAt: Date,
+  updatedAt: { type: Date, default: Date.now },
 });
 
 module.exports = mongoose.model('videos', schema);
