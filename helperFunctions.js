@@ -341,11 +341,6 @@ const uploadVideos = async (config) => {
     for (var v = 0; v < videoFiles.length; v++) {
       ffmpeg.ffprobe(`/home/pi/videos/${camera}/${videoFiles[v]}`, function (error, metadata) {
         try {
-          let yearMonthDay = metadata.format.filename.split('/')[5].split('_')[0];
-          let hour = metadata.format.filename.split('/')[5].split('_')[1].split('.')[0].split('-')[0];
-          let minute = metadata.format.filename.split('/')[5].split('_')[1].split('.')[0].split('-')[1];
-          let dateTime = moment(`${yearMonthDay} ${hour}:${minute}:00`).unix();
-
           videos.exists(
             {
               node: config.hostName,
@@ -367,7 +362,7 @@ const uploadVideos = async (config) => {
                   height: metadata.streams[0].height,
                   width: metadata.streams[0].width,
                   size: metadata.format.size,
-                  dateTime: dateTime,
+                  dateTime: metadata.format.filename.split('/')[5].substring(0, 10),
                   camera: camera,
                   hash: execSync(`sha1sum ${metadata.format.filename}`).toString(),
                 }).save();
