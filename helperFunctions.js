@@ -184,46 +184,42 @@ const startRecordingInterval = async () => {
     var minutes = new Date().getMinutes();
     var seconds = new Date().getSeconds();
 
-    // if ((minutes == 0 && seconds == 0) || (minutes % 15 == 0 && seconds == 0)) {
-    console.log('Starting recording!');
+    if ((minutes == 0 && seconds == 0) || (minutes % 15 == 0 && seconds == 0)) {
+      console.log('Starting recording!');
 
-    const cameras = [
-      { address: '10.10.5.2:554', folder: 'camera1' },
-      { address: '10.10.5.3:554', folder: 'camera2' },
-      { address: '10.10.5.4:554', folder: 'camera3' },
-    ];
+      const cameras = [
+        { address: '10.10.5.2:554', folder: 'camera1' },
+        { address: '10.10.5.3:554', folder: 'camera2' },
+        { address: '10.10.5.4:554', folder: 'camera3' },
+      ];
 
-    for (var i = 0; i < cameras.length; i++) {
-      console.log(`Spawning ffmpeg for ${cameras[i].folder}/${cameras[i].address}...`);
-      execCommand(`mkdir -p /home/pi/videos/${cameras[i].folder}/`);
+      for (var i = 0; i < cameras.length; i++) {
+        console.log(`Spawning ffmpeg for ${cameras[i].folder}/${cameras[i].address}...`);
+        execCommand(`mkdir -p /home/pi/videos/${cameras[i].folder}/`);
 
-      child = spawn(
-        'ffmpeg',
-        formatArguments(`
+        child = spawn(
+          'ffmpeg',
+          formatArguments(`
             -hide_banner
             -i rtsp://${process.env.CAMERA_USER}:${process.env.CAMERA_PASSWORD}@${cameras[i].address}/cam/realmonitor?channel=1&subtype=0
             -codec copy
             -f segment
-            -segment_time 60
+            -segment_time 900
             -segment_format mp4
             -strftime 1
             /home/pi/videos/${cameras[i].folder}/%Y-%m-%d-%H-%M.mp4
           `)
-      );
+        );
 
-      child.stdout.on('data', (data) => {
-        // console.log(`${data}`);
-      });
+        child.stderr.on('data', (data) => {
+          console.error(`${data}`);
+        });
+      }
 
-      child.stderr.on('data', (data) => {
-        // console.error(`${data}`);
-      });
+      stopRecordingInterval();
+    } else {
+      console.log(`Time: ${minutes}:${seconds}. Waiting for 15-minute recording interval...`);
     }
-
-    stopRecordingInterval();
-    // } else {
-    //   console.log(`Time: ${minutes}:${seconds}. Waiting for 15-minute recording interval...`);
-    // }
   }, 1000);
 };
 
@@ -372,8 +368,9 @@ const uploadVideos = async (config) => {
                       width: metadata.streams[0].width,
                       size: metadata.format.size,
                       camera: camera,
-                      hash: execSync(`sha1sum ${metadata.format.filename}`).toString().split(' ')[0],
                       dateTime: dateTime,
+
+                      hash: execSync(`sha1sum ${metadata.format.filename}`).toString().split(' ')[0],
                     }).save();
                   }
                 }
