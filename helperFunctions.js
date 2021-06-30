@@ -353,7 +353,7 @@ const uploadVideos = async (config) => {
               videos.exists(
                 {
                   node: config.hostName,
-                  fileLocation: metadata.format.filename,
+                  fileLocation: `${camera}/${videoFile}`,
                 },
                 function (err, doc) {
                   if (!doc) {
