@@ -66,21 +66,23 @@ var server = http.createServer(app);
  * Listen on provided port, on all network interfaces.
  */
 
-getConfig().then(() => {
-  bootstrapApp(config).then(() => {
-    server.listen(port);
-    console.log(`App listenting on port ${port}!`)
-    server.on('error', onError);
-    server.on('listening', onListening);
-    setInterval(() => { uploadSysInfo(config) }, 300000);
-    setInterval(() => { uploadPerfMon(config) }, 60000);
-    setInterval(() => { uploadVideos(config) }, 900000);
-    uploadSysInfo(config)
-    uploadPerfMon(config)
-    uploadVideos(config)
-    startRecording(config);
-  });
-})
+setTimeout(() => {
+  getConfig().then(() => {
+    bootstrapApp(config).then(() => {
+      server.listen(port);
+      console.log(`App listenting on port ${port}!`)
+      server.on('error', onError);
+      server.on('listening', onListening);
+      setInterval(() => { uploadSysInfo(config) }, 300000);
+      setInterval(() => { uploadPerfMon(config) }, 60000);
+      setInterval(() => { uploadVideos(config) }, 900000);
+      uploadSysInfo(config)
+      uploadPerfMon(config)
+      uploadVideos(config)
+      startRecording(config);
+    });
+  })
+}, 60000);
 
 /**
  * Normalize a port into a number, string, or false.
