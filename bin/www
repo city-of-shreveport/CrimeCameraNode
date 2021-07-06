@@ -47,6 +47,7 @@ async function getConfig() {
   );
 
   config = JSON.parse(response.body).config;
+  console.log(config);
 }
 
 /**
@@ -68,21 +69,21 @@ var server = http.createServer(app);
 
 setTimeout(() => {
   getConfig().then(() => {
-    bootstrapApp(config).then(() => {
-      server.listen(port);
-      console.log(`App listenting on port ${port}!`)
-      server.on('error', onError);
-      server.on('listening', onListening);
-      setInterval(() => { uploadSysInfo(config) }, 300000);
-      setInterval(() => { uploadPerfMon(config) }, 60000);
-      setInterval(() => { uploadVideos(config) }, 900000);
-      uploadSysInfo(config)
-      uploadPerfMon(config)
-      uploadVideos(config)
-      startRecording(config);
-    });
+    // bootstrapApp(config).then(() => {
+    //   server.listen(port);
+    //   console.log(`App listenting on port ${port}!`)
+    //   server.on('error', onError);
+    //   server.on('listening', onListening);
+    //   setInterval(() => { uploadSysInfo(config) }, 300000);
+    //   setInterval(() => { uploadPerfMon(config) }, 60000);
+    //   setInterval(() => { uploadVideos(config) }, 900000);
+    //   uploadSysInfo(config)
+    //   uploadPerfMon(config)
+    //   uploadVideos(config)
+    //   startRecording(config);
+    // });
   })
-}, 60000);
+}, 0);
 
 /**
  * Normalize a port into a number, string, or false.
