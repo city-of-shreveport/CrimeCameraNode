@@ -45,9 +45,8 @@ async function getConfig() {
   var response = await got(
     `${process.env.NODE_SERVER}/api/nodes/${process.env.NODE_IDENTIFIER}`
   );
-
-  config = JSON.parse(response.body).config;
-  console.log(config);
+  console.log(response.body);
+  // config = JSON.parse(response.body).config;
 }
 
 /**
