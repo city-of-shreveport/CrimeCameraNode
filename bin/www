@@ -84,12 +84,12 @@ var server = http.createServer(app);
  * Listen on provided port, on all network interfaces.
  */
 
-if (process.env.DEBUG == true) {
+if (process.env.DEBUG == 'true') {
+  executeMainProcess()
+} else {
   setTimeout(() => {
     executeMainProcess()
   }, 60000);
-} else {
-  executeMainProcess()
 }
 
 /**
