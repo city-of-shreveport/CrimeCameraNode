@@ -45,8 +45,26 @@ async function getConfig() {
   var response = await got(
     `${process.env.NODE_SERVER}/api/nodes/${process.env.NODE_IDENTIFIER}`
   );
-  console.log(response.body);
-  // config = JSON.parse(response.body).config;
+
+  config = JSON.parse(response.body).config;
+}
+
+async function executeMainProcess() {
+  getConfig().then(() => {
+    bootstrapApp(config).then(() => {
+      server.listen(port);
+      console.log(`App listenting on port ${port}!`)
+      server.on('error', onError);
+      server.on('listening', onListening);
+      setInterval(() => { uploadSysInfo(config) }, 300000);
+      setInterval(() => { uploadPerfMon(config) }, 60000);
+      setInterval(() => { uploadVideos(config) }, 900000);
+      uploadSysInfo(config)
+      uploadPerfMon(config)
+      uploadVideos(config)
+      startRecording(config);
+    });
+  })
 }
 
 /**
@@ -66,23 +84,13 @@ var server = http.createServer(app);
  * Listen on provided port, on all network interfaces.
  */
 
-setTimeout(() => {
-  getConfig().then(() => {
-    // bootstrapApp(config).then(() => {
-    //   server.listen(port);
-    //   console.log(`App listenting on port ${port}!`)
-    //   server.on('error', onError);
-    //   server.on('listening', onListening);
-    //   setInterval(() => { uploadSysInfo(config) }, 300000);
-    //   setInterval(() => { uploadPerfMon(config) }, 60000);
-    //   setInterval(() => { uploadVideos(config) }, 900000);
-    //   uploadSysInfo(config)
-    //   uploadPerfMon(config)
-    //   uploadVideos(config)
-    //   startRecording(config);
-    // });
-  })
-}, 0);
+if (process.env.DEBUG == true) {
+  setTimeout(() => {
+    executeMainProcess()
+  }, 60000);
+} else {
+  executeMainProcess()
+}
 
 /**
  * Normalize a port into a number, string, or false.
