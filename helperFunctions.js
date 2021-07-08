@@ -110,6 +110,7 @@ const bootstrapApp = async (config) => {
       sudo sysctl net.ipv4.conf.eth0.forwarding=1;
       sudo sysctl net.ipv4.conf.eth1.forwarding=1;
       sudo sysctl net.ipv4.conf.wlan0.forwarding=1;
+      sudo sysctl net.ipv4.conf.ztuga5uslj.forwarding=1;
 
       sudo iptables -t nat -A PREROUTING -p tcp -s 0/0 -d ${config.ip} --dport 554 -j DNAT --to 10.10.5.2:554;
       sudo iptables -A FORWARD -p tcp -d ${config.ip} --dport 554 -j ACCEPT;
