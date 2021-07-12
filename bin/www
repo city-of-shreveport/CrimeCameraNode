@@ -23,7 +23,6 @@ module.exports = {
   stopRecordingInterval,
   uploadPerfMon,
   uploadSysInfo,
-  uploadVideos,
 } = require('../helperFunctions');
 
 require('dotenv').config();
@@ -58,10 +57,8 @@ async function executeMainProcess() {
       server.on('listening', onListening);
       setInterval(() => { uploadSysInfo(config) }, 300000);
       setInterval(() => { uploadPerfMon(config) }, 60000);
-      setInterval(() => { uploadVideos(config) }, 900000);
       uploadSysInfo(config)
       uploadPerfMon(config)
-      uploadVideos(config)
       startRecording(config);
     });
   })

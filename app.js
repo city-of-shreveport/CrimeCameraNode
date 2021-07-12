@@ -10,19 +10,6 @@ var path = require('path');
 // require routers
 var apiRouter = require('./routes/api');
 
-// establish database connection
-mongoose.connect(
-  'mongodb://localhost/CrimeCameraSystem',
-  {
-    useFindAndModify: false,
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  },
-  function (err) {
-    if (err) throw err;
-  }
-);
-
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');

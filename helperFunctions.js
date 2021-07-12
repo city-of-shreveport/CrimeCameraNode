@@ -8,9 +8,6 @@ const promise = require('promise');
 const si = require('systeminformation');
 const { exec, execSync, spawn } = require('child_process');
 
-// require models
-const videos = require('./models/videos');
-
 // require environment
 require('dotenv').config();
 require('events').EventEmitter.defaultMaxListeners = 100;
@@ -324,69 +321,6 @@ const uploadPerfMon = async (config) => {
   });
 
   axios.post(`${process.env.NODE_SERVER}/api/perfmons`, perfMon);
-};
-
-const uploadVideos = async (config) => {
-  console.log('Uploading Videos...');
-  const cameras = ['camera1', 'camera2', 'camera3'];
-
-  for (var c = 0; c < cameras.length; c++) {
-    const camera = cameras[c];
-    const fileList = await execCommand(`ls /home/pi/videos/${camera}`);
-    const videoFiles = fileList.split('\n').filter((file) => file !== '');
-
-    videoFiles.forEach(
-      await async function (videoFile) {
-        try {
-          ffmpeg.ffprobe(`/home/pi/videos/${camera}/${videoFile}`, function (error, metadata) {
-            if (videoFiles != undefined && metadata != undefined) {
-              let year = parseInt(metadata.format.filename.split('/')[5].split('-')[0]);
-              let monthIndex = parseInt(metadata.format.filename.split('/')[5].split('-')[1]) - 1;
-              let day = parseInt(metadata.format.filename.split('/')[5].split('-')[2]);
-              let hours = parseInt(metadata.format.filename.split('/')[5].split('-')[3]);
-              let minutes = parseInt(metadata.format.filename.split('/')[5].split('-')[4]);
-              let dateTime = new Date(year, monthIndex, day, hours, minutes);
-
-              videos.exists(
-                {
-                  node: config.hostName,
-                  fileLocation: `${camera}/${videoFile}`,
-                },
-                function (err, doc) {
-                  if (!doc) {
-                    new videos({
-                      node: config.hostName,
-                      fileLocation: `${camera}/${videoFile}`,
-                      location: {
-                        lat: config.locationLat,
-                        lng: config.locationLong,
-                      },
-                      startPts: metadata.streams[0].start_pts,
-                      startTime: metadata.streams[0].start_time,
-                      duration: metadata.format.duration,
-                      bitRate: metadata.format.bit_rate,
-                      height: metadata.streams[0].height,
-                      width: metadata.streams[0].width,
-                      size: metadata.format.size,
-                      camera: camera,
-                      dateTime: dateTime,
-
-                      hash: execSync(`sha1sum ${metadata.format.filename}`).toString().split(' ')[0],
-                    }).save();
-                  }
-                }
-              );
-            }
-          });
-        } catch (error) {
-          console.log(error);
-        }
-      }
-    );
-  }
-
-  allVideos = await videos.find({});
-  axios.post(`${process.env.NODE_SERVER}/api/videos`, allVideos);
 };
 
 module.exports = {
