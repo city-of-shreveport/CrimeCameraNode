@@ -27,6 +27,7 @@
     "morgan": "~1.9.1",
     "mp4frag": "^0.3.0",
     "node-fetch": "^2.6.1",
+    "node-media-server": "^2.3.8",
     "node-rtsp-stream": "0.0.9",
     "npm": "^7.15.1",
     "pug": "^3.0.2",

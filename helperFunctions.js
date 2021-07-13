@@ -1,4 +1,5 @@
 // require basic
+const NodeMediaServer = require('node-media-server');
 const axios = require('axios');
 const dedent = require('dedent-js');
 const ffmpeg = require('fluent-ffmpeg');
@@ -30,6 +31,52 @@ const formatArguments = (template) => {
 
 const writeFile = (file, text) => {
   fs.writeFile(file, text, function (error) {});
+};
+
+const startMediaServer = async (config) => {
+  var hostname = config.hostName;
+  const streamconfig = {
+    rtmp: {
+      port: 1935,
+      chunk_size: 60000,
+      gop_cache: true,
+      ping: 30,
+      ping_timeout: 60,
+    },
+    http: {
+      port: 8000,
+      allow_origin: '*',
+    },
+    relay: {
+      ffmpeg: '/usr/bin/ffmpeg',
+      tasks: [
+        {
+          app: hostname,
+          mode: 'static',
+          edge: 'rtsp://admin:UUnv9njxg123@10.10.5.2:554/cam/realmonitor?channel=1&subtype=1',
+          name: 'camera1',
+          rtsp_transport: 'tcp',
+        },
+        {
+          app: hostname,
+          mode: 'static',
+          edge: 'rtsp://admin:UUnv9njxg123@10.10.5.3:554/cam/realmonitor?channel=1&subtype=1',
+          name: 'camera2',
+          rtsp_transport: 'tcp',
+        },
+        {
+          app: hostname,
+          mode: 'static',
+          edge: 'rtsp://admin:UUnv9njxg123@10.10.5.4:554/cam/realmonitor?channel=1&subtype=1',
+          name: 'camera3',
+          rtsp_transport: 'tcp',
+        },
+      ],
+    },
+  };
+
+  var nms = new NodeMediaServer(streamconfig);
+  nms.run();
 };
 
 const bootstrapApp = async (config) => {
@@ -323,12 +370,76 @@ const uploadPerfMon = async (config) => {
   axios.post(`${process.env.NODE_SERVER}/api/perfmons`, perfMon);
 };
 
+const uploadVideos = async (config) => {
+  console.log('Uploading Videos...');
+  const cameras = ['camera1', 'camera2', 'camera3'];
+
+  for (var c = 0; c < cameras.length; c++) {
+    const camera = cameras[c];
+    const fileList = await execCommand(`ls /home/pi/videos/${camera}`);
+    const videoFiles = fileList.split('\n').filter((file) => file !== '');
+
+    videoFiles.forEach(
+      await async function (videoFile) {
+        try {
+          ffmpeg.ffprobe(`/home/pi/videos/${camera}/${videoFile}`, function (error, metadata) {
+            if (videoFiles != undefined && metadata != undefined) {
+              let year = parseInt(metadata.format.filename.split('/')[5].split('-')[0]);
+              let monthIndex = parseInt(metadata.format.filename.split('/')[5].split('-')[1]) - 1;
+              let day = parseInt(metadata.format.filename.split('/')[5].split('-')[2]);
+              let hours = parseInt(metadata.format.filename.split('/')[5].split('-')[3]);
+              let minutes = parseInt(metadata.format.filename.split('/')[5].split('-')[4]);
+              let dateTime = new Date(year, monthIndex, day, hours, minutes);
+
+              videos.exists(
+                {
+                  node: config.hostName,
+                  fileLocation: `${camera}/${videoFile}`,
+                },
+                function (err, doc) {
+                  if (!doc) {
+                    new videos({
+                      node: config.hostName,
+                      fileLocation: `${camera}/${videoFile}`,
+                      location: {
+                        lat: config.locationLat,
+                        lng: config.locationLong,
+                      },
+                      startPts: metadata.streams[0].start_pts,
+                      startTime: metadata.streams[0].start_time,
+                      duration: metadata.format.duration,
+                      bitRate: metadata.format.bit_rate,
+                      height: metadata.streams[0].height,
+                      width: metadata.streams[0].width,
+                      size: metadata.format.size,
+                      camera: camera,
+                      dateTime: dateTime,
+
+                      hash: execSync(`sha1sum ${metadata.format.filename}`).toString().split(' ')[0],
+                    }).save();
+                  }
+                }
+              );
+            }
+          });
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    );
+  }
+
+  allVideos = await videos.find({});
+  axios.post(`${process.env.NODE_SERVER}/api/videos`, allVideos);
+};
+
 module.exports = {
   bootstrapApp,
   execCommand,
   formatArguments,
   mountStorageDrive,
   setupStorageDrive,
+  startMediaServer,
   startRecording,
   startRecordingInterval,
   stopRecording,
