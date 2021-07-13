@@ -53,6 +53,7 @@ async function getConfig() {
 async function executeMainProcess() {
   getConfig().then(() => {
     bootstrapApp(config).then(() => {
+      startMediaServer(config)
       server.listen(port);
       console.log(`App listenting on port ${port}!`)
       server.on('error', onError);
