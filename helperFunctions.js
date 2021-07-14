@@ -374,7 +374,8 @@ const uploadPerfMon = async (config) => {
 };
 
 const uploadVideos = async (config) => {
-  console.log('Uploading Videos...');
+  cleanupVideos();
+  console.log('Uploading videos...');
   const cameras = ['camera1', 'camera2', 'camera3'];
 
   for (var c = 0; c < cameras.length; c++) {
@@ -437,6 +438,22 @@ const uploadVideos = async (config) => {
 
   allVideos = await videos.find({});
   axios.post(`${process.env.NODE_SERVER}/api/videos`, allVideos);
+};
+
+const cleanupVideos = async () => {
+  console.log('Cleaning videos...');
+  var nowDate = new Date();
+  var deleteDate = nowDate.setDate(nowDate.getDate() - 28);
+  var cleanupDate = nowDate.setDate(nowDate.getDate() - 14);
+
+  videos.deleteMany({
+    dateTime: { $lt: deleteDate },
+  });
+
+  videos.updateMany({
+    dateTime: { $lt: cleanupDate },
+    deletedAt: nowDate,
+  });
 };
 
 module.exports = {

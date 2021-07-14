@@ -9,7 +9,7 @@ var debug = require('debug')('CrimeCameraNode:server');
 var http = require('http');
 var dedent = require('dedent-js');
 var got = require('got');
-var config = {}
+var config = {};
 
 var {
   bootstrapApp,
@@ -43,9 +43,7 @@ async function getConfig() {
   `);
 
   console.log('Getting configuration information from remote server...');
-  var response = await got(
-    `${process.env.NODE_SERVER}/api/nodes/${process.env.NODE_IDENTIFIER}`
-  );
+  var response = await got(`${process.env.NODE_SERVER}/api/nodes/${process.env.NODE_IDENTIFIER}`);
 
   config = JSON.parse(response.body).config;
 }
@@ -53,20 +51,31 @@ async function getConfig() {
 async function executeMainProcess() {
   getConfig().then(() => {
     bootstrapApp(config).then(() => {
-      startMediaServer(config)
+      startMediaServer(config);
+
       server.listen(port);
-      console.log(`App listenting on port ${port}!`)
       server.on('error', onError);
       server.on('listening', onListening);
-      setInterval(() => { uploadSysInfo(config) }, 300000);
-      setInterval(() => { uploadPerfMon(config) }, 60000);
-      setInterval(() => { uploadVideos(config) }, 900000);
-      uploadSysInfo(config)
-      uploadPerfMon(config)
-      uploadVideos(config)
+      console.log(`App listenting on port ${port}!`);
+
+      setInterval(() => {
+        uploadSysInfo(config);
+      }, 300000);
+
+      setInterval(() => {
+        uploadPerfMon(config);
+      }, 60000);
+
+      setInterval(() => {
+        uploadVideos(config);
+      }, 900000);
+
+      uploadSysInfo(config);
+      uploadPerfMon(config);
+      uploadVideos(config);
       startRecording(config);
     });
-  })
+  });
 }
 
 /**
@@ -87,10 +96,10 @@ var server = http.createServer(app);
  */
 
 if (process.env.DEBUG == 'true') {
-  executeMainProcess()
+  executeMainProcess();
 } else {
   setTimeout(() => {
-    executeMainProcess()
+    executeMainProcess();
   }, 60000);
 }
 
@@ -123,9 +132,7 @@ function onError(error) {
     throw error;
   }
 
-  var bind = typeof port === 'string'
-    ? 'Pipe ' + port
-    : 'Port ' + port;
+  var bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
@@ -148,8 +155,6 @@ function onError(error) {
 
 function onListening() {
   var addr = server.address();
-  var bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
+  var bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
   debug('Listening on ' + bind);
 }

@@ -15,9 +15,9 @@ const schema = mongoose.Schema({
   camera: { type: String, default: '' },
   hash: { type: String, default: '' },
   dateTime: { type: Date, default: Date.now },
-  deleteAt: {
+  deletedAt: {
     type: Date,
-    default: new Date(+new Date() + 14 * 24 * 60 * 60 * 1000),
+    default: null,
   },
 
   // Default
