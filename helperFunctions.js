@@ -9,6 +9,9 @@ const promise = require('promise');
 const si = require('systeminformation');
 const { exec, execSync, spawn } = require('child_process');
 
+// require models
+const videos = require('./models/videos');
+
 // require environment
 require('dotenv').config();
 require('events').EventEmitter.defaultMaxListeners = 100;
