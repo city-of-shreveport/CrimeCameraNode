@@ -394,17 +394,21 @@ const uploadVideos = async (config) => {
               videos.exists(
                 {
                   node: config.hostName,
-                  fileLocation: `${camera}/${videoFile}`,
+                  camera: camera,
+                  fileLocation: videoFile,
                 },
                 function (err, doc) {
                   if (!doc) {
                     new videos({
                       node: config.hostName,
-                      fileLocation: `${camera}/${videoFile}`,
+                      camera: camera,
+                      fileLocation: videoFile,
+
                       location: {
                         lat: config.locationLat,
                         lng: config.locationLong,
                       },
+
                       startPts: metadata.streams[0].start_pts,
                       startTime: metadata.streams[0].start_time,
                       duration: metadata.format.duration,
@@ -412,7 +416,6 @@ const uploadVideos = async (config) => {
                       height: metadata.streams[0].height,
                       width: metadata.streams[0].width,
                       size: metadata.format.size,
-                      camera: camera,
                       dateTime: dateTime,
 
                       hash: execSync(`sha1sum ${metadata.format.filename}`).toString().split(' ')[0],
