@@ -454,6 +454,18 @@ const cleanupVideos = async () => {
     dateTime: { $lt: cleanupDate },
     deletedAt: nowDate,
   });
+
+  oldVideos = await videos.find({ dateTime: { $lt: cleanupDate } });
+
+  oldVideos.forEach(
+    await async function (video) {
+      try {
+        execSync(`rm /home/pi/videos/${video.camera}/${video.fileLocation}`);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  );
 };
 
 module.exports = {
