@@ -253,7 +253,7 @@ const startRecordingInterval = async () => {
             -codec copy
             -f segment
             -segment_time 900
-            reset_timestamps 1
+            -reset_timestamps 1
             -segment_format mp4
             -strftime 1
             /home/pi/videos/${cameras[i].folder}/%Y-%m-%d-%H-%M.mp4
