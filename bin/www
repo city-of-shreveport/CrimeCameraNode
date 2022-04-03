@@ -9,16 +9,17 @@ var debug = require('debug')('CrimeCameraNode:server');
 var http = require('http');
 var dedent = require('dedent-js');
 var got = require('got');
-var config = {};
+var config = {}
 
-var {
+module.exports = {
   bootstrapApp,
   execCommand,
+  startMediaServer,
   formatArguments,
   mountStorageDrive,
   setupStorageDrive,
-  startMediaServer,
   startRecording,
+  startMediaServer,
   startRecordingInterval,
   stopRecording,
   stopRecordingInterval,
@@ -43,45 +44,11 @@ async function getConfig() {
   `);
 
   console.log('Getting configuration information from remote server...');
-  var response = await got(`${process.env.NODE_SERVER}/api/nodes/${process.env.NODE_IDENTIFIER}`);
+  var response = await got(
+    `${process.env.NODE_SERVER}/api/nodes/${process.env.NODE_IDENTIFIER}`
+  );
 
   config = JSON.parse(response.body).config;
-}
-
-async function executeMainProcess() {
-  getConfig().then(() => {
-    bootstrapApp(config).then(() => {
-      
-
-      server.listen(port);
-      server.on('error', onError);
-      server.on('listening', onListening);
-      console.log(`App listenting on port ${port}!`);
-      setInterval(() => {
-        startMediaServer(config);
-        console.log("Starting Streams")
-      }, 60000);
-      setInterval(() => {
-        uploadSysInfo(config);
-      }, 300000);
-
-      setInterval(() => {
-        uploadPerfMon(config);
-      }, 60000);
-
-      setInterval(() => {
-        uploadVideos(config);
-      }, 900000);
-
-      uploadSysInfo(config);
-      uploadPerfMon(config);
-      uploadVideos(config);
-     
- 
-      startMediaServer(config);
-      startRecording(config);
-    });
-  });
 }
 
 /**
@@ -101,13 +68,27 @@ var server = http.createServer(app);
  * Listen on provided port, on all network interfaces.
  */
 
-if (process.env.DEBUG == 'true') {
-  executeMainProcess();
-} else {
-  setTimeout(() => {
-    executeMainProcess();
-  }, 60000);
-}
+getConfig().then(() => {
+  bootstrapApp(config).then(() => {
+    server.listen(port);
+    console.log(`App listenting on port ${port}!`)
+    server.on('error', onError);
+    server.on('listening', onListening);
+    
+    setInterval(() => { uploadSysInfo(config) }, 300000);
+    setInterval(() => { uploadPerfMon(config) }, 60000);
+    setInterval(() => { uploadVideos(config) }, 900000);
+    setInterval(() => {
+      startMediaServer(config);
+      console.log("Starting Streams")
+    }, 60000);
+    uploadSysInfo(config)
+    uploadPerfMon(config)
+    uploadVideos(config)
+    startMediaServer(config)
+    startRecording(config);
+  });
+})
 
 /**
  * Normalize a port into a number, string, or false.
@@ -138,7 +119,9 @@ function onError(error) {
     throw error;
   }
 
-  var bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port;
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
@@ -161,6 +144,8 @@ function onError(error) {
 
 function onListening() {
   var addr = server.address();
-  var bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
   debug('Listening on ' + bind);
 }

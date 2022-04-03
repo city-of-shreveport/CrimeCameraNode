@@ -1,5 +1,5 @@
 // require basic
-const NodeMediaServer = require('node-media-server');
+//const NodeMediaServer = require('node-media-server');
 const axios = require('axios');
 const dedent = require('dedent-js');
 const ffmpeg = require('fluent-ffmpeg');
@@ -37,50 +37,16 @@ const writeFile = (file, text) => {
 };
 
 const startMediaServer = async (config) => {
-  var hostname = config.hostName;
-  const streamconfig = {
-    rtmp: {
-      port: 1935,
-      chunk_size: 60000,
-      gop_cache: true,
-      ping: 30,
-      ping_timeout: 60,
-    },
-    http: {
-      port: 8000,
-      allow_origin: '*',
-    },
-    relay: {
-      ffmpeg: '/usr/bin/ffmpeg',
-      tasks: [
-        {
-          app: hostname,
-          mode: 'static',
-          edge: 'rtsp://admin:UUnv9njxg123@10.10.5.2:554/cam/realmonitor?channel=1&subtype=1',
-          name: 'camera1',
-          rtsp_transport: 'tcp',
-        },
-        {
-          app: hostname,
-          mode: 'static',
-          edge: 'rtsp://admin:UUnv9njxg123@10.10.5.3:554/cam/realmonitor?channel=1&subtype=1',
-          name: 'camera2',
-          rtsp_transport: 'tcp',
-        },
-        {
-          app: hostname,
-          mode: 'static',
-          edge: 'rtsp://admin:UUnv9njxg123@10.10.5.4:554/cam/realmonitor?channel=1&subtype=1',
-          name: 'camera3',
-          rtsp_transport: 'tcp',
-        },
-      ],
-    },
-  };
 
-  var nms = new NodeMediaServer(streamconfig);
-  nms.run();
+  
+   execCommand(`/home/pi/u/tool/ffserver/bin/ffmpeg -rtsp_transport tcp -i "rtsp://admin:UUnv9njxg123@10.10.5.3/cam/realmonitor?channel=1&subtype=1" -r 15 -an http://127.0.0.1:8090/camera2.ffm`);
+   execCommand(`/home/pi/u/tool/ffserver/bin/ffmpeg -rtsp_transport tcp -i "rtsp://admin:UUnv9njxg123@10.10.5.4/cam/realmonitor?channel=1&subtype=1" -r 15 -an http://127.0.0.1:8090/camera3.ffm`);
+   execCommand(`/home/pi/u/tool/ffserver/bin/ffmpeg -rtsp_transport tcp -i "rtsp://admin:UUnv9njxg123@10.10.5.2/cam/realmonitor?channel=1&subtype=1" -r 15 -an http://127.0.0.1:8090/camera1.ffm`);
+
+  
 };
+
+
 
 const bootstrapApp = async (config) => {
   try {
