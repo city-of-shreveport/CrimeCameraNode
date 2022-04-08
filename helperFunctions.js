@@ -194,11 +194,11 @@ const mountStorageDrive = async (devicePath, mountPath, encryptionKey) => {
 var recordingInterval;
 
 const startRecordingInterval = async () => {
-  recordingInterval = setInterval(function () {
+  
     var minutes = new Date().getMinutes();
     var seconds = new Date().getSeconds();
 
-    if ((minutes == 0 && seconds == 0) || (minutes % 15 == 0 && seconds == 0) || process.env.DEBUG == 'true') {
+
       console.log('Starting recording!');
 
       const cameras = [
@@ -231,11 +231,7 @@ const startRecordingInterval = async () => {
         });
       }
 
-      stopRecordingInterval();
-    } else {
-      console.log(`Time: ${minutes}:${seconds}. Waiting for 15-minute recording interval...`);
-    }
-  }, 1000);
+     
 };
 
 const stopRecordingInterval = async () => {
