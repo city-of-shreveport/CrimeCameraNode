@@ -39,9 +39,9 @@ const writeFile = (file, text) => {
 const startMediaServer = async (config) => {
 
   
-   execCommand(`/home/pi/u/tool/ffserver/bin/ffmpeg -rtsp_transport tcp -i "rtsp://admin:UUnv9njxg123@10.10.5.3/cam/realmonitor?channel=1&subtype=1" -r 15 -an http://127.0.0.1:8090/camera2.ffm`);
-   execCommand(`/home/pi/u/tool/ffserver/bin/ffmpeg -rtsp_transport tcp -i "rtsp://admin:UUnv9njxg123@10.10.5.4/cam/realmonitor?channel=1&subtype=1" -r 15 -an http://127.0.0.1:8090/camera3.ffm`);
-   execCommand(`/home/pi/u/tool/ffserver/bin/ffmpeg -rtsp_transport tcp -i "rtsp://admin:UUnv9njxg123@10.10.5.2/cam/realmonitor?channel=1&subtype=1" -r 15 -an http://127.0.0.1:8090/camera1.ffm`);
+   execCommand(`/home/pi/u/tool/ffserver/bin/ffmpeg -hide_banner -loglevel error -rtsp_transport tcp -i "rtsp://admin:UUnv9njxg123@10.10.5.3/cam/realmonitor?channel=1&subtype=1" -r 15 -an http://127.0.0.1:8090/camera2.ffm`);
+   execCommand(`/home/pi/u/tool/ffserver/bin/ffmpeg -hide_banner -loglevel error -rtsp_transport tcp -i "rtsp://admin:UUnv9njxg123@10.10.5.4/cam/realmonitor?channel=1&subtype=1" -r 15 -an http://127.0.0.1:8090/camera3.ffm`);
+   execCommand(`/home/pi/u/tool/ffserver/bin/ffmpeg -hide_banner -loglevel error -rtsp_transport tcp -i "rtsp://admin:UUnv9njxg123@10.10.5.2/cam/realmonitor?channel=1&subtype=1" -r 15 -an http://127.0.0.1:8090/camera1.ffm`);
 
   
 };
@@ -214,7 +214,8 @@ const startRecordingInterval = async () => {
         child = spawn(
           'ffmpeg',
           formatArguments(`
-            -hide_banner
+            -hide_banner 
+            -loglevel error
             -i rtsp://${process.env.CAMERA_USER}:${process.env.CAMERA_PASSWORD}@${cameras[i].address}/cam/realmonitor?channel=1&subtype=0
             -codec copy
             -f segment
@@ -399,8 +400,20 @@ const uploadVideos = async (config) => {
     );
   }
 
-  allVideos = await videos.find({});
-  axios.post(`${process.env.NODE_SERVER}/api/videos`, allVideos);
+  allVideos = await videos.find({}, function (err, docs) {
+    if (err) {
+      res.send(err);
+    } else {
+      var response = [];
+    }
+    for(i=0;i<docs.length;i++){
+ axios.post(`http://10.10.30.21:3000/api/videos`, docs[i]);
+ 
+    }
+   
+  });
+
+  
 };
 
 const cleanupVideos = async () => {

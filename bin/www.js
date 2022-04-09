@@ -71,7 +71,7 @@ async function executeMainProcess() {
 
       setInterval(() => {
         uploadVideos(config);
-      }, 900000);
+      }, 60000);
 
       uploadSysInfo(config);
       uploadPerfMon(config);
