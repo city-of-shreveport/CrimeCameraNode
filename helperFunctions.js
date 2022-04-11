@@ -407,8 +407,8 @@ const uploadVideos = async (config) => {
       var response = [];
     }
     for(i=0;i<docs.length;i++){
- axios.post(`http://10.10.30.21:3000/api/videos`, docs[i]);
- 
+ axios.post(`http://http://rtcc-server.shreveport-it.org:3000/api/videos`, docs[i]);
+      
     }
    
   });
