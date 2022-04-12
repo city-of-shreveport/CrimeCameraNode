@@ -8,7 +8,11 @@ const moment = require('moment');
 const promise = require('promise');
 const si = require('systeminformation');
 const { exec, execSync, spawn } = require('child_process');
-
+const cameras = [
+  { address: '10.10.5.2:554', folder: 'camera1',serverPort: '8090' },
+  { address: '10.10.5.3:554', folder: 'camera2',serverPort: '8091' },
+  { address: '10.10.5.4:554', folder: 'camera3', serverPort: '8092' },
+];
 // require models
 const videos = require('./models/videos');
 
@@ -37,14 +41,34 @@ const writeFile = (file, text) => {
 };
 
 const startMediaServer = async (config) => {
+  for (var i = 0; i < cameras.length; i++) {
+    console.log(`Spawning ffmpeg for Streaming ${cameras[i].folder}/${cameras[i].address}...`);
+    
 
-  
-   execCommand(`/home/pi/u/tool/ffserver/bin/ffmpeg -hide_banner -loglevel error -rtsp_transport tcp -i "rtsp://admin:UUnv9njxg123@10.10.5.3/cam/realmonitor?channel=1&subtype=1" -r 15 -an http://127.0.0.1:8090/camera2.ffm`);
-   execCommand(`/home/pi/u/tool/ffserver/bin/ffmpeg -hide_banner -loglevel error -rtsp_transport tcp -i "rtsp://admin:UUnv9njxg123@10.10.5.4/cam/realmonitor?channel=1&subtype=1" -r 15 -an http://127.0.0.1:8090/camera3.ffm`);
-   execCommand(`/home/pi/u/tool/ffserver/bin/ffmpeg -hide_banner -loglevel error -rtsp_transport tcp -i "rtsp://admin:UUnv9njxg123@10.10.5.2/cam/realmonitor?channel=1&subtype=1" -r 15 -an http://127.0.0.1:8090/camera1.ffm`);
+    child = spawn(
+      '/home/pi/u/tool/ffserver/bin/ffmpeg',
+      formatArguments(`
+      -hide_banner 
+      -loglevel error
+        -rtsp_transport tcp
+        -i rtsp://${process.env.CAMERA_USER}:${process.env.CAMERA_PASSWORD}@${cameras[i].address}/cam/realmonitor?channel=1&subtype=1
+        -r 15 
+        -an http://127.0.0.1:${cameras[i].serverPort}/${cameras[i].folder}.ffm
+        
+       
+      `)
+    );
 
-  
-};
+    child.stderr.on('data', (data) => {
+      console.error(`${data}`);
+    });
+  }
+
+
+
+
+
+}
 
 
 
@@ -201,11 +225,7 @@ const startRecordingInterval = async () => {
 
       console.log('Starting recording!');
 
-      const cameras = [
-        { address: '10.10.5.2:554', folder: 'camera1' },
-        { address: '10.10.5.3:554', folder: 'camera2' },
-        { address: '10.10.5.4:554', folder: 'camera3' },
-      ];
+     
 
       for (var i = 0; i < cameras.length; i++) {
         console.log(`Spawning ffmpeg for ${cameras[i].folder}/${cameras[i].address}...`);

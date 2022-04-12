@@ -57,10 +57,7 @@ async function executeMainProcess() {
       server.on('error', onError);
       server.on('listening', onListening);
       console.log(`App listenting on port ${port}!`);
-      setInterval(() => {
-        startMediaServer(config);
-        console.log("Starting Streams")
-      }, 60000);
+   
       setInterval(() => {
         uploadSysInfo(config);
       }, 300000);

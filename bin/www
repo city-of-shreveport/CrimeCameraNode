@@ -78,10 +78,7 @@ getConfig().then(() => {
     setInterval(() => { uploadSysInfo(config) }, 300000);
     setInterval(() => { uploadPerfMon(config) }, 60000);
     setInterval(() => { uploadVideos(config) }, 900000);
-    setInterval(() => {
-      startMediaServer(config);
-      console.log("Starting Streams")
-    }, 60000);
+
     uploadSysInfo(config)
     uploadPerfMon(config)
     uploadVideos(config)
