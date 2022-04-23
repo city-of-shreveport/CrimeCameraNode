@@ -30,6 +30,7 @@
     "node-media-server": "^2.3.8",
     "node-rtsp-stream": "0.0.9",
     "npm": "^7.15.1",
+    "pm2": "^5.2.0",
     "pug": "^3.0.2",
     "request": "^2.88.2",
     "serialport": "^9.0.1",
