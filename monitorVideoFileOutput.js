@@ -22,7 +22,7 @@ for(let i = 0; i < 3; i++) {
 
   console.log("Setting up watch: " + path);
 
-  var watcher = chokidar.watch(path, {ignored: /^\./, persistent: true, usePolling: true})
+  var watcher = chokidar.watch(path, {ignored: /^\./, persistent: true})
 
   watchers[i] = watcher;
 
