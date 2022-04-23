@@ -15,7 +15,8 @@ for(let i = 0; i < 3; i++) {
 
   cameraLastSavedVideos[i] = io.counter({
     name: 'camera-' + i + '-saved-videos',
-    id: 'saved-videos/cameras/' + i
+    id: 'saved-videos/cameras/' + i,
+    value: 0
   });
 
   var path = rootDirectory + '/camera' + (i + 1).toString();
