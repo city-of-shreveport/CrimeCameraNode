@@ -34,10 +34,13 @@ function buildCommandForCamera(i) {
       '-hide_banner'
     )
     .videoCodec('copy')
-    .output(`/home/${process.env.USER}/videos/${localCameras[i].folder}/%Y-%m-%d-%H-%M.mp4`, {strftime: 1} )
-    .outputFormat('segment', {segment_time: 900, reset_timestamps: 1, segment_format: 'mp4')
+    .output(`/home/${process.env.USER}/videos/${localCameras[i].folder}/%Y-%m-%d-%H-%M.mp4`)
+    .outputFormat('segment')
     .outputOptions([
-      '-segment_time 900', '-reset_timestamps 1', '-segment_format \'mp4\''
+      '-segment_time', '900', 
+      '-reset_timestamps', '1', 
+      '-segment_format','mp4', 
+      'strftime', '1'
     ])
 }
 
