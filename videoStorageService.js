@@ -40,7 +40,7 @@ function buildCommandForCamera(i) {
       '-segment_time', '900', 
       '-reset_timestamps', '1', 
       '-segment_format','mp4', 
-      'strftime', '1'
+      '-strftime', '1'
     ])
 }
 
