@@ -232,7 +232,10 @@ const stopRecordingInterval = async () => {
 };
 
 const startRecording = async (config) => {
-  startRecordingInterval();
+  // This has been refactored into a service
+  // TODO: REMOVE REFERENCES TO RECORDING
+  /* startRecordingInterval(); */
+
 };
 
 const stopRecording = async () => {
