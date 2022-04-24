@@ -42,8 +42,6 @@ const writeFile = (file, text) => {
   fs.writeFile(file, text, function (error) {});
 };
 
-const startMediaServer = async (config) => {
-
 const bootstrapApp = async (config) => {
   try {
     console.log('Setting hostname...');
@@ -190,22 +188,17 @@ const mountStorageDrive = async (devicePath, mountPath, encryptionKey) => {
 var recordingInterval;
 
 const startRecordingInterval = async () => {
-  
-    var minutes = new Date().getMinutes();
-    var seconds = new Date().getSeconds();
 
+  console.log('Starting recording!');
 
-      console.log('Starting recording!');
+  for (var i = 0; i < cameras.length; i++) {
+    console.log(`Spawning ffmpeg for ${cameras[i].folder}/${cameras[i].address}...`);
 
-     
+    execCommand(`mkdir -p /home/pi/videos/${cameras[i].folder}/`);
 
-      for (var i = 0; i < cameras.length; i++) {
-        console.log(`Spawning ffmpeg for ${cameras[i].folder}/${cameras[i].address}...`);
-        execCommand(`mkdir -p /home/pi/videos/${cameras[i].folder}/`);
-
-        child = spawn(
-          'ffmpeg',
-          formatArguments(`
+    child = spawn(
+      'ffmpeg',
+      formatArguments(`
             -hide_banner 
             -loglevel error
             -i rtsp://${process.env.CAMERA_USER}:${process.env.CAMERA_PASSWORD}@${cameras[i].address}/cam/realmonitor?channel=1&subtype=0
@@ -217,14 +210,21 @@ const startRecordingInterval = async () => {
             -strftime 1
             /home/pi/videos/${cameras[i].folder}/%Y-%m-%d-%H-%M.mp4
           `)
-        );
+    );
 
-        child.stderr.on('data', (data) => {
-          console.error(`${data}`);
-        });
-      }
+    child.stderr.on('data', (data) => {
+      console.error(`${data}`);
+    });
 
-     
+    child.on('exit', (code) => {
+      //restart the process and log the exit.
+      console.log(`child process exited with code ${code}`);
+      stopRecording();
+      startRecording();
+    });
+
+    console.log("\tSpawned process " + i);
+  }
 };
 
 const stopRecordingInterval = async () => {
@@ -442,7 +442,6 @@ module.exports = {
   formatArguments,
   mountStorageDrive,
   setupStorageDrive,
-  startMediaServer,
   startRecording,
   startRecordingInterval,
   stopRecording,

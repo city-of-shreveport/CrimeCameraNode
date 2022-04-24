@@ -17,7 +17,6 @@ var {
   formatArguments,
   mountStorageDrive,
   setupStorageDrive,
-  startMediaServer,
   startRecording,
   startRecordingInterval,
   stopRecording,
@@ -74,8 +73,6 @@ async function executeMainProcess() {
       uploadPerfMon(config);
       uploadVideos(config);
      
- 
-      startMediaServer(config);
       startRecording(config);
     });
   });
