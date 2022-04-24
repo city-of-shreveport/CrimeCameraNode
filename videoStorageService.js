@@ -20,21 +20,29 @@ const execCommand = (command) => {
 
 commands = []
 
-for (var i = 0; i < cameras.length; i++) {
-  command = ffmpeg()
+function buildCommandForCamera(i) {
+  var localCameras = [
+    { address: '10.10.5.2:554', folder: 'camera1',serverPort: '8090' },
+    { address: '10.10.5.3:554', folder: 'camera2',serverPort: '8091' },
+    { address: '10.10.5.4:554', folder: 'camera3', serverPort: '8092' },
+  ];
+
+  return ffmpeg()
     .noAudio()
-    .input(`rtsp://${process.env.CAMERA_USER}:${process.env.CAMERA_PASSWORD}@${cameras[i].address}/cam/realmonitor?channel=1&subtype=0`)
-    .videoCodec('copy')
-    .output(`/home/${process.env.USER}/videos/${cameras[i].folder}/%Y-%m-%d-%H-%M.mp4`)
+    .input(`rtsp://${process.env.CAMERA_USER}:${process.env.CAMERA_PASSWORD}@${localCameras[i].address}/cam/realmonitor?channel=1&subtype=0`)
     .inputOptions(
-      '-hide_banner',
-      'loglevel error',
-      '-f segment',
-      '-segment_time 900',
-      '-reset_timestamps 1',
-      '-segment_format mp4',
-      '-strftime 1'
+      '-hide_banner'
     )
+    .videoCodec('copy')
+    .output(`/home/${process.env.USER}/videos/${localCameras[i].folder}/%Y-%m-%d-%H-%M.mp4`)
+    .outputFormat('segment', {segment_time: 900, reset_timestamps: 1, segment_format: 'mp4', strftime: 1 })
+    .outputOptions([
+      '-segment_time 900', '-reset_timestamps 1', '-segment_format \'mp4\'', 'strftime 1'
+    ])
+}
+
+for (var i = 0; i < cameras.length; i++) {
+  command = buildCommandForCamera(i);
 
   commands[i] = command
 }
@@ -42,21 +50,18 @@ for (var i = 0; i < cameras.length; i++) {
 for (var i = 0; i < commands.length; i++) {
   command = commands[i]
 
-
   execCommand(`mkdir -p /home/${process.env.USER}/videos/${cameras[i].folder}/`);
 
   command.on('end', function(stdout, stderr) {
     console.log(`ffmpeg process ${i} died. Restarting.`)
+    execCommand(`killall ffmpeg`)
 
-    commands[i] = command.clone()
-
-    commands[i].run()
-
-    console.log(`ffmpeg process ${index} restarted.`)
   });
 
   command.on('error', function(err, stdout, stderr) {
     console.error('Cannot process video: ' + err.message);
+    console.log(`ffmpeg process ${i} died. Restarting.`)
+    execCommand(`killall ffmpeg`)
   });
 
   command.run()
