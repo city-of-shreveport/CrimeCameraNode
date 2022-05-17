@@ -20,9 +20,7 @@ const execCommand = (command) => {
 
 
   execCommand(dedent`
-  sudo parted --script ${devicePath.slice(0, -1)} mklabel gpt
-  sudo parted --script -a opt ${devicePath.slice(0, -1)} mkpart primary ext4 0% 100%
-  yes | sudo mkfs -t ext4 ${devicePath}
+
 `);
 
 
