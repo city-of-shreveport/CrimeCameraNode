@@ -74,7 +74,6 @@ function getnetworkStats(){
   console.log(streaming)
     if(streaming['554'] | streaming['555'] | streaming['556']){
       if(synching===true){
-        console.log('stop rsync')
         synching = false;
         rsync.kill('SIGINT');
       }
@@ -83,13 +82,8 @@ function getnetworkStats(){
       if(synching===false){
         console.log('start rsync')
         synching = true;
-    console.log(CurrentBuddy)
-    rsync = require('child_process').spawn('rsync' ,['-avzh', '/home/pi/videos/', 'pi@'+CurrentBuddy.ip+':/home/pi/remote_backups/'+process.env.NODE_IDENTIFIER])
-      
-    
-   
-      
-  } 
+        rsync = require('child_process').spawn('rsync' ,['-avzh', '/home/pi/videos/', 'pi@'+CurrentBuddy.ip+':/home/pi/remote_backups/'+process.env.NODE_IDENTIFIER])
+      } 
     }
 }
 
@@ -98,7 +92,7 @@ app.get('/', (req, res) => {
   res.send('Nothing to see here')
 })
 app.get('/stopBuddy', (req, res) => {
-  stopBuddy()
+  rsync.kill('SIGINT');
   res.send(202)
 })
 app.listen(port, () => {
