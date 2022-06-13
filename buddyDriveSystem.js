@@ -9,6 +9,7 @@ let rsync = null;
 let currentip = ''
 let CurrentBuddy = {'buddy':'','ip':''}
 //Get currentBuddy and its IP
+function getCurrentBudy(){
 fetch(`http://rtcc-server.shreveport-it.org:3000/api/nodes/`+ process.env.NODE_IDENTIFIER)
 .then((response) => response.json())
 .then((json) => {
@@ -20,10 +21,11 @@ fetch(`http://rtcc-server.shreveport-it.org:3000/api/nodes/`+ process.env.NODE_I
     .then((json) => {
       CurrentBuddy.ip = json.config.ip
     console.log(CurrentBuddy)
+    getnetworkStats()
     });
 
 });
-
+}
 let streaming = {554:false,555:false,556:false}
 let synching = false
 
@@ -82,7 +84,10 @@ function getnetworkStats(){
         console.log('start rsync')
         synching = true;
     console.log(CurrentBuddy)
-    rsync = require('child_process').spawn('rsync -avzh /home/pi/videos/ pi@' +currentBudddy.ip  + ':/home/pi/remote_backups/'+ process.env.NODE_IDENTIFIER);
+    rsync = require('child_process').spawn('rsync' ,['-avzh', '/home/pi/videos/', 'pi@'+CurrentBuddy.ip+':/home/pi/remote_backups/'+process.env.NODE_IDENTIFIER])
+      
+    
+   
       
   } 
     }
@@ -101,31 +106,8 @@ app.listen(port, () => {
 })
 
 setInterval(() => { getnetworkStats() }, 30000);
-getnetworkStats();
-
-// Function rsync command
-
-// timer function wait 30 min check network stats
+getCurrentBudy()
 
 
 
-
-
-//Get current Buddy
-//Check if online(maybe)
-//Start initial rsync
-//Wait for webhook 
-// if get webhook stop rsyn and start 30 min timer
-//After 30 min
-//Check network usage
-//if high restart 30 min timer
-//if low restart rsync
-
-   
-
- 
-//Loop RSYNC every hour
-
-
-//rsync -avzh /home/pi/videos/camera1 pi@10.10.30.141:/home/pi/remote_backups/CrimeCamera074/caemra1/
 
