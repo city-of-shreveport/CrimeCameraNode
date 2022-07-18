@@ -14,8 +14,8 @@ const execCommand = (command) => {
 };
 
 const setupStorageDrive = async (devicePath, mountPath, encryptionKey) => {
-  var stdout = null;
-  var stderr = null;
+  var stdout = "";
+  var stderr = "";
 
   try {
     var {stdout, stderr} = await execCommand(`sudo lsblk -o NAME,TYPE,SIZE,MODEL | grep ${encryptionKey}`);
