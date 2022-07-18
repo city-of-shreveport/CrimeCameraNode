@@ -14,39 +14,39 @@ const execCommand = (command) => {
 };
 
 const setupStorageDrive = async (devicePath, mountPath, encryptionKey) => {
+  var stdout = null;
+  var stderr = null;
   try {
     var {stdout, stderr} = await execCommand(`sudo lsblk -o NAME,TYPE,SIZE,MODEL | grep ${encryptionKey}`);
-
-    if (stdout.includes(encryptionKey)) {
-      debug("Encrypted and Formatted Drive Exists.");
-      debug("Mounting drive with Encryption Key");
-
-      await mountStorageDrive(devicePath, mountPath, encryptionKey);
-    } else {
-      var {stdout, stderr} = await execCommand(`sudo blkid ${devicePath} | grep crypto_LUKS`);
-
-      if (!stdout.includes('crypto_LUKS')) {
-        debug(`Formatting ${devicePath}...`);
-
-        await execCommand(dedent`
-        sudo parted --script ${devicePath.slice(0, -1)} mklabel gpt
-        sudo parted --script -a opt ${devicePath.slice(0, -1)} mkpart primary ext4 0% 100%
-        yes | sudo mkfs -t ext4 ${devicePath}
-      `);
-
-        await execCommand(dedent`
-        echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${devicePath};
-        echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${devicePath} ${encryptionKey};
-        yes | sudo mkfs -t ext4 /dev/mapper/${encryptionKey};
-      `);
-      }
-
-    await mountStorageDrive(devicePath, mountPath, encryptionKey);
-  }
   } catch(err) {
 
   }
 
+  if (stdout.includes(encryptionKey)) {
+    debug("Encrypted and Formatted Drive Exists.");
+    debug("Mounting drive with Encryption Key");
+
+    await mountStorageDrive(devicePath, mountPath, encryptionKey);
+  } else {
+    var {stdout, stderr} = await execCommand(`sudo blkid ${devicePath} | grep crypto_LUKS`);
+
+    if (!stdout.includes('crypto_LUKS')) {
+      debug(`Formatting ${devicePath}...`);
+
+      await execCommand(dedent`
+      sudo parted --script ${devicePath.slice(0, -1)} mklabel gpt
+      sudo parted --script -a opt ${devicePath.slice(0, -1)} mkpart primary ext4 0% 100%
+      yes | sudo mkfs -t ext4 ${devicePath}
+    `);
+
+      await execCommand(dedent`
+      echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${devicePath};
+      echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${devicePath} ${encryptionKey};
+      yes | sudo mkfs -t ext4 /dev/mapper/${encryptionKey};
+    `);
+    }
+
+  await mountStorageDrive(devicePath, mountPath, encryptionKey);
 };
 
 const mountStorageDrive = async (devicePath, mountPath, encryptionKey) => {
