@@ -27,7 +27,9 @@ const setupStorageDrive = async (devicePath, mountPath, encryptionKey) => {
 
     await mountStorageDrive(devicePath, mountPath, encryptionKey);
   } else {
-    var {stdout, stderr} = await execCommand(`sudo blkid ${devicePath} | grep crypto_LUKS`);
+    try {
+      var {stdout, stderr} = await execCommand(`sudo blkid ${devicePath} | grep crypto_LUKS`);
+    } catch(err) {}
 
     if (!stdout.includes('crypto_LUKS')) {
       debug(`Formatting ${devicePath}...`);
