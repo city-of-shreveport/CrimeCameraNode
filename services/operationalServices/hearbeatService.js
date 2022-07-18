@@ -1,3 +1,5 @@
+const tx2 = require('tx2')
+
 require('dotenv').config();
 const axios = require('axios').default;
 
@@ -49,6 +51,12 @@ async function ramdiskHealthy() {
   }
 
   debug(`Ramdisk Healthy? ${mounted}`);
+
+  tx2.metric({
+    name: 'Ramdisk Healty?',
+    value: mounted
+  });
+
   return mounted;
 }
 
@@ -64,6 +72,12 @@ async function configHealthy() {
   }
 
   debug(`Config Healthy? ${configWorks}`);
+
+  tx2.metric({
+    name: 'Config Works?',
+    value: configWorks
+  });
+
   return configWorks;
 }
 
@@ -91,6 +105,11 @@ async function drivesHealthy() {
   var result = videoMountWorking && buddyMountWorking;
 
   debug(`Drives Healthy? ${result}`);
+  
+  tx2.metric({
+    name: 'Drives Healthy?',
+    value: result
+  });
 
   return result;
 }
@@ -119,6 +138,11 @@ async function videosAreRecording() {
   var result = camerasRecording[0] && camerasRecording[1] && camerasRecording[2];
 
   debug(`Cameras Recording? ${result}`);
+  
+  tx2.metric({
+    name: 'Cameras Recording?',
+    value: result
+  });
   
   return result;
 }
