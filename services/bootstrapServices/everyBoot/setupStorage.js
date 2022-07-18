@@ -16,11 +16,10 @@ const execCommand = (command) => {
 const setupStorageDrive = async (devicePath, mountPath, encryptionKey) => {
   var stdout = null;
   var stderr = null;
+
   try {
     var {stdout, stderr} = await execCommand(`sudo lsblk -o NAME,TYPE,SIZE,MODEL | grep ${encryptionKey}`);
-  } catch(err) {
-
-  }
+  } catch(err) { }
 
   if (stdout.includes(encryptionKey)) {
     debug("Encrypted and Formatted Drive Exists.");
@@ -45,6 +44,7 @@ const setupStorageDrive = async (devicePath, mountPath, encryptionKey) => {
       yes | sudo mkfs -t ext4 /dev/mapper/${encryptionKey};
     `);
     }
+  }
 
   await mountStorageDrive(devicePath, mountPath, encryptionKey);
 };
