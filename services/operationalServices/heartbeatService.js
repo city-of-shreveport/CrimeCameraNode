@@ -111,6 +111,12 @@ async function drivesHealthy() {
     value: result
   });
 
+  if(!result) {
+    debug("!!! Drives not healthy.");
+    tx2.issue("Drives not healthy.");
+  }
+
+
   return result;
 }
 
@@ -143,6 +149,11 @@ async function videosAreRecording() {
     name: 'Cameras Recording?',
     value: result
   });
+
+  if(!result) {
+    debug("!!! Cameras are not recording. Creating an issue to trigger alerts.");
+    tx2.issue("Cameras are not recording.");
+  }
   
   return result;
 }
