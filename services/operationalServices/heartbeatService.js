@@ -113,7 +113,8 @@ async function drivesHealthy() {
 
   if(!result) {
     debug("!!! Drives not healthy.");
-    tx2.issue("Drives not healthy.");
+  
+    tx2.issue(`Host: ${config.hostName} |  Drives are not healthy.`);
   }
 
 
@@ -152,7 +153,7 @@ async function videosAreRecording() {
 
   if(!result) {
     debug("!!! Cameras are not recording. Creating an issue to trigger alerts.");
-    tx2.issue("Cameras are not recording.");
+    tx2.issue(`Host: ${config.hostName} |  Cameras are not recording.`);
   }
   
   return result;
