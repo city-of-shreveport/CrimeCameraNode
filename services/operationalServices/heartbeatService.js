@@ -88,17 +88,25 @@ async function firewallHealthy() {
 async function drivesHealthy() {
   var videoMountWorking = false;
 
-  var {stdout, stderr} = await exec(`sudo lsblk -o NAME,TYPE,SIZE,MODEL | grep ${config.videoDriveEncryptionKey}`);
+  try {
+    var {stdout, stderr} = await exec(`sudo lsblk -o NAME,TYPE,SIZE,MODEL | grep ${config.videoDriveEncryptionKey}`);
+  } catch(e) {
 
-  if (stdout.includes(config.videoDriveEncryptionKey)) {
+  }
+
+  if (stdout && stdout.includes(config.videoDriveEncryptionKey)) {
     videoMountWorking = true; 
   }
 
   var buddyMountWorking = false;
 
-  var {stdout, stderr} = await exec(`sudo lsblk -o NAME,TYPE,SIZE,MODEL | grep ${config.buddyDriveEncryptionKey}`);
+  try {
+    var {stdout, stderr} = await exec(`sudo lsblk -o NAME,TYPE,SIZE,MODEL | grep ${config.buddyDriveEncryptionKey}`);
+  } catch(e) {
 
-  if (stdout.includes(config.buddyDriveEncryptionKey)) {
+  }
+
+  if (stdout && stdout.includes(config.buddyDriveEncryptionKey)) {
     buddyMountWorking = true; 
   }
 
