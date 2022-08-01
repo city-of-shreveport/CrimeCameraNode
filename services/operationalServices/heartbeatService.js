@@ -133,21 +133,26 @@ async function videosAreRecording() {
   var camerasRecording = [false, false, false];
 
   for(i = 1; i < 4; i++) {
-    var {stdout, stderr} = await exec(`ls -t /home/pi/videos/camera${i} | head -n 1`);
+    try {
+      var {stdout, stderr} = await exec(`ls -t /home/pi/videos/camera${i} | head -n 1`);
 
-    const file_fd = fs.openSync(`/home/pi/videos/camera${i}/${stdout.replace("\n", "")}`, 'r');
+      const file_fd = fs.openSync(`/home/pi/videos/camera${i}/${stdout.replace("\n", "")}`, 'r');
 
-    var stats = fs.fstatSync(file_fd);
+      var stats = fs.fstatSync(file_fd);
 
-    var mtime = stats.mtime;
+      var mtime = stats.mtime;
 
-    var testDate = (Date.now() - 15 * 60000)
+      var testDate = (Date.now() - 15 * 60000)
 
-    if(mtime > testDate) {
-      camerasRecording[i - 1] = true    
-    } else {
-      camerasRecording[i - 1] = false
-    }
+      if(mtime > testDate) {
+        camerasRecording[i - 1] = true    
+      } else {
+        camerasRecording[i - 1] = false
+      }
+
+    } catch(e) {
+      //Do nothing - if something failed, it will fail below too.
+    } 
   }
 
   var result = camerasRecording[0] && camerasRecording[1] && camerasRecording[2];
