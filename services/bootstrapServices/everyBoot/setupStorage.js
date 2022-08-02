@@ -63,10 +63,49 @@ const mountStorageDrive = async (devicePath, mountPath, encryptionKey) => {
   `);
 };
 
+const determineVideoDriveConfig(encryptionKey) {
+  var config = {videoDriveEncryptionKey: encryptionKey};
+
+  
+}
+
 async function run() {
   debug("Reading config...");
   configString = fs.readFileSync('/mnt/ramdisk/config.json', 'utf8');
   config = JSON.parse(configString).config;
+
+  //config.videoDriveDevicePath, config.videoDriveMountPath,
+  //config.buddyDriveDevicePath, config.buddyDriveMountPath,
+
+  var {stdout, stderr} = await execCommand(`sudo lsblk -o NAME,TYPE,SIZE,MODEL | grep ${encryptionKey}`);
+  
+  //TODO: This is a hack. But... a pretty reliable one.
+  if(stdout.includes("T")) {
+    var lines = stdout.split("\n");
+
+    var bothDrives = lines.filter(line => {return line.includes("└─") && line.includes("T")})
+
+    var driveOneParts = bothDrives[0].replace("└─", "").split(/\s+/);
+    var driveTwoParts = bothDrives[1].replace("└─", "").split(/\s+/);
+
+    if(parseFloat(driveOneParts[1]) > parseFloat(driveTwoParts[1])) { //Sizes, parseFloat ignores the T
+      
+      config.buddyDriveDevicePath = "/dev/" + driveOneParts[0]; //name - like sda1
+      config.buddyDriveMountPath = "/home/pi/remote_backups";
+
+      config.videoDriveDevicePath = "/dev/" + driveTwoParts[0];
+      config.videoDriveMountPath = "/home/pi/videos";
+
+    } else {
+
+      config.buddyDriveDevicePath = "/dev/" + driveTwoParts[0]; //name - like sdb1
+      config.buddyDriveMountPath = "/home/pi/remote_backups";
+
+      config.videoDriveDevicePath = "/dev/" + driveOneParts[0];
+      config.videoDriveMountPath = "/home/pi/videos";
+    }
+    
+  }
 
   debug("Setting up video and buddy drives")
   await setupStorageDrive(config.videoDriveDevicePath, config.videoDriveMountPath, config.videoDriveEncryptionKey);
