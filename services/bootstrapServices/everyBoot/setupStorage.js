@@ -71,7 +71,7 @@ async function run() {
   //config.videoDriveDevicePath, config.videoDriveMountPath,
   //config.buddyDriveDevicePath, config.buddyDriveMountPath,
 
-  var {stdout, stderr} = await execCommand(`sudo lsblk -o NAME,TYPE,SIZE,MODEL | grep ${encryptionKey}`);
+  var {stdout, stderr} = await execCommand(`sudo lsblk -o NAME,SIZE`);
   
   //TODO: This is a hack. But... a pretty reliable one.
   if(stdout.includes("T")) {
