@@ -63,12 +63,6 @@ const mountStorageDrive = async (devicePath, mountPath, encryptionKey) => {
   `);
 };
 
-const determineVideoDriveConfig(encryptionKey) {
-  var config = {videoDriveEncryptionKey: encryptionKey};
-
-  
-}
-
 async function run() {
   debug("Reading config...");
   configString = fs.readFileSync('/mnt/ramdisk/config.json', 'utf8');
