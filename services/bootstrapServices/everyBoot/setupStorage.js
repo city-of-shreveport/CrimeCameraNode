@@ -69,34 +69,20 @@ async function run() {
   //config.videoDriveDevicePath, config.videoDriveMountPath,
   //config.buddyDriveDevicePath, config.buddyDriveMountPath,
 
-  var {stdout, stderr} = await execCommand(`sudo lsblk -o NAME,SIZE`);
+  var {stdout, stderr} = await execCommand(`pm2 sudo lsblk --json -b -o NAME,SIZE`);
   
   //TODO: This is a hack. But... a pretty reliable one.
-  if(stdout.includes("T")) {
-    var lines = stdout.split("\n");
+  if(stdout) {
+    var json=JSON.parse(stdout);
 
-    var bothDrives = lines.filter(line => {return line.includes("└─") && line.includes("T")})
+	// keep the >1TB drives, sort smaller drive first; smaller is videos, larger is remote_backups
+    var bothDrives = json.blockdevices.filter( d => d.size > 1e12 ).sort( (a,b) => a.size - b.size );
 
-    var driveOneParts = bothDrives[0].replace("└─", "").split(/\s+/);
-    var driveTwoParts = bothDrives[1].replace("└─", "").split(/\s+/);
+    config.buddyDriveDevicePath = "/dev/" + bothDrives[1].children[0].name; //name - like sda1
+    config.buddyDriveMountPath = "/home/pi/remote_backups";
 
-    if(parseFloat(driveOneParts[1]) > parseFloat(driveTwoParts[1])) { //Sizes, parseFloat ignores the T
-      
-      config.buddyDriveDevicePath = "/dev/" + driveOneParts[0]; //name - like sda1
-      config.buddyDriveMountPath = "/home/pi/remote_backups";
-
-      config.videoDriveDevicePath = "/dev/" + driveTwoParts[0];
-      config.videoDriveMountPath = "/home/pi/videos";
-
-    } else {
-
-      config.buddyDriveDevicePath = "/dev/" + driveTwoParts[0]; //name - like sdb1
-      config.buddyDriveMountPath = "/home/pi/remote_backups";
-
-      config.videoDriveDevicePath = "/dev/" + driveOneParts[0];
-      config.videoDriveMountPath = "/home/pi/videos";
-    }
-    
+    config.videoDriveDevicePath = "/dev/" + bothDrives[0].children[0].name; //name - like sdb1
+    config.videoDriveMountPath = "/home/pi/videos";
   }
 
   debug("Setting up video and buddy drives")
