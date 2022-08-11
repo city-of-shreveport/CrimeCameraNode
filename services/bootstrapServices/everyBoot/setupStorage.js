@@ -24,8 +24,6 @@ const setupStorageDrive = async (devicePath, mountPath, encryptionKey) => {
   if (stdout.includes(encryptionKey)) {
     debug("Encrypted and Formatted Drive Exists.");
     debug("Mounting drive with Encryption Key");
-
-    await mountStorageDrive(devicePath, mountPath, encryptionKey);
   } else {
     try {
       var {stdout, stderr} = await execCommand(`sudo blkid ${devicePath} | grep crypto_LUKS`);
