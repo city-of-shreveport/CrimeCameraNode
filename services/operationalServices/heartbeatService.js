@@ -33,11 +33,19 @@ async function run() {
     debug("Completed. Data:");
     debug(data);
 
-    await axios.post(`${process.env.NODE_SERVER}/api/heartbeats`, data)
-    await axios.post(`${process.env.NODE_SERVER}/api/nodes/checkin/${process.env.NODE_IDENTIFIER}`, data)
+    try {
+      await axios.post(`${process.env.NODE_SERVER}/api/heartbeats`, data)
+      await axios.post(`${process.env.NODE_SERVER}/api/nodes/checkin/${process.env.NODE_IDENTIFIER}`, data)
 
-    debug("Heartbeat Completed. Sleeping 60 seconds...");
-    await new Promise(resolve => setTimeout(resolve, 60000));
+      debug("Heartbeat Completed. Sleeping 60 seconds...");
+      await new Promise(resolve => setTimeout(resolve, 60000));
+    } catch (e) {
+      debug("Heartbeat Failure!");
+      debug(e);
+      debug("Sleeping 10 seconds and trying again.") 
+      await new Promise(resolve => setTimeout(resolve, 10000));
+    }
+
   }
 }
 
