@@ -53,6 +53,17 @@ async function run() {
 }
 
 
+const prepDrive = async(driveSpec,driveName,mountPath,encryptionKey) => {
+  debug(`  Setting up ${driveName.toLowerCase()} drive (${driveSpec.devicePath})...`)
+  try {
+    await bringDriveFullyOnline(driveSpec,mountPath,encryptionKey);
+    debug("    ${driveName} drive online");
+    return true;
+  }
+  catch(e) {
+    return false;
+  }
+}
 async function runInternal(config,firstTry) {
   debug("Setting up video and buddy drives")
 
@@ -70,26 +81,28 @@ async function runInternal(config,firstTry) {
   // we have identified every drive attached (which could be 0, 1, or 2)
   // this will format if necessary
   if(drives.video) {
-    debug(`  Setting up video drive (${drives.video.devicePath})...`)
-    try {
-      await bringDriveFullyOnline(drives.video,VIDEO_DIR,config.videoDriveEncryptionKey);
-      debug("    Video drive online");
-    }
-    catch(e) {
-      debug("    Video drive failed to come online");
-      drives.video=null;
-    }
+    var ok=prepDrive(drives.video,'Video',VIDEO_DIR,config.videoDriveEncryptionKey);
+    if(!ok && drives.video.luksFormatted && !drives.video.luksOpened) {
+		// we saw a rare failure case where drives had the wrong encryption key used. So try the other just in case
+		ok=prepDrive(drives.video,'Video',VIDEO_DIR,config.buddyDriveEncryptionKey);
+		if(ok)debug("    Warning: Had to use buddy drive encryption key");
+	}
+	if(!ok) {
+	  debug("    Video drive failed to come online");
+	  drives.video=null;
+	}
   }
   if(drives.buddy) {
-    debug(`  Setting up buddy drive (${drives.buddy.devicePath})...`)
-    try {
-      await bringDriveFullyOnline(drives.buddy,BUDDY_DIR,config.buddyDriveEncryptionKey);
-      debug("    Buddy drive online");
-    }
-    catch(e) {
-      debug("    Buddy drive failed to come online");
-      drives.buddy=null;
-    }
+    var ok=prepDrive(drives.buddy,'Buddy',BUDDY_DIR,config.buddyDriveEncryptionKey);
+    if(!ok && drives.buddy.luksFormatted && !drives.buddy.luksOpened) {
+		// we saw a rare failure case where drives had the wrong encryption key used. So try the other just in case
+		ok=prepDrive(drives.buddy,'Buddy',BUDDY_DIR,config.videoDriveEncryptionKey);
+		if(ok)debug("    Warning: Had to use video drive encryption key");
+	}
+	if(!ok) {
+	  debug("    Buddy drive failed to come online");
+	  drives.buddy=null;
+	}
   }
 
   if(!drives.video && !drives.buddy) {
