@@ -181,6 +181,23 @@ async function videosAreRecording() {
   return result;
 }
 
+
+/*
+  STATUS REPORTING
+  healthy   -- Everything appears functional. There might be minor misconfigurations or other small issues, but nothing that should affect stability.
+  degraded  -- Either something not-mission-critical is broken, or something mission-critical is working poorly. System is expected to still be stable, but it could use some attention when convenient.
+  critical  -- Something mission-critical is nonfunctional, and system may be unstable. It needs attention now, but will try to limp along for as long as it can.
+  emergency -- Something mission-critical is nonfunctional, and the system is **not** expected to be stable. It might limp along for a short period by chance, but it needs attention immediately.
+
+  The line between critical and emergency is pretty subtle, and either state should really be treated as a system failure.
+  Basically: critical means broken but probably will work for a while. emergency means broken and probably won't work at all, or if it does, it won't for long.
+
+  In short:
+  healthy   -- I'm fine
+  degraded  -- I need help, but it can probably wait til next week.
+  critical  -- I need help, but it can probably wait til tomorrow.
+  emergency -- I need help, ideally yesterday.
+*/
 async function getServiceData() {
   // possible statuses in order: healthy, degraded, critical, emergency.
   // overall status is the lowest of those seen
