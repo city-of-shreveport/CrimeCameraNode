@@ -94,26 +94,26 @@ async function runInternal(config,firstTry) {
   if(drives.video) {
     var ok=prepDrive(drives.video,'Video',VIDEO_DIR,config.videoDriveEncryptionKey);
     if(!ok && drives.video.luksFormatted && !drives.video.luksOpened) {
-		// we saw a rare failure case where drives had the wrong encryption key used. So try the other just in case
-		ok=prepDrive(drives.video,'Video',VIDEO_DIR,config.buddyDriveEncryptionKey);
-		if(ok)debug("    Warning: Had to use buddy drive encryption key");
-	}
-	if(!ok) {
-	  debug("    Video drive failed to come online");
-	  drives.video=null;
-	}
+      // we saw a rare failure case where drives had the wrong encryption key used. So try the other just in case
+      ok=prepDrive(drives.video,'Video',VIDEO_DIR,config.buddyDriveEncryptionKey);
+      if(ok)debug("    Warning: Had to use buddy drive encryption key");
+    }
+    if(!ok) {
+      debug("    Video drive failed to come online");
+      drives.video=null;
+    }
   }
   if(drives.buddy) {
     var ok=prepDrive(drives.buddy,'Buddy',BUDDY_DIR,config.buddyDriveEncryptionKey);
     if(!ok && drives.buddy.luksFormatted && !drives.buddy.luksOpened) {
-		// we saw a rare failure case where drives had the wrong encryption key used. So try the other just in case
-		ok=prepDrive(drives.buddy,'Buddy',BUDDY_DIR,config.videoDriveEncryptionKey);
-		if(ok)debug("    Warning: Had to use video drive encryption key");
-	}
-	if(!ok) {
-	  debug("    Buddy drive failed to come online");
-	  drives.buddy=null;
-	}
+      // we saw a rare failure case where drives had the wrong encryption key used. So try the other just in case
+      ok=prepDrive(drives.buddy,'Buddy',BUDDY_DIR,config.videoDriveEncryptionKey);
+      if(ok)debug("    Warning: Had to use video drive encryption key");
+    }
+    if(!ok) {
+      debug("    Buddy drive failed to come online");
+      drives.buddy=null;
+    }
   }
 
   if(!drives.video && !drives.buddy) {
@@ -495,16 +495,18 @@ const _mount = async() => {
 }
 
 
-const writeHeartbeatData = async (data) {
+const writeHeartbeatData = async (data) => {
   if(data.video) {
-	delete data.video.luksPath; // possibly sensitive path (enc key)
+    delete data.video.luksName; // possibly sensitive path (enc key)
+    delete data.video.luksPath;
   }
   else {
     data.video={exists:false}; // null fields are sometimes weird in mongo, so ensure minimal data for each drive
   }
 
   if(data.buddy) {
-	delete data.buddy.luksPath;
+    delete data.buddy.luksName;
+    delete data.buddy.luksPath;
   }
   else {
     data.buddy={exists:false};

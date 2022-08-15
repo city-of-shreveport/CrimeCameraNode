@@ -187,7 +187,7 @@ async function getServiceData() {
   var result={status:"healthy"};
 
   try {
-    var dir=await fs.readdir('/mnt/ramdisk/services');
+    var dir=fs.readdirSync('/mnt/ramdisk/services');
   }
   catch(e) {
     result.status="emergency";
@@ -202,7 +202,7 @@ async function getServiceData() {
   for(var file of dir) {
     var service=file.slice(0,-5); // remove .json
     try {
-      var dat=await fs.readFile(`/mnt/ramdisk/services/${file}`,"utf8");
+      var dat=fs.readFileSync(`/mnt/ramdisk/services/${file}`,"utf8");
       dat=JSON.parse(dat);
       if(dat.date < now - 15*60*1000) {
         // if any data is over 15 minutes old, set that system to emergency, because it means something failed.
