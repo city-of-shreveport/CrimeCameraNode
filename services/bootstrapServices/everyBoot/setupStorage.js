@@ -7,7 +7,12 @@ const fs = require('fs')
 
 var config = {}
 
-const execCommand = (command,sanitize=null) => {
+function sanitize(str) {
+  str=str.replace(new RegExp(config.videoDriveEncryptionKey,"g"),"<video key>")
+  str=str.replace(new RegExp(config.buddyDriveEncryptionKey,"g"),"<buddy key>")
+  return str;
+}
+const execCommand = (command) => {
   try {
     return exec(command)
   } catch(e) {
@@ -15,17 +20,9 @@ const execCommand = (command,sanitize=null) => {
     var cmd=command;
     var str=e.stack||e.message||e;
     var err=e.stderr;
-    if(sanitize) {
-      var r=new RegExp(sanitize,'g');
-      cmd=cmd.replace(r,'<snip>'); // use this to sanitize keys
-      if(typeof str=='string')
-        str=str.replace(r,'<snip>'); // use this to sanitize keys
-    if(typeof err=='string')
-      err=err.replace(r,'<snip>'); // use this to sanitize keys
-    }
-    debug(cmd);
-    debug(str);
-    debug(err);
+    debug(sanitize(cmd));
+    debug(sanitize(str));
+    debug(sanitize(err));
     throw e;
   }
 };
@@ -55,8 +52,8 @@ async function run() {
   debug("Unable to properly detect state. Attempting to unmount everything and try again.");
   try { await execCommand("sudo umount "+VIDEO_DIR); } catch(e){}
   try { await execCommand("sudo umount "+BUDDY_DIR); } catch(e){}
-  try { await execCommand("sudo cryptsetup --batch-mode -d - luksClose /dev/mapper/"+config.videoDriveEncryptionKey,config.videoDriveEncryptionKey); } catch(e){}
-  try { await execCommand("sudo cryptsetup --batch-mode -d - luksClose /dev/mapper/"+config.buddyDriveEncryptionKey,config.buddyDriveEncryptionKey); } catch(e){}
+  try { await execCommand("sudo cryptsetup --batch-mode -d - luksClose /dev/mapper/"+config.videoDriveEncryptionKey); } catch(e){}
+  try { await execCommand("sudo cryptsetup --batch-mode -d - luksClose /dev/mapper/"+config.buddyDriveEncryptionKey); } catch(e){}
 
   return await runInternal(config);
 }
@@ -153,7 +150,7 @@ async function runInternal(config,firstTry) {
     }
   }
 
-  await writeHeartbeatData(heartbeatData);
+  await writeHeartbeatData(heartbeatData,config);
   debug("Completed setting up drives");
 }
 
@@ -376,9 +373,9 @@ const partitionDrive = async(deviceSpec) => {
 const luksFormatDrive = async(deviceSpec,encryptionKey) => {
   debug(`    Formatting ${deviceSpec.partitionPath}...`);
 
-  await execCommand(`echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${deviceSpec.partitionPath}`,encryptionKey);
+  await execCommand(`echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${deviceSpec.partitionPath}`);
   await luksOpenDrive(deviceSpec,encryptionKey); // awkward, but have to open in the middle to make the fs
-  await execCommand(`yes | sudo mkfs -t ext4 ${deviceSpec.luksPath}`,encryptionKey);
+  await execCommand(`yes | sudo mkfs -t ext4 ${deviceSpec.luksPath}`);
 
   deviceSpec.luksFormatted=true;
 }
@@ -387,7 +384,7 @@ const luksOpenDrive = async(deviceSpec,encryptionKey) => {
   debug(`    Opening ${deviceSpec.partitionPath}...`);
 
   try {
-    await execCommand(`echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${deviceSpec.partitionPath} ${encryptionKey}`,encryptionKey);
+    await execCommand(`echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${deviceSpec.partitionPath} ${encryptionKey}`);
   } catch(err) {
     if(!err.stderr.includes(`Device ${encryptionKey} already exists.`))
       throw err;
@@ -402,7 +399,7 @@ const mountDrive = async(deviceSpec, mountPath, encryptionKey) => {
   debug(`    Mounting ${deviceSpec.partitionPath}...`);
 
   await execCommand(`sudo mkdir -p ${mountPath}`);
-  await execCommand(`sudo mount ${deviceSpec.luksPath} ${mountPath}`,encryptionKey);
+  await execCommand(`sudo mount ${deviceSpec.luksPath} ${mountPath}`);
   await execCommand(`sudo chown -R pi:pi ${mountPath}`)
   await execCommand(`sudo chmod 755 -R ${mountPath}`)
 
@@ -495,24 +492,16 @@ const _mount = async() => {
 }
 
 
-const writeHeartbeatData = async (data) => {
-  if(data.video) {
-    delete data.video.luksName; // possibly sensitive path (enc key)
-    delete data.video.luksPath;
-  }
-  else {
+const writeHeartbeatData = async (data,config) => {
+  if(!data.video) {
     data.video={exists:false}; // null fields are sometimes weird in mongo, so ensure minimal data for each drive
   }
 
-  if(data.buddy) {
-    delete data.buddy.luksName;
-    delete data.buddy.luksPath;
-  }
-  else {
+  if(!data.buddy) {
     data.buddy={exists:false};
   }
 
   await execCommand(`mkdir -p ${RAM_DISK_BASE}/services`);
 
-  fs.writeFileSync(`${RAM_DISK_BASE}/services/setupStorage.json`, JSON.stringify(data),'utf8');
+  fs.writeFileSync(`${RAM_DISK_BASE}/services/setupStorage.json`, sanitize(JSON.stringify(data)),'utf8');
 }
