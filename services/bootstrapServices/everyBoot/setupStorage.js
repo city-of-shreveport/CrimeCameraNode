@@ -30,12 +30,21 @@ const execCommand = (command,sanitize=null) => {
   }
 };
 
+/*
+  STATUS REPORTING
+  healthy   -- both drives are functioning correctly. System may still be misconfigured (i.e. wrong keys), but the drives are healthy and the system should be functional.
+  degraded  -- one drive is missing, and the remaining drive is doing double duty. The system should be stable but it needs attention sooner than later.
+  critical  -- one drive is missing, and the other could not be used for both purposes at once. One of the video streams is being written to the SD card. System needs attention now.
+  emergency -- both drives are missing, and both streams are being written to the SD card. System needs attention yesterday.
+*/
+
 const VIDEO_DIR="/home/pi/videos";
-const BUDDY_DIR="/home/pi/remote_backups"
+const BUDDY_DIR="/home/pi/remote_backups";
+const RAM_DISK_BASE="/mnt/ramdisk";
 
 async function run() {
   debug("Reading config...");
-  configString = fs.readFileSync('/mnt/ramdisk/config.json', 'utf8');
+  configString = fs.readFileSync(`${RAM_DISK_BASE}/config.json`, 'utf8');
   config = JSON.parse(configString).config;
 
   try {
@@ -78,6 +87,8 @@ async function runInternal(config,firstTry) {
     delete drives.unknown;
   }
 
+  var heartbeatData={status:"healthy",date:Date.now(),video:drives.video,buddy:drives.buddy};
+
   // we have identified every drive attached (which could be 0, 1, or 2)
   // this will format if necessary
   if(drives.video) {
@@ -115,6 +126,7 @@ async function runInternal(config,firstTry) {
       await execCommand(`sudo mkdir -p ${VIDEO_DIR}`);
       await execCommand(`sudo mkdir -p ${BUDDY_DIR}`);
     }catch(e){}
+    heartbeatData.status="emergency";
     debug("Working in emergency mode; using system drive for video and buddy systems");
   }
   else if(drives.video && drives.buddy) {
@@ -124,19 +136,24 @@ async function runInternal(config,firstTry) {
     try {
       await bindAlternateStorageDrive(VIDEO_DIR,BUDDY_DIR);
       debug("Working in degraded mode; using video drive for video and buddy systems");
+      heartbeatData.status="degraded";
     } catch(err) {
       debug("Failed to bind video drive to buddy drive");
+      heartbeatData.status="critical";
     }
   }
   else if(drives.buddy && !drives.video) {
     try {
       bindAlternateStorageDrive(BUDDY_DIR,VIDEO_DIR);
       debug("Working in degraded mode; using buddy drive for video and buddy systems");
+      heartbeatData.status="degraded";
     } catch(err) {
       debug("Failed to bind buddy drive to video drive");
+      heartbeatData.status="critical";
     }
   }
 
+  await writeHeartbeatData(heartbeatData);
   debug("Completed setting up drives");
 }
 
@@ -475,4 +492,25 @@ const _mount = async() => {
     return {device:t[1],path:t[2],type:t[3],flags:t[4]}
   }).filter(l=>l);
   return mount_lines;
+}
+
+
+const writeHeartbeatData = async (data) {
+  if(data.video) {
+	delete data.video.luksPath; // possibly sensitive path (enc key)
+  }
+  else {
+    data.video={exists:false}; // null fields are sometimes weird in mongo, so ensure minimal data for each drive
+  }
+
+  if(data.buddy) {
+	delete data.buddy.luksPath;
+  }
+  else {
+    data.buddy={exists:false};
+  }
+
+  await execCommand(`mkdir -p ${RAM_DISK_BASE}/services`);
+
+  fs.writeFileSync(`${RAM_DISK_BASE}/services/setupStorage.json`, JSON.stringify(data),'utf8');
 }
