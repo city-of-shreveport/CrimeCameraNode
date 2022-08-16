@@ -29,6 +29,7 @@ async function everyBoot() {
   await require("./everyBoot/setupRamDisk").run();
   await require("./everyBoot/cacheCameraConfig").run();
   await require("./everyBoot/setupStorage").run()
+  await require("./everyBoot/hwStatus").run()
   debug("Completed everyBoot Procedures");
 }
 
