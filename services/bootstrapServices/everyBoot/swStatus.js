@@ -40,8 +40,6 @@ async function run() {
 }
 
 const writeHeartbeatData = async (data,config) => {
-  await execCommand(`mkdir -p ${RAM_DISK_BASE}/services`);
-
   fs.writeFileSync(`${RAM_DISK_BASE}/services/swStatus.json`, sanitize(JSON.stringify(data)),'utf8');
 }
 

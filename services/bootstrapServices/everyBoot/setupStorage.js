@@ -501,7 +501,5 @@ const writeHeartbeatData = async (data,config) => {
     data.buddy={exists:false};
   }
 
-  await execCommand(`mkdir -p ${RAM_DISK_BASE}/services`);
-
   fs.writeFileSync(`${RAM_DISK_BASE}/services/setupStorage.json`, sanitize(JSON.stringify(data)),'utf8');
 }
