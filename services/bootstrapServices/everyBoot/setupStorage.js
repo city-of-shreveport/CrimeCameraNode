@@ -63,7 +63,7 @@ const prepDrive = async(driveSpec,driveName,mountPath,encryptionKey) => {
   debug(`  Setting up ${driveName.toLowerCase()} drive (${driveSpec.devicePath})...`)
   try {
     await bringDriveFullyOnline(driveSpec,mountPath,encryptionKey);
-    debug("    ${driveName} drive online");
+    debug(`    ${driveName} drive online`);
     return true;
   }
   catch(e) {
