@@ -1,7 +1,7 @@
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 
-const debug = require('debug')('setupStorage')
+const debug = require('debug')('hwStatus')
 debug.enabled = true
 const fs = require('fs')
 
