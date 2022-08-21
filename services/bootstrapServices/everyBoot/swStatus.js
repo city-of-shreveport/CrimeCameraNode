@@ -1,46 +1,12 @@
-const util = require('util');
-const exec = util.promisify(require('child_process').exec);
+const utils=require('../../serviceUtils')('swStatus');
 
-const debug = require('debug')('swStatus')
-debug.enabled = true
 const fs = require('fs')
 const pm2 = require('pm2')
 
-var config = {}
-
-function sanitize(str) {
-  str=str.replace(new RegExp(config.videoDriveEncryptionKey,"g"),"<video key>")
-  str=str.replace(new RegExp(config.buddyDriveEncryptionKey,"g"),"<buddy key>")
-  return str;
-}
-const execCommand = (command) => {
-  try {
-    return exec(command)
-  } catch(e) {
-    debug("COMMAND FAILED")
-    var cmd=command;
-    var str=e.stack||e.message||e;
-    var err=e.stderr;
-    debug(sanitize(cmd));
-    debug(sanitize(str));
-    debug(sanitize(err));
-    throw e;
-  }
-};
-
-const RAM_DISK_BASE="/mnt/ramdisk";
-
 async function run() {
-  debug("Reading config...");
-  var configString = fs.readFileSync(`${RAM_DISK_BASE}/config.json`, 'utf8');
-  config = JSON.parse(configString).config; // only needed for sanitize
-
+  utils.readConfig() // for sanitize
   var data=await getData()
-  writeHeartbeatData(data);
-}
-
-const writeHeartbeatData = (data) => {
-  fs.writeFileSync(`${RAM_DISK_BASE}/services/swStatus.json`, sanitize(JSON.stringify(data)),'utf8');
+  utils.writeHeartbeatData(data);
 }
 
 // this system will report emergency if any of the pm2 modules are not online
@@ -87,14 +53,14 @@ async function getPM2Data() {
     return e.message;
   }
   finally {
-  pm2.disconnect();
+    pm2.disconnect();
   }
 }
 
 
 async function getGitData() {
   try {
-    var d=await execCommand(`git status --porcelain -b`)
+    var d=await utils.execCommand(`git status --porcelain -b`)
     d=d.stdout.trim().split('\n')
     var branch_line=d.shift();
     var branch=branch_line.match(/^## (.*?)\.\.\./);

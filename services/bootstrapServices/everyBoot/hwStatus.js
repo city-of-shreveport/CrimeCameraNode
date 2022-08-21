@@ -1,47 +1,12 @@
-const util = require('util');
-const exec = util.promisify(require('child_process').exec);
+const utils=require('../../serviceUtils')('hwStatus');
 
-const debug = require('debug')('hwStatus')
-debug.enabled = true
 const fs = require('fs')
 
-var config = {}
-
-function sanitize(str) {
-  str=str.replace(new RegExp(config.videoDriveEncryptionKey,"g"),"<video key>")
-  str=str.replace(new RegExp(config.buddyDriveEncryptionKey,"g"),"<buddy key>")
-  return str;
-}
-const execCommand = (command) => {
-  try {
-    return exec(command)
-  } catch(e) {
-    debug("COMMAND FAILED")
-    var cmd=command;
-    var str=e.stack||e.message||e;
-    var err=e.stderr;
-    debug(sanitize(cmd));
-    debug(sanitize(str));
-    debug(sanitize(err));
-    throw e;
-  }
-};
-
-const RAM_DISK_BASE="/mnt/ramdisk";
-
 async function run() {
-  debug("Reading config...");
-  var  configString = fs.readFileSync(`${RAM_DISK_BASE}/config.json`, 'utf8');
-  config = JSON.parse(configString).config;
-
+  utils.readConfig() // for sanitize
   var data=await getData()
-  writeHeartbeatData(data);
+  utils.writeHeartbeatData(data);
 }
-
-const writeHeartbeatData = (data) => {
-  fs.writeFileSync(`${RAM_DISK_BASE}/services/hwStatus.json`, sanitize(JSON.stringify(data)),'utf8');
-}
-
 
 
 // this system is for reporting only; for now it only can report healthy
@@ -75,7 +40,7 @@ async function getVcgencmdData() {
 
 async function vcgencmdMeasureTemp() {
   try {
-    var d=await execCommand(`vcgencmd measure_temp`);
+    var d=await utils.execCommand(`vcgencmd measure_temp`);
     d=d.stdout.trim().match(/^temp=([0-9]+\.[0-9]+)'C$/)
     if(!d)return "N/A";
     return parseFloat(d[1]);
@@ -86,7 +51,7 @@ async function vcgencmdMeasureTemp() {
 }
 async function vcgencmdGetThrottled() {
   try {
-    var d=await execCommand(`vcgencmd get_throttled`);
+    var d=await utils.execCommand(`vcgencmd get_throttled`);
     d=d.stdout.trim().match(/^throttled=(0x[0-9a-fA-F]+)$/)
     if(!d)return "N/A";
     var numeric=parseInt(d[1],16);
@@ -113,7 +78,7 @@ async function vcgencmdGetThrottled() {
 }
 async function vcgencmdMeasureClock(clock) {
   try {
-    var d=await execCommand(`vcgencmd measure_clock ${clock}`);
+    var d=await utils.execCommand(`vcgencmd measure_clock ${clock}`);
     d=d.stdout.trim().match(/^frequency\(.*\)=([0-9]+)$/)
     if(!d)return "N/A";
     return parseInt(d[1]);
@@ -124,7 +89,7 @@ async function vcgencmdMeasureClock(clock) {
 }
 async function vcgencmdMeasureVolts(block) {
   try {
-    var d=await execCommand(`vcgencmd measure_volts ${block}`);
+    var d=await utils.execCommand(`vcgencmd measure_volts ${block}`);
     d=d.stdout.trim().match(/^volt=([0-9]+\.[0-9]+)V$/)
     if(!d)return "N/A";
     return parseFloat(d[1]);
@@ -137,7 +102,7 @@ async function vcgencmdMeasureVolts(block) {
 
 async function getUptimeData() {
   try {
-    var d=await execCommand(`uptime`)
+    var d=await utils.execCommand(`uptime`)
     d=d.stdout.trim().match(/^.*? up (.*?),  ([0-9]) user,  load average: ([0-9]+\.[0-9]+), ([0-9]+\.[0-9]+), ([0-9]+\.[0-9]+)$/);
     if(!d)return "N/A"
     return {
@@ -157,7 +122,7 @@ async function getUptimeData() {
 
 async function getDFData() {
   try {
-    var d=await execCommand(`df --output=target,size,used,avail --block-size=K`);
+    var d=await utils.execCommand(`df --output=target,size,used,avail --block-size=K`);
     d=d.stdout.trim().split('\n');
     d.shift() // remove header
     d=d.map(l=>{
@@ -200,7 +165,7 @@ function processFreeData(header,dat) {
 }
 async function getFreeData() {
   try {
-    var d=await execCommand(`free -wk`);
+    var d=await utils.execCommand(`free -wk`);
     d=d.stdout.trim().split('\n');
     var header=d[0].split(/\s+/)
     var mem=d[1].split(/\s+/)
