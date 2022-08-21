@@ -41,7 +41,7 @@ const RAM_DISK_BASE="/mnt/ramdisk";
 
 async function run() {
   debug("Reading config...");
-  configString = fs.readFileSync(`${RAM_DISK_BASE}/config.json`, 'utf8');
+  var configString = fs.readFileSync(`${RAM_DISK_BASE}/config.json`, 'utf8');
   config = JSON.parse(configString).config;
 
   try {
@@ -150,7 +150,7 @@ async function runInternal(config,firstTry) {
     }
   }
 
-  await writeHeartbeatData(heartbeatData,config);
+  writeHeartbeatData(heartbeatData);
   debug("Completed setting up drives");
 }
 
@@ -492,7 +492,7 @@ const _mount = async() => {
 }
 
 
-const writeHeartbeatData = async (data,config) => {
+const writeHeartbeatData = (data) => {
   if(!data.video) {
     data.video={exists:false}; // null fields are sometimes weird in mongo, so ensure minimal data for each drive
   }

@@ -32,14 +32,14 @@ const RAM_DISK_BASE="/mnt/ramdisk";
 
 async function run() {
   debug("Reading config...");
-  configString = fs.readFileSync(`${RAM_DISK_BASE}/config.json`, 'utf8');
-  config = JSON.parse(configString).config;
+  var configString = fs.readFileSync(`${RAM_DISK_BASE}/config.json`, 'utf8');
+  config = JSON.parse(configString).config; // only needed for sanitize
 
   var data=await getData()
-  await writeHeartbeatData(data,config);
+  writeHeartbeatData(data);
 }
 
-const writeHeartbeatData = async (data,config) => {
+const writeHeartbeatData = (data) => {
   fs.writeFileSync(`${RAM_DISK_BASE}/services/swStatus.json`, sanitize(JSON.stringify(data)),'utf8');
 }
 
