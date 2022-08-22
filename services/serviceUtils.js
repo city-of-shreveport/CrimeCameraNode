@@ -58,7 +58,7 @@ module.exports=function(module_name) {
     },
 
     writeHeartbeatData(data){
-      fs.writeFileSync(`${utils.paths.ram_disk}/services/${module_name}.json`, utils.sanitize(JSON.stringify(data)),'utf8');
+      fs.writeFileSync(`${ob.paths.ram_disk}/services/${module_name}.json`, ob.sanitize(JSON.stringify(data)),'utf8');
     }
 
   }
