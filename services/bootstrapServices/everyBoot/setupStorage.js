@@ -7,7 +7,12 @@ const fs = require('fs')
 
 var config = {}
 
-const execCommand = (command,sanitize=null) => {
+function sanitize(str) {
+  str=str.replace(new RegExp(config.videoDriveEncryptionKey,"g"),"<video key>")
+  str=str.replace(new RegExp(config.buddyDriveEncryptionKey,"g"),"<buddy key>")
+  return str;
+}
+const execCommand = (command) => {
   try {
     return exec(command)
   } catch(e) {
@@ -15,27 +20,28 @@ const execCommand = (command,sanitize=null) => {
     var cmd=command;
     var str=e.stack||e.message||e;
     var err=e.stderr;
-    if(sanitize) {
-      var r=new RegExp(sanitize,'g');
-      cmd=cmd.replace(r,'<snip>'); // use this to sanitize keys
-      if(typeof str=='string')
-        str=str.replace(r,'<snip>'); // use this to sanitize keys
-    if(typeof err=='string')
-      err=err.replace(r,'<snip>'); // use this to sanitize keys
-    }
-    debug(cmd);
-    debug(str);
-    debug(err);
+    debug(sanitize(cmd));
+    debug(sanitize(str));
+    debug(sanitize(err));
     throw e;
   }
 };
 
+/*
+  STATUS REPORTING
+  healthy   -- both drives are functioning correctly. System may still be misconfigured (i.e. wrong keys), but the drives are healthy and the system should be functional.
+  degraded  -- one drive is missing, and the remaining drive is doing double duty. The system should be stable but it needs attention sooner than later.
+  critical  -- one drive is missing, and the other could not be used for both purposes at once. One of the video streams is being written to the SD card. System needs attention now.
+  emergency -- both drives are missing, and both streams are being written to the SD card. System needs attention yesterday.
+*/
+
 const VIDEO_DIR="/home/pi/videos";
-const BUDDY_DIR="/home/pi/remote_backups"
+const BUDDY_DIR="/home/pi/remote_backups";
+const RAM_DISK_BASE="/mnt/ramdisk";
 
 async function run() {
   debug("Reading config...");
-  configString = fs.readFileSync('/mnt/ramdisk/config.json', 'utf8');
+  var configString = fs.readFileSync(`${RAM_DISK_BASE}/config.json`, 'utf8');
   config = JSON.parse(configString).config;
 
   try {
@@ -46,13 +52,24 @@ async function run() {
   debug("Unable to properly detect state. Attempting to unmount everything and try again.");
   try { await execCommand("sudo umount "+VIDEO_DIR); } catch(e){}
   try { await execCommand("sudo umount "+BUDDY_DIR); } catch(e){}
-  try { await execCommand("sudo cryptsetup --batch-mode -d - luksClose /dev/mapper/"+config.videoDriveEncryptionKey,config.videoDriveEncryptionKey); } catch(e){}
-  try { await execCommand("sudo cryptsetup --batch-mode -d - luksClose /dev/mapper/"+config.buddyDriveEncryptionKey,config.buddyDriveEncryptionKey); } catch(e){}
+  try { await execCommand("sudo cryptsetup --batch-mode -d - luksClose /dev/mapper/"+config.videoDriveEncryptionKey); } catch(e){}
+  try { await execCommand("sudo cryptsetup --batch-mode -d - luksClose /dev/mapper/"+config.buddyDriveEncryptionKey); } catch(e){}
 
   return await runInternal(config);
 }
 
 
+const prepDrive = async(driveSpec,driveName,mountPath,encryptionKey) => {
+  debug(`  Setting up ${driveName.toLowerCase()} drive (${driveSpec.devicePath})...`)
+  try {
+    await bringDriveFullyOnline(driveSpec,mountPath,encryptionKey);
+    debug(`    ${driveName} drive online`);
+    return true;
+  }
+  catch(e) {
+    return false;
+  }
+}
 async function runInternal(config,firstTry) {
   debug("Setting up video and buddy drives")
 
@@ -67,26 +84,30 @@ async function runInternal(config,firstTry) {
     delete drives.unknown;
   }
 
+  var heartbeatData={status:"healthy",date:Date.now(),video:drives.video,buddy:drives.buddy};
+
   // we have identified every drive attached (which could be 0, 1, or 2)
   // this will format if necessary
   if(drives.video) {
-    debug(`  Setting up video drive (${drives.video.devicePath})...`)
-    try {
-      await bringDriveFullyOnline(drives.video,VIDEO_DIR,config.videoDriveEncryptionKey);
-      debug("    Video drive online");
+    var ok=prepDrive(drives.video,'Video',VIDEO_DIR,config.videoDriveEncryptionKey);
+    if(!ok && drives.video.luksFormatted && !drives.video.luksOpened) {
+      // we saw a rare failure case where drives had the wrong encryption key used. So try the other just in case
+      ok=prepDrive(drives.video,'Video',VIDEO_DIR,config.buddyDriveEncryptionKey);
+      if(ok)debug("    Warning: Had to use buddy drive encryption key");
     }
-    catch(e) {
+    if(!ok) {
       debug("    Video drive failed to come online");
       drives.video=null;
     }
   }
   if(drives.buddy) {
-    debug(`  Setting up buddy drive (${drives.buddy.devicePath})...`)
-    try {
-      await bringDriveFullyOnline(drives.buddy,BUDDY_DIR,config.buddyDriveEncryptionKey);
-      debug("    Buddy drive online");
+    var ok=prepDrive(drives.buddy,'Buddy',BUDDY_DIR,config.buddyDriveEncryptionKey);
+    if(!ok && drives.buddy.luksFormatted && !drives.buddy.luksOpened) {
+      // we saw a rare failure case where drives had the wrong encryption key used. So try the other just in case
+      ok=prepDrive(drives.buddy,'Buddy',BUDDY_DIR,config.videoDriveEncryptionKey);
+      if(ok)debug("    Warning: Had to use video drive encryption key");
     }
-    catch(e) {
+    if(!ok) {
       debug("    Buddy drive failed to come online");
       drives.buddy=null;
     }
@@ -102,6 +123,7 @@ async function runInternal(config,firstTry) {
       await execCommand(`sudo mkdir -p ${VIDEO_DIR}`);
       await execCommand(`sudo mkdir -p ${BUDDY_DIR}`);
     }catch(e){}
+    heartbeatData.status="emergency";
     debug("Working in emergency mode; using system drive for video and buddy systems");
   }
   else if(drives.video && drives.buddy) {
@@ -111,19 +133,24 @@ async function runInternal(config,firstTry) {
     try {
       await bindAlternateStorageDrive(VIDEO_DIR,BUDDY_DIR);
       debug("Working in degraded mode; using video drive for video and buddy systems");
+      heartbeatData.status="degraded";
     } catch(err) {
       debug("Failed to bind video drive to buddy drive");
+      heartbeatData.status="critical";
     }
   }
   else if(drives.buddy && !drives.video) {
     try {
       bindAlternateStorageDrive(BUDDY_DIR,VIDEO_DIR);
       debug("Working in degraded mode; using buddy drive for video and buddy systems");
+      heartbeatData.status="degraded";
     } catch(err) {
       debug("Failed to bind buddy drive to video drive");
+      heartbeatData.status="critical";
     }
   }
 
+  writeHeartbeatData(heartbeatData);
   debug("Completed setting up drives");
 }
 
@@ -346,9 +373,9 @@ const partitionDrive = async(deviceSpec) => {
 const luksFormatDrive = async(deviceSpec,encryptionKey) => {
   debug(`    Formatting ${deviceSpec.partitionPath}...`);
 
-  await execCommand(`echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${deviceSpec.partitionPath}`,encryptionKey);
+  await execCommand(`echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${deviceSpec.partitionPath}`);
   await luksOpenDrive(deviceSpec,encryptionKey); // awkward, but have to open in the middle to make the fs
-  await execCommand(`yes | sudo mkfs -t ext4 ${deviceSpec.luksPath}`,encryptionKey);
+  await execCommand(`yes | sudo mkfs -t ext4 ${deviceSpec.luksPath}`);
 
   deviceSpec.luksFormatted=true;
 }
@@ -357,7 +384,7 @@ const luksOpenDrive = async(deviceSpec,encryptionKey) => {
   debug(`    Opening ${deviceSpec.partitionPath}...`);
 
   try {
-    await execCommand(`echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${deviceSpec.partitionPath} ${encryptionKey}`,encryptionKey);
+    await execCommand(`echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${deviceSpec.partitionPath} ${encryptionKey}`);
   } catch(err) {
     if(!err.stderr.includes(`Device ${encryptionKey} already exists.`))
       throw err;
@@ -372,7 +399,7 @@ const mountDrive = async(deviceSpec, mountPath, encryptionKey) => {
   debug(`    Mounting ${deviceSpec.partitionPath}...`);
 
   await execCommand(`sudo mkdir -p ${mountPath}`);
-  await execCommand(`sudo mount ${deviceSpec.luksPath} ${mountPath}`,encryptionKey);
+  await execCommand(`sudo mount ${deviceSpec.luksPath} ${mountPath}`);
   await execCommand(`sudo chown -R pi:pi ${mountPath}`)
   await execCommand(`sudo chmod 755 -R ${mountPath}`)
 
@@ -462,4 +489,17 @@ const _mount = async() => {
     return {device:t[1],path:t[2],type:t[3],flags:t[4]}
   }).filter(l=>l);
   return mount_lines;
+}
+
+
+const writeHeartbeatData = (data) => {
+  if(!data.video) {
+    data.video={exists:false}; // null fields are sometimes weird in mongo, so ensure minimal data for each drive
+  }
+
+  if(!data.buddy) {
+    data.buddy={exists:false};
+  }
+
+  fs.writeFileSync(`${RAM_DISK_BASE}/services/setupStorage.json`, sanitize(JSON.stringify(data)),'utf8');
 }

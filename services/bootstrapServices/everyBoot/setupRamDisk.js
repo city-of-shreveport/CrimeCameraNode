@@ -43,6 +43,8 @@ async function run() {
     debug("Ram Disk mounted. Skipping");
   }
 
+  await exec(`mkdir -p /mnt/ramdisk/services`);
+
   debug("Completed Ram Disk Setup Procedure");
 }
 
