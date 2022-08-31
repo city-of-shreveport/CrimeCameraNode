@@ -57,8 +57,15 @@ const prepDrive = async(driveSpec,driveName,mountPath,encryptionKey) => {
   debug(`  Setting up ${driveName.toLowerCase()} drive (${driveSpec.devicePath})...`)
   try {
     await bringDriveFullyOnline(driveSpec,mountPath,encryptionKey);
-    debug("    ${driveName} drive online");
-    return true;
+    driveSpec.ioWorked=await iotest(mountpath);
+    if(driveSpec.ioWorked) {
+      debug(`    ${driveName} drive online`);
+      return true;
+    }
+    else {
+      debug(`    ${driveName} failed I/O test`);
+      return false;
+	}
   }
   catch(e) {
     return false;
@@ -145,7 +152,18 @@ module.exports = {
 }
 
 
-
+async function iotest(base) {
+  try {
+    debug(`Testing file I/O on ${base}`);
+    await fs.promises.writeFile(`${base}/io_test`,"test");
+    await fs.promises.unlink(`${base}/io_test`);
+    return true;
+  }
+  catch(e) {
+    debug(e);
+    return false;
+  }
+}
 //------------------------------------------------------------------------------
 // Check drive state
 
