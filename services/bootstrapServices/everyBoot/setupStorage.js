@@ -74,7 +74,7 @@ const prepDrive = async(driveSpec,driveName,mountPath,encryptionKey) => {
     else {
       utils.debug(`    ${driveName} failed I/O test`);
       return false;
-	}
+    }
   }
   catch(e) {
     return false;
@@ -115,9 +115,9 @@ async function runInternal(firstTry) {
       driveFailed('video');
       drives.video=null;
     }
-	else {
-	  driveSucceeded('video');
-	}
+    else {
+      driveSucceeded('video');
+    }
   }
   if(drives.buddy) {
     var ok=prepDrive(drives.buddy,'Buddy',utils.paths.buddy_dir,utils.config.buddyDriveEncryptionKey);
@@ -131,9 +131,9 @@ async function runInternal(firstTry) {
       driveFailed('buddy')
       drives.buddy=null;
     }
-	else {
-	  driveSucceeded('buddy');
-	}
+    else {
+      driveSucceeded('buddy');
+    }
   }
 
   if(!drives.video && !drives.buddy) {
