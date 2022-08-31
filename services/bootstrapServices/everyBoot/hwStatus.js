@@ -139,9 +139,9 @@ async function getDFData() {
     return {
       root:d.find(o=>o.path=='/')||"not found",
       boot:d.find(o=>o.path=='/boot')||"not found",
-      video:d.find(o=>o.path=='/home/pi/videos')||"not found",
-      buddy:d.find(o=>o.path=='/home/pi/remote_backups')||"not found",
-      ramdisk:d.find(o=>o.path==RAM_DISK_BASE)||"not found",
+      video:d.find(o=>o.path==utils.paths.video_dir)||"not found",
+      buddy:d.find(o=>o.path==utils.paths.buddy_dir)||"not found",
+      ramdisk:d.find(o=>o.path==utils.paths.ram_disk)||"not found"
     }
   }
   catch(e) {
