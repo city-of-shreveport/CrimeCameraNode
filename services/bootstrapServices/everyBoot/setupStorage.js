@@ -98,7 +98,7 @@ async function runInternal(firstTry) {
   if(didDriveFail('buddy'))
     drives.buddy=null;
 
-  var heartbeatData={status:"healthy",date:Date.now(),video:drives.video,buddy:drives.buddy};
+  var heartbeatData={status:"healthy",date:Date.now(),video:drives.video,buddy:drives.buddy,fails:fail_count};
 
   // we have identified every drive attached (which could be 0, 1, or 2)
   // this will format if necessary
