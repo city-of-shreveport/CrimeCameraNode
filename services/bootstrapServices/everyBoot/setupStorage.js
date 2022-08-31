@@ -33,6 +33,35 @@ const execCommand = (command,sanitize=null) => {
 const VIDEO_DIR="/home/pi/videos";
 const BUDDY_DIR="/home/pi/remote_backups"
 
+
+// each time a drive fails to mount, add 2
+// each time it succeeds, subtract 1 (min 1)
+// at 10, assume the drive is toast and stop trying.
+// basically: 5 sequential failures in a row will count
+// but if the drive is intermittent, if it's offline 50/50 or more,
+// it'll get caught too. But if it is on more than 50/50, we'll keep trying it
+var fail_count={
+  video:0, // current count
+  video_hwm:0, // high water mark
+  buddy:0,
+  buddy_hwm:0
+
+}
+function driveFailed(key) {
+  fail_count[key]+=2;
+  if(fail_count[key]>fail_count[key+'_hwm'])
+    fail_count[key+'_hwm']=fail_count[key];
+}
+function driveSucceeded(key) {
+  fail_count[key]--;
+  if(fail_count[key]<0)
+    fail_count[key]=0;
+}
+function didDriveFail(key) {
+  return fail_count[key]>=10;
+}
+
+
 async function run() {
   debug("Reading config...");
   configString = fs.readFileSync('/mnt/ramdisk/config.json', 'utf8');
@@ -44,10 +73,14 @@ async function run() {
   catch(err) {}
 
   debug("Unable to properly detect state. Attempting to unmount everything and try again.");
-  try { await execCommand("sudo umount "+VIDEO_DIR); } catch(e){}
-  try { await execCommand("sudo umount "+BUDDY_DIR); } catch(e){}
-  try { await execCommand("sudo cryptsetup --batch-mode -d - luksClose /dev/mapper/"+config.videoDriveEncryptionKey,config.videoDriveEncryptionKey); } catch(e){}
-  try { await execCommand("sudo cryptsetup --batch-mode -d - luksClose /dev/mapper/"+config.buddyDriveEncryptionKey,config.buddyDriveEncryptionKey); } catch(e){}
+  if(!didDriveFail('video')) {
+    try { await execCommand("sudo umount "+VIDEO_DIR); } catch(e){}
+    try { await execCommand("sudo cryptsetup --batch-mode -d - luksClose /dev/mapper/"+config.videoDriveEncryptionKey,config.videoDriveEncryptionKey); } catch(e){}
+  }
+  if(!didDriveFail('buddy') {
+    try { await execCommand("sudo umount "+BUDDY_DIR); } catch(e){}
+    try { await execCommand("sudo cryptsetup --batch-mode -d - luksClose /dev/mapper/"+config.buddyDriveEncryptionKey,config.buddyDriveEncryptionKey); } catch(e){}
+  }
 
   return await runInternal(config);
 }
@@ -84,6 +117,10 @@ async function runInternal(config,firstTry) {
     drives.video=drives.unknown;
     delete drives.unknown;
   }
+  if(didDriveFail('video'))
+    drives.video=null;
+  if(didDriveFail('buddy'))
+    drives.buddy=null;
 
   // we have identified every drive attached (which could be 0, 1, or 2)
   // this will format if necessary
@@ -96,7 +133,11 @@ async function runInternal(config,firstTry) {
 	}
 	if(!ok) {
 	  debug("    Video drive failed to come online");
+	  driveFailed('video');
 	  drives.video=null;
+	}
+	else {
+	  driveSucceeded('video');
 	}
   }
   if(drives.buddy) {
@@ -108,7 +149,11 @@ async function runInternal(config,firstTry) {
 	}
 	if(!ok) {
 	  debug("    Buddy drive failed to come online");
+	  driveFailed('buddy')
 	  drives.buddy=null;
+	}
+	else {
+	  driveSucceeded('buddy');
 	}
   }
 
@@ -237,19 +282,24 @@ const getDriveState = async(config) => {
     // we can only get to here if the drive was formatted but not opened.
     // so guess and check, try to open it both ways.
     debug('  Attempting to guess which drive this is...');
-    try {
-      // try video drive
-      await luksOpenDrive(drive,config.videoDriveEncryptionKey);
-      return {video:drive,buddy:null}
-    }catch(err) {
-       // wrong key, that's ok
+    // if a drive has failed, don't try it's enc key.
+    if(!didDriveFail('video')) {
+      try {
+        // try video drive
+        await luksOpenDrive(drive,config.videoDriveEncryptionKey);
+        return {video:drive,buddy:null}
+      }catch(err) {
+         // wrong key, that's ok
+      }
     }
-    try {
-      // try buddy drive
-      await luksOpenDrive(drive,config.buddyDriveEncryptionKey);
-      return {video:null,buddy:drive}
-    }catch(err) {
-       // wrong key, that's ok
+    if(!didDriveFail('buddy')) {
+      try {
+        // try buddy drive
+        await luksOpenDrive(drive,config.buddyDriveEncryptionKey);
+        return {video:null,buddy:drive}
+      }catch(err) {
+         // wrong key, that's ok
+      }
     }
     // neither key worked
     return {video:null,buddy:null,unknown:drive};
