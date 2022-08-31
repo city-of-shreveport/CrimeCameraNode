@@ -52,7 +52,7 @@ async function run() {
     try { await utils.execCommand("sudo umount "+utils.paths.video_dir); } catch(e){}
     try { await utils.execCommand("sudo cryptsetup --batch-mode -d - luksClose /dev/mapper/"+utils.config.videoDriveEncryptionKey); } catch(e){}
   }
-  if(!didDriveFail('buddy') {
+  if(!didDriveFail('buddy')) {
     try { await utils.execCommand("sudo umount "+utils.paths.buddy_dir); } catch(e){}
     try { await utils.execCommand("sudo cryptsetup --batch-mode -d - luksClose /dev/mapper/"+utils.config.buddyDriveEncryptionKey); } catch(e){}
   }
