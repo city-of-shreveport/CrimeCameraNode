@@ -66,7 +66,7 @@ const prepDrive = async(driveSpec,driveName,mountPath,encryptionKey) => {
   try {
     await bringDriveFullyOnline(driveSpec,mountPath,encryptionKey);
 
-    driveSpec.ioWorked=await iotest(mountpath);
+    driveSpec.ioWorked=await iotest(mountPath);
     if(driveSpec.ioWorked) {
       utils.debug(`    ${driveName} drive online`);
       return true;
@@ -77,6 +77,7 @@ const prepDrive = async(driveSpec,driveName,mountPath,encryptionKey) => {
     }
   }
   catch(e) {
+    utils.debug(e);
     return false;
   }
 }
@@ -103,11 +104,11 @@ async function runInternal(firstTry) {
   // we have identified every drive attached (which could be 0, 1, or 2)
   // this will format if necessary
   if(drives.video) {
-    var ok=prepDrive(drives.video,'Video',utils.paths.video_dir,utils.config.videoDriveEncryptionKey);
+    var ok=await prepDrive(drives.video,'Video',utils.paths.video_dir,utils.config.videoDriveEncryptionKey);
     if(!ok && drives.video.luksFormatted && !drives.video.luksOpened) {
 
       // we saw a rare failure case where drives had the wrong encryption key used. So try the other just in case
-      ok=prepDrive(drives.video,'Video',utils.paths.video_dir,utils.config.buddyDriveEncryptionKey);
+      ok=await prepDrive(drives.video,'Video',utils.paths.video_dir,utils.config.buddyDriveEncryptionKey);
       if(ok)utils.debug("    Warning: Had to use buddy drive encryption key");
     }
     if(!ok) {
@@ -120,10 +121,10 @@ async function runInternal(firstTry) {
     }
   }
   if(drives.buddy) {
-    var ok=prepDrive(drives.buddy,'Buddy',utils.paths.buddy_dir,utils.config.buddyDriveEncryptionKey);
+    var ok=await prepDrive(drives.buddy,'Buddy',utils.paths.buddy_dir,utils.config.buddyDriveEncryptionKey);
     if(!ok && drives.buddy.luksFormatted && !drives.buddy.luksOpened) {
       // we saw a rare failure case where drives had the wrong encryption key used. So try the other just in case
-      ok=prepDrive(drives.buddy,'Buddy',utils.paths.buddy_dir,utils.config.videoDriveEncryptionKey);
+      ok=await prepDrive(drives.buddy,'Buddy',utils.paths.buddy_dir,utils.config.videoDriveEncryptionKey);
       if(ok)utils.debug("    Warning: Had to use video drive encryption key");
     }
     if(!ok) {
@@ -190,13 +191,13 @@ module.exports = {
 
 async function iotest(base) {
   try {
-    debug(`Testing file I/O on ${base}`);
+    utils.debug(`Testing file I/O on ${base}`);
     await fs.promises.writeFile(`${base}/io_test`,"test");
     await fs.promises.unlink(`${base}/io_test`);
     return true;
   }
   catch(e) {
-    debug(e);
+    utils.debug(e);debug(e);
     return false;
   }
 }
