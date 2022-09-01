@@ -9,7 +9,12 @@ async function run() {
   utils.writeHeartbeatData(data);
 }
 
-// this system will report emergency if any of the pm2 modules are not online
+/*
+  STATUS REPORTING
+  healthy   -- Everything looks ok
+  emergency -- Any pm2 module is not 'online'
+*/
+
 async function getData() {
   var dat={
     status:"healthy",

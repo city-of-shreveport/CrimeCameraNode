@@ -9,9 +9,17 @@ async function run() {
 }
 
 
-// this system is for reporting only; for now it only can report healthy
+/*
+  STATUS REPORTING
+  healthy   -- Everything looks ok
+  degraded  -- One of: one mass storage device is missing, one mass storage device is attached to a low speed port, the CPU is reporting throttling, or CPU temps are over 75C.
+  critical  -- Two of the above (counting the drives separately)
+  emergency -- Three or more of the above
+*/
+
+
 async function getData() {
-  return {
+  var ret={
     status:"healthy",
     date:Date.now(),
     uptime:await getUptimeData(),
@@ -20,6 +28,23 @@ async function getData() {
     pi:await getVcgencmdData(),
     usb:await getLSUSBData()
   }
+  var problems=0;
+
+  if(ret.pi.temperatureC >= 75)problems++;
+  if(ret.pi.throttled.raw & 0xF)problems++; // don't count the sticky flags
+
+  var drives=getMassStorageDevices(ret.usb)
+  if(drives.length<2)problems+=2-drives.length;
+  drives.forEach(d=>{
+    if(d.speed[0]<3) // format is USBVER/speed.
+      problems++;
+  })
+
+  if(problems==1)ret.status=='degraded';
+  else if(problems==2)ret.status=='critical';
+  else if(problems>=3)ret.status='emergency';
+
+  return ret;
 }
 
 async function getVcgencmdData() {
@@ -236,6 +261,16 @@ async function getLSUSBData() {
     }
   }
   return str.filter(o=>o.depth==0).map(cleanLSUSB)
+}
+
+function getMassStorageDevices(dat) {
+  var ret=[];
+  if(dat.class=='Mass Storage')
+    ret.push(dat);
+  if(ret.children) {
+    ret.children.forEach(c=>ret.push(...getMassStorageDevices(c)))
+  }
+  return ret;
 }
 
 
