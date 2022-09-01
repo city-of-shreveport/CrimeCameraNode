@@ -191,7 +191,7 @@ module.exports = {
 
 async function iotest(base) {
   try {
-    utils.debug(`Testing file I/O on ${base}`);
+    utils.debug(`    Testing file I/O on ${base}`);
     await fs.promises.writeFile(`${base}/io_test`,"test");
     await fs.promises.unlink(`${base}/io_test`);
     return true;
