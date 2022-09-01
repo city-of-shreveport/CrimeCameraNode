@@ -18,6 +18,7 @@ async function getData() {
     disks:await getDFData(),
     ram:await getFreeData(),
     pi:await getVcgencmdData(),
+    usb:await getLSUSBData()
   }
 }
 
@@ -179,6 +180,64 @@ async function getFreeData() {
     return e.message
   }
 }
+
+
+
+
+function cleanLSUSB(dat) {
+  var ret={}
+  dat.line=dat.line.replace(/\/:|\|__/g,'').trim()
+  if(dat.line.startsWith('Port')) {
+    var l=dat.line.match(/Port ([0-9]+): Dev ([0-9]+), If ([0-9]+), Class=(.*?), Driver=(.*?), (.*)/);
+    ret.port=+l[1];
+    ret.dev=+l[2];
+//    ret.if=+l[3];
+    ret.class=l[4]
+//    ret.driver=l[5]
+    ret.speed=l[6]
+  }
+  else if(dat.line.startsWith('Bus')) {
+    var l=dat.line.match(/Bus ([0-9]+)\.Port ([0-9]+): Dev ([0-9]+), Class=(.*?), Driver=(.*?), (.*)/);
+    ret.bus=l[1]
+    ret.port=+l[2];
+    ret.dev=+l[2];
+    ret.class=l[4]
+//    ret.driver=l[5]
+    ret.speed=l[6]
+  }
+  else {
+    ret.type="unknown"
+    ret.raw=dat.line
+  }
+  if(ret.speed=='12M')ret.speed="1/12Mbps"
+  else if(ret.speed=='480M')ret.speed="2/480Mbps"
+  else if(ret.speed=='5000M')ret.speed="3/5Gbps"
+  else if(ret.speed=='10000M')ret.speed="3.1/10Gbps"
+  else if(ret.speed=='20000M')ret.speed="3.2/20Gbps"
+  else if(ret.speed=='40000M')ret.speed="4/40Gbps"
+  if(dat.children.length)
+    ret.children=dat.children.map(cleanLSUSB);
+  return ret;
+}
+
+async function getLSUSBData() {
+  var str=await utils.execCommand(`lsusb -t`);
+  str=str.stdout.split('\n').filter(l=>l);
+  str=str.map(o=>({line:o.trim(),depth:o.match(/^(\s*)/)[1].length/4,children:[]}))
+  var root=[];
+  var work=[];
+  for(var i=0;i<str.length;++i) {
+    if(str[i].depth==0)continue;
+    for(var j=i-1;j>=0;j--) {
+      if(str[j].depth < str[i].depth) {
+        str[j].children.push(str[i])
+        break
+      }
+    }
+  }
+  return str.filter(o=>o.depth==0).map(cleanLSUSB)
+}
+
 
 module.exports = {
   run
