@@ -1,4 +1,6 @@
-const {debug,execCommand,...utils}=require('../../serviceUtils')('setupStorage');
+const utils=require('../../serviceUtils')('setupStorage');
+const debug=utils.debug;
+const execCommand=utils.execCommand;
 
 const fs = require('fs')
 
