@@ -1,4 +1,4 @@
-const {debug,execCommand...utils}=require('../../serviceUtils')('swStatus');
+const {debug,execCommand,...utils}=require('../../serviceUtils')('swStatus');
 
 const fs = require('fs')
 const pm2 = require('pm2')
