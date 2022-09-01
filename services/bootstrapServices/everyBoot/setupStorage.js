@@ -1,4 +1,4 @@
-const utils=require('../../serviceUtils')('setupStorage');
+const {debug,execCommand...utils}=require('../../serviceUtils')('setupStorage');
 
 const fs = require('fs')
 
@@ -47,14 +47,14 @@ async function run() {
   }
   catch(err) {}
 
-  utils.debug("Unable to properly detect state. Attempting to unmount everything and try again.");
+  debug("Unable to properly detect state. Attempting to unmount everything and try again.");
   if(!didDriveFail('video')) {
-    try { await utils.execCommand("sudo umount "+utils.paths.video_dir); } catch(e){}
-    try { await utils.execCommand("sudo cryptsetup --batch-mode -d - luksClose /dev/mapper/"+utils.config.videoDriveEncryptionKey); } catch(e){}
+    try { await execCommand("sudo umount "+utils.paths.video_dir); } catch(e){}
+    try { await execCommand("sudo cryptsetup --batch-mode -d - luksClose /dev/mapper/"+utils.config.videoDriveEncryptionKey); } catch(e){}
   }
   if(!didDriveFail('buddy')) {
-    try { await utils.execCommand("sudo umount "+utils.paths.buddy_dir); } catch(e){}
-    try { await utils.execCommand("sudo cryptsetup --batch-mode -d - luksClose /dev/mapper/"+utils.config.buddyDriveEncryptionKey); } catch(e){}
+    try { await execCommand("sudo umount "+utils.paths.buddy_dir); } catch(e){}
+    try { await execCommand("sudo cryptsetup --batch-mode -d - luksClose /dev/mapper/"+utils.config.buddyDriveEncryptionKey); } catch(e){}
   }
 
   return await runInternal();
@@ -62,27 +62,27 @@ async function run() {
 
 
 const prepDrive = async(driveSpec,driveName,mountPath,encryptionKey) => {
-  utils.debug(`  Setting up ${driveName.toLowerCase()} drive (${driveSpec.devicePath})...`)
+  debug(`  Setting up ${driveName.toLowerCase()} drive (${driveSpec.devicePath})...`)
   try {
     await bringDriveFullyOnline(driveSpec,mountPath,encryptionKey);
 
     driveSpec.ioWorked=await iotest(mountPath);
     if(driveSpec.ioWorked) {
-      utils.debug(`    ${driveName} drive online`);
+      debug(`    ${driveName} drive online`);
       return true;
     }
     else {
-      utils.debug(`    ${driveName} failed I/O test`);
+      debug(`    ${driveName} failed I/O test`);
       return false;
     }
   }
   catch(e) {
-    utils.debug(e);
+    debug(e);
     return false;
   }
 }
 async function runInternal(firstTry) {
-  utils.debug("Setting up video and buddy drives")
+  debug("Setting up video and buddy drives")
 
   var drives=await getDriveState();
   // if this throws it is because something like mount or lsblk threw
@@ -109,10 +109,10 @@ async function runInternal(firstTry) {
 
       // we saw a rare failure case where drives had the wrong encryption key used. So try the other just in case
       ok=await prepDrive(drives.video,'Video',utils.paths.video_dir,utils.config.buddyDriveEncryptionKey);
-      if(ok)utils.debug("    Warning: Had to use buddy drive encryption key");
+      if(ok)debug("    Warning: Had to use buddy drive encryption key");
     }
     if(!ok) {
-      utils.debug("    Video drive failed to come online");
+      debug("    Video drive failed to come online");
       driveFailed('video');
       drives.video=null;
     }
@@ -125,10 +125,10 @@ async function runInternal(firstTry) {
     if(!ok && drives.buddy.luksFormatted && !drives.buddy.luksOpened) {
       // we saw a rare failure case where drives had the wrong encryption key used. So try the other just in case
       ok=await prepDrive(drives.buddy,'Buddy',utils.paths.buddy_dir,utils.config.videoDriveEncryptionKey);
-      if(ok)utils.debug("    Warning: Had to use video drive encryption key");
+      if(ok)debug("    Warning: Had to use video drive encryption key");
     }
     if(!ok) {
-      utils.debug("    Buddy drive failed to come online");
+      debug("    Buddy drive failed to come online");
       driveFailed('buddy')
       drives.buddy=null;
     }
@@ -144,32 +144,32 @@ async function runInternal(firstTry) {
     // no drives are working
     // ensure the files exist for writing to the sd card
     try {
-      await utils.execCommand(`sudo mkdir -p ${utils.paths.video_dir}`);
-      await utils.execCommand(`sudo mkdir -p ${utils.paths.buddy_dir}`);
+      await execCommand(`sudo mkdir -p ${utils.paths.video_dir}`);
+      await execCommand(`sudo mkdir -p ${utils.paths.buddy_dir}`);
     }catch(e){}
     heartbeatData.status="emergency";
-    utils.debug("Working in emergency mode; using system drive for video and buddy systems");
+    debug("Working in emergency mode; using system drive for video and buddy systems");
   }
   else if(drives.video && drives.buddy) {
-    utils.debug("Both drives mounted successfully");
+    debug("Both drives mounted successfully");
   }
   else if(drives.video && !drives.buddy) {
     try {
       await bindAlternateStorageDrive(utils.paths.video_dir,utils.paths.buddy_dir);
-      utils.debug("Working in degraded mode; using video drive for video and buddy systems");
+      debug("Working in degraded mode; using video drive for video and buddy systems");
       heartbeatData.status="degraded";
     } catch(err) {
-      utils.debug("Failed to bind video drive to buddy drive");
+      debug("Failed to bind video drive to buddy drive");
       heartbeatData.status="critical";
     }
   }
   else if(drives.buddy && !drives.video) {
     try {
       bindAlternateStorageDrive(utils.paths.buddy_dir,utils.paths.video_dir);
-      utils.debug("Working in degraded mode; using buddy drive for video and buddy systems");
+      debug("Working in degraded mode; using buddy drive for video and buddy systems");
       heartbeatData.status="degraded";
     } catch(err) {
-      utils.debug("Failed to bind buddy drive to video drive");
+      debug("Failed to bind buddy drive to video drive");
       heartbeatData.status="critical";
     }
   }
@@ -181,7 +181,7 @@ async function runInternal(firstTry) {
     heartbeatData.buddy={exists:false};
   }
   utils.writeHeartbeatData(heartbeatData);
-  utils.debug("Completed setting up drives");
+  debug("Completed setting up drives");
 }
 
 module.exports = {
@@ -191,13 +191,13 @@ module.exports = {
 
 async function iotest(base) {
   try {
-    utils.debug(`    Testing file I/O on ${base}`);
+    debug(`    Testing file I/O on ${base}`);
     await fs.promises.writeFile(`${base}/io_test`,"test");
     await fs.promises.unlink(`${base}/io_test`);
     return true;
   }
   catch(e) {
-    utils.debug(e);debug(e);
+    debug(e);debug(e);
     return false;
   }
 }
@@ -226,7 +226,7 @@ const getDriveState = async() => {
   devices=devices.map(dev=>getSingleDriveState(dev,blkid_lines,mount_lines));
 
   if(devices.length != 2) {
-    utils.debug(`Warning: ${devices.length} large drives detected; expected 2`);
+    debug(`Warning: ${devices.length} large drives detected; expected 2`);
   }
 
   var video=null;
@@ -273,7 +273,7 @@ const getDriveState = async() => {
 
     // we can only get to here if the drive was formatted but not opened.
     // so guess and check, try to open it both ways.
-    utils.debug('  Attempting to guess which drive this is...');
+    debug('  Attempting to guess which drive this is...');
     // if a drive has failed, don't try it's enc key.
     if(!didDriveFail('video')) {
       try {
@@ -337,7 +337,7 @@ const getSingleDriveState = (drive,blkid,mount) => {
         ret.mountPaths.push(...d.map(l=>l.path))
         ret.mountPaths=[...new Set(ret.mountPaths)] // uniq
         if(d.some(l=>/\bro\b/.test(l.flags))) {
-            utils.debug('  WARNING: Drive mounted read-only!');
+            debug('  WARNING: Drive mounted read-only!');
         }
       }
     }
@@ -360,7 +360,7 @@ const bringDriveFullyOnline=async(drive,mountPath,encryptionKey) => {
     try {
       await partitionDrive(drive);
     } catch(e) {
-      utils.debug("    Failed to partition "+drive.devicePath);
+      debug("    Failed to partition "+drive.devicePath);
       throw e;
     }
   }
@@ -368,7 +368,7 @@ const bringDriveFullyOnline=async(drive,mountPath,encryptionKey) => {
     try {
       await luksFormatDrive(drive,encryptionKey);
     } catch(e) {
-      utils.debug("    Failed to luksFormat "+drive.devicePath);
+      debug("    Failed to luksFormat "+drive.devicePath);
       throw e;
     }
   }
@@ -376,7 +376,7 @@ const bringDriveFullyOnline=async(drive,mountPath,encryptionKey) => {
     try {
       await luksOpenDrive(drive,encryptionKey);
     } catch(e) {
-      utils.debug("    Failed to luksOpen "+drive.devicePath);
+      debug("    Failed to luksOpen "+drive.devicePath);
       throw e;
     }
   }
@@ -384,7 +384,7 @@ const bringDriveFullyOnline=async(drive,mountPath,encryptionKey) => {
     try {
       await mountDrive(drive,mountPath,encryptionKey);
     } catch(e) {
-      utils.debug("    Failed to mount "+drive.devicePath);
+      debug("    Failed to mount "+drive.devicePath);
       throw e;
     }
   }
@@ -393,7 +393,7 @@ const bringDriveFullyOnline=async(drive,mountPath,encryptionKey) => {
      try {
       await bindAlternateStorageDrive(drive.mountPaths[0],mountPath)
     } catch(e) {
-      utils.debug("    Failed to bind "+drive.devicePath);
+      debug("    Failed to bind "+drive.devicePath);
       throw e;
     }
 
@@ -401,14 +401,14 @@ const bringDriveFullyOnline=async(drive,mountPath,encryptionKey) => {
 }
 
 const partitionDrive = async(deviceSpec) => {
-  utils.debug(`    Partitioning ${deviceSpec.devicePath}...`);
+  debug(`    Partitioning ${deviceSpec.devicePath}...`);
 
   var partitionName=deviceSpec.deviceName+"1";
   var partitionPath='/dev/'+partitionName
 
-  await utils.execCommand(`sudo parted --script ${deviceSpec.devicePath} mklabel gpt`);
-  await utils.execCommand(`sudo parted --script -a opt ${deviceSpec.devicePath} mkpart primary ext4 0% 100%`);
-  await utils.execCommand(`yes | sudo mkfs -t ext4 ${partitionPath}`);
+  await execCommand(`sudo parted --script ${deviceSpec.devicePath} mklabel gpt`);
+  await execCommand(`sudo parted --script -a opt ${deviceSpec.devicePath} mkpart primary ext4 0% 100%`);
+  await execCommand(`yes | sudo mkfs -t ext4 ${partitionPath}`);
 
   deviceSpec.partitioned=true;
   deviceSpec.partitionName=partitionName;
@@ -417,20 +417,20 @@ const partitionDrive = async(deviceSpec) => {
 };
 
 const luksFormatDrive = async(deviceSpec,encryptionKey) => {
-  utils.debug(`    Formatting ${deviceSpec.partitionPath}...`);
+  debug(`    Formatting ${deviceSpec.partitionPath}...`);
 
-  await utils.execCommand(`echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${deviceSpec.partitionPath}`);
+  await execCommand(`echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksFormat ${deviceSpec.partitionPath}`);
   await luksOpenDrive(deviceSpec,encryptionKey); // awkward, but have to open in the middle to make the fs
-  await utils.execCommand(`yes | sudo mkfs -t ext4 ${deviceSpec.luksPath}`);
+  await execCommand(`yes | sudo mkfs -t ext4 ${deviceSpec.luksPath}`);
 
   deviceSpec.luksFormatted=true;
 }
 
 const luksOpenDrive = async(deviceSpec,encryptionKey) => {
-  utils.debug(`    Opening ${deviceSpec.partitionPath}...`);
+  debug(`    Opening ${deviceSpec.partitionPath}...`);
 
   try {
-    await utils.execCommand(`echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${deviceSpec.partitionPath} ${encryptionKey}`);
+    await execCommand(`echo '${encryptionKey}' | sudo cryptsetup --batch-mode -d - luksOpen ${deviceSpec.partitionPath} ${encryptionKey}`);
   } catch(err) {
     if(!err.stderr.includes(`Device ${encryptionKey} already exists.`))
       throw err;
@@ -442,12 +442,12 @@ const luksOpenDrive = async(deviceSpec,encryptionKey) => {
 }
 
 const mountDrive = async(deviceSpec, mountPath, encryptionKey) => {
-  utils.debug(`    Mounting ${deviceSpec.partitionPath}...`);
+  debug(`    Mounting ${deviceSpec.partitionPath}...`);
 
-  await utils.execCommand(`sudo mkdir -p ${mountPath}`);
-  await utils.execCommand(`sudo mount ${deviceSpec.luksPath} ${mountPath}`);
-  await utils.execCommand(`sudo chown -R pi:pi ${mountPath}`)
-  await utils.execCommand(`sudo chmod 755 -R ${mountPath}`)
+  await execCommand(`sudo mkdir -p ${mountPath}`);
+  await execCommand(`sudo mount ${deviceSpec.luksPath} ${mountPath}`);
+  await execCommand(`sudo chown -R pi:pi ${mountPath}`)
+  await execCommand(`sudo chmod 755 -R ${mountPath}`)
 
   deviceSpec.mounted=true;
   deviceSpec.mountPaths.push(mountPath);
@@ -455,20 +455,20 @@ const mountDrive = async(deviceSpec, mountPath, encryptionKey) => {
 };
 
 const bindAlternateStorageDrive = async (fromPath,toPath) => {
-  utils.debug(`Attempting to bind ${fromPath} to ${toPath}`);
+  debug(`Attempting to bind ${fromPath} to ${toPath}`);
 
-  var {stdout,stderr} = await utils.execCommand('mount');
+  var {stdout,stderr} = await execCommand('mount');
   if(stdout.includes(toPath)) {
-    utils.debug('  Drive already bound');
+    debug('  Drive already bound');
   }
   else {
-    await utils.execCommand(`sudo mkdir -p ${toPath}`);
-    await utils.execCommand(`sudo mount --bind ${fromPath} ${toPath}`);
+    await execCommand(`sudo mkdir -p ${toPath}`);
+    await execCommand(`sudo mount --bind ${fromPath} ${toPath}`);
   }
   // don't need -R here, since the drive would have already been set when opened at
   // its other path. Just make sure the mount path is ours
-  await utils.execCommand(`sudo chown pi:pi ${toPath}`);
-  await utils.execCommand(`sudo chmod 755 ${toPath}`);
+  await execCommand(`sudo chown pi:pi ${toPath}`);
+  await execCommand(`sudo chmod 755 ${toPath}`);
 }
 
 //------------------------------------------------------------------------------
@@ -498,9 +498,9 @@ const bindAlternateStorageDrive = async (fromPath,toPath) => {
 */
 const _lsblk = async () => {
   try {
-    var {stdout,stderr} = await utils.execCommand('lsblk --json -b -o NAME,SIZE');
+    var {stdout,stderr} = await execCommand('lsblk --json -b -o NAME,SIZE');
   }catch(err) {
-    utils.debug('Critical error: lsblk failed')
+    debug('Critical error: lsblk failed')
     // there is absolutely nothing we can do if this fails
     throw err;
   }
@@ -508,9 +508,9 @@ const _lsblk = async () => {
 }
 const _blkid = async () => {
    try {
-    var {stdout,stderr} = await utils.execCommand('sudo blkid');
+    var {stdout,stderr} = await execCommand('sudo blkid');
   }catch(err) {
-    utils.debug('Critical error: blkid failed')
+    debug('Critical error: blkid failed')
     // there is absolutely nothing we can do if this fails
     throw err;
   }
@@ -523,9 +523,9 @@ const _blkid = async () => {
 
 const _mount = async() => {
   try {
-    var {stdout,stderr} = await utils.execCommand('mount');
+    var {stdout,stderr} = await execCommand('mount');
   }catch(err) {
-    utils.debug('Critical error: mount failed')
+    debug('Critical error: mount failed')
     // there is absolutely nothing we can do if this fails
     throw err;
   }

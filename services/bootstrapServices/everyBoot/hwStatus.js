@@ -1,4 +1,4 @@
-const utils=require('../../serviceUtils')('hwStatus');
+const {debug,execCommand...utils}=require('../../serviceUtils')('hwStatus');
 
 const fs = require('fs')
 
@@ -41,7 +41,7 @@ async function getVcgencmdData() {
 
 async function vcgencmdMeasureTemp() {
   try {
-    var d=await utils.execCommand(`vcgencmd measure_temp`);
+    var d=await execCommand(`vcgencmd measure_temp`);
     d=d.stdout.trim().match(/^temp=([0-9]+\.[0-9]+)'C$/)
     if(!d)return "N/A";
     return parseFloat(d[1]);
@@ -52,7 +52,7 @@ async function vcgencmdMeasureTemp() {
 }
 async function vcgencmdGetThrottled() {
   try {
-    var d=await utils.execCommand(`vcgencmd get_throttled`);
+    var d=await execCommand(`vcgencmd get_throttled`);
     d=d.stdout.trim().match(/^throttled=(0x[0-9a-fA-F]+)$/)
     if(!d)return "N/A";
     var numeric=parseInt(d[1],16);
@@ -79,7 +79,7 @@ async function vcgencmdGetThrottled() {
 }
 async function vcgencmdMeasureClock(clock) {
   try {
-    var d=await utils.execCommand(`vcgencmd measure_clock ${clock}`);
+    var d=await execCommand(`vcgencmd measure_clock ${clock}`);
     d=d.stdout.trim().match(/^frequency\(.*\)=([0-9]+)$/)
     if(!d)return "N/A";
     return parseInt(d[1]);
@@ -90,7 +90,7 @@ async function vcgencmdMeasureClock(clock) {
 }
 async function vcgencmdMeasureVolts(block) {
   try {
-    var d=await utils.execCommand(`vcgencmd measure_volts ${block}`);
+    var d=await execCommand(`vcgencmd measure_volts ${block}`);
     d=d.stdout.trim().match(/^volt=([0-9]+\.[0-9]+)V$/)
     if(!d)return "N/A";
     return parseFloat(d[1]);
@@ -103,7 +103,7 @@ async function vcgencmdMeasureVolts(block) {
 
 async function getUptimeData() {
   try {
-    var d=await utils.execCommand(`uptime`)
+    var d=await execCommand(`uptime`)
     d=d.stdout.trim().match(/^.*? up (.*?),  ([0-9]) user,  load average: ([0-9]+\.[0-9]+), ([0-9]+\.[0-9]+), ([0-9]+\.[0-9]+)$/);
     if(!d)return "N/A"
     return {
@@ -123,7 +123,7 @@ async function getUptimeData() {
 
 async function getDFData() {
   try {
-    var d=await utils.execCommand(`df --output=target,size,used,avail --block-size=K`);
+    var d=await execCommand(`df --output=target,size,used,avail --block-size=K`);
     d=d.stdout.trim().split('\n');
     d.shift() // remove header
     d=d.map(l=>{
@@ -166,7 +166,7 @@ function processFreeData(header,dat) {
 }
 async function getFreeData() {
   try {
-    var d=await utils.execCommand(`free -wk`);
+    var d=await execCommand(`free -wk`);
     d=d.stdout.trim().split('\n');
     var header=d[0].split(/\s+/)
     var mem=d[1].split(/\s+/)
@@ -221,7 +221,7 @@ function cleanLSUSB(dat) {
 }
 
 async function getLSUSBData() {
-  var str=await utils.execCommand(`lsusb -t`);
+  var str=await execCommand(`lsusb -t`);
   str=str.stdout.split('\n').filter(l=>l);
   str=str.map(o=>({line:o.trim(),depth:o.match(/^(\s*)/)[1].length/4,children:[]}))
   var root=[];

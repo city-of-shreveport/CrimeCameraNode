@@ -1,4 +1,4 @@
-const utils=require('../../serviceUtils')('swStatus');
+const {debug,execCommand...utils}=require('../../serviceUtils')('swStatus');
 
 const fs = require('fs')
 const pm2 = require('pm2')
@@ -60,7 +60,7 @@ async function getPM2Data() {
 
 async function getGitData() {
   try {
-    var d=await utils.execCommand(`git status --porcelain -b`)
+    var d=await execCommand(`git status --porcelain -b`)
     d=d.stdout.trim().split('\n')
     var branch_line=d.shift();
     var branch=branch_line.match(/^## (.*?)\.\.\./);
