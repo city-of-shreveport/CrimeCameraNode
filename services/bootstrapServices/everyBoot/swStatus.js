@@ -1,4 +1,4 @@
-const utils=require('../../serviceUtils')('setupStorage');
+const utils=require('../../serviceUtils')('swStatus');
 const debug=utils.debug;
 const execCommand=utils.execCommand;
 

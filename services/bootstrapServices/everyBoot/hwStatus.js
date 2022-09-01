@@ -1,4 +1,4 @@
-const utils=require('../../serviceUtils')('setupStorage');
+const utils=require('../../serviceUtils')('hwStatus');
 const debug=utils.debug;
 const execCommand=utils.execCommand;
 
@@ -131,7 +131,7 @@ async function vcgencmdMeasureVolts(block) {
 async function getUptimeData() {
   try {
     var d=await execCommand(`uptime`)
-    d=d.stdout.trim().match(/^.*? up (.*?),  ([0-9]) user,  load average: ([0-9]+\.[0-9]+), ([0-9]+\.[0-9]+), ([0-9]+\.[0-9]+)$/);
+    d=d.stdout.trim().match(/^.*? up (.*?),  ([0-9]) users?,  load average: ([0-9]+\.[0-9]+), ([0-9]+\.[0-9]+), ([0-9]+\.[0-9]+)$/);
     if(!d)return "N/A"
     return {
       up:d[1],
