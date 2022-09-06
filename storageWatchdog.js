@@ -101,6 +101,7 @@ async function dfStats(path) {
       size:+dfstats[0],
       used:+dfstats[1],
       avail:+dfstats[2],
+      reserve:RESERVE_SPACE // just for  heartbeat data
     }
 }
 async function scanRoots() {
