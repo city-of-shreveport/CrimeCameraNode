@@ -24,7 +24,10 @@ async function getData() {
     status:"healthy",
     date:Date.now(),
     pm2:await getPM2Data(),
-    git:await getGitData()
+    git:{
+      main:await getGitData(),
+      nvrjs:await getGitData('/home/pi/nvr-js')
+    }
   }
 
   for(var i=0;i<dat.pm2.length;i++) {
@@ -73,7 +76,12 @@ async function getPM2Data() {
 }
 
 
-async function getGitData() {
+async function getGitData(dir) {
+  var pwd;
+  if(dir) {
+    pwd=process.cwd();
+    process.chdir(dir);
+  }
   try {
     var d=await execCommand(`git status --porcelain -b`)
     d=d.stdout.trim().split('\n')
@@ -92,6 +100,11 @@ async function getGitData() {
   }
   catch(e) {
     return e.message;
+  }
+  finally {
+    if(dir) {
+      process.chdir(pwd);
+    }
   }
 }
 
