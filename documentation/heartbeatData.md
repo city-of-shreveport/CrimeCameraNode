@@ -9,7 +9,7 @@ with data that is too old being treated as an emergency).
 Note about units: There is not much consistency in units since each subsystem
 either tries to provide convenient units, or easy-to-access units. However,
 storage units are always reported with base 2 conventions: i.e. kibibytes (1024)
-not kilobytes (1000), mebibytes (1024\*1024) not megabytes (1000\*1000), etc..  
+not kilobytes (1000), mebibytes (1024\*1024) not megabytes (1000\*1000), etc..
 
 ***
 
@@ -228,7 +228,7 @@ not kilobytes (1000), mebibytes (1024\*1024) not megabytes (1000\*1000), etc..
 
 #### `usb.*<hub|device>.speed`
 * type: `string`
-* description: formatted like `"<usbver>/speed"` -- for example, `3/5Gbps` or `2/480Mbps` 
+* description: formatted like `"<usbver>/speed"` -- for example, `3/5Gbps` or `2/480Mbps`
 
 #### `usb.*<hub|device>.children`
 * type: `array`
@@ -534,4 +534,4 @@ not kilobytes (1000), mebibytes (1024\*1024) not megabytes (1000\*1000), etc..
 
 ###### `roots.*.cleanup.actual`
 * type: `number`
-* description: how many bytes the deletion actually freed. This might be lower than `expected` if some removed files had multiple links, or if new files were written during deletion. This might be higher than `expected` if, for example, directory entries were cleaned up. If the values are ever drastically different, something has likely gone wrong, but if they are within a few percent of each other, it is probably fine. 
+* description: how many bytes the deletion actually freed. This might be lower than `expected` if some removed files had multiple links, or if new files were written during deletion. This might be higher than `expected` if, for example, directory entries were cleaned up. If the values are ever drastically different, something has likely gone wrong, but if they are within a few percent of each other, it is probably fine.
