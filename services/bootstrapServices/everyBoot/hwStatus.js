@@ -2,7 +2,7 @@ const utils=require('../../serviceUtils')('hwStatus');
 const debug=utils.debug;
 const execCommand=utils.execCommand;
 
-const fs = require('fs')
+const fs = require('fs').promises;
 
 async function run() {
   utils.readConfig() // for sanitize
@@ -28,7 +28,8 @@ async function getData() {
     disks:await getDFData(),
     ram:await getFreeData(),
     pi:await getVcgencmdData(),
-    usb:await getLSUSBData()
+    usb:await getLSUSBData(),
+    bandwidth:await computeNetworkBandwidth()
   }
   var problems=0;
 
@@ -273,6 +274,53 @@ function getMassStorageDevices(dat) {
     ret.children.forEach(c=>ret.push(...getMassStorageDevices(c)))
   }
   return ret;
+}
+
+
+
+
+var lastNetworkData;
+async function computeNetworkBandwidth() { // units are kilobytes (not bits!) per second
+  var data={bandwidth:await getNetworkStats(),date:Date.now()}
+  var ret={}
+  if(lastNetworkData) {
+    for(var iface of data.bandwidth) {
+      var last_iface=lastNetworkData.bandwidth.find(l=>l.interface==iface.interface);
+      var deltaT=(data.date - lastNetworkData.date)/1000;
+      ret[iface.interface]={
+        in:+((iface.bytes_in-last_iface.bytes_in) / 1024 / deltaT).toFixed(3),
+        out:+((iface.bytes_out-last_iface.bytes_out) / 1024 / deltaT).toFixed(3)
+      }
+    }
+  }
+  else {
+    // initial call at boot
+    for(var iface of data.bandwidth) {
+      ret[iface.interface]={in:"N/A",out:"N/A"}
+    }
+  }
+  lastNetworkData=data;
+  return ret;
+}
+
+
+function checkInterfaceName(n) {
+  if(/^(eth|wlan)[0-9]|lo/.test(n))return n;
+  return "cellular"
+}
+async function getNetworkStats() {
+  var dat=await fs.readFile('/proc/net/dev');
+  dat=dat.toString().trim().split('\n')
+  dat.shift() // remove pointless header
+  dat.shift() // same
+  dat=dat.map(line=>line.trim().split(/\s+/));
+
+  return dat.map(line=>{
+    var ret={interface:checkInterfaceName(line[0].replace(/:/,''))};
+    ret.bytes_in=+line[1]
+    ret.bytes_out=+line[9]
+    return ret;
+  }).sort((a,b)=>a.interface.localeCompare(b.interface))
 }
 
 
