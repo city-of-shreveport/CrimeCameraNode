@@ -4,7 +4,7 @@ const exec=util.promisify(require('child_process').exec);
 const debug = require('debug')('storageWatchdog')
 debug.enabled=true
 
-const RESERVE_SPACE=5*1024*1024*1024; // 5 gigs
+const RESERVE_SPACE=2*1024*1024*1024; // 2 gigs.
 
 // a "device root" is all the files for a particular device
 // for example: all 3 cameras of the local pi.

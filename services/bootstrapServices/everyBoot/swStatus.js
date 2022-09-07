@@ -25,7 +25,7 @@ async function getData() {
     date:Date.now(),
     pm2:await getPM2Data(),
     git:{
-      main:await getGitData(),
+      crimecameranode:await getGitData(),
       nvrjs:await getGitData('/home/pi/nvr-js')
     }
   }
