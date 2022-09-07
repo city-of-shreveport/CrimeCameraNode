@@ -194,9 +194,12 @@ module.exports = {
 async function iotest(base) {
   try {
     debug(`    Testing file I/O on ${base}`);
-    await fs.promises.writeFile(`${base}/io_test`,"test");
+    var test_string="test";
+    await fs.promises.writeFile(`${base}/io_test`,test_string);
+    var dat=await fs.promises.readFile(`${base}/io_test`)
+    var ret=dat.toString()==test_string;
     await fs.promises.unlink(`${base}/io_test`);
-    return true;
+    return ret;
   }
   catch(e) {
     debug(e);debug(e);
