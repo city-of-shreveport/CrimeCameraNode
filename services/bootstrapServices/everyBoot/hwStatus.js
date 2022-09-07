@@ -1,0 +1,329 @@
+const utils=require('../../serviceUtils')('hwStatus');
+const debug=utils.debug;
+const execCommand=utils.execCommand;
+
+const fs = require('fs').promises;
+
+async function run() {
+  utils.readConfig() // for sanitize
+  var data=await getData()
+  utils.writeHeartbeatData(data);
+}
+
+
+/*
+  STATUS REPORTING
+  healthy   -- Everything looks ok
+  degraded  -- One of: one mass storage device is missing, one mass storage device is attached to a low speed port, the CPU is reporting throttling, or CPU temps are over 75C.
+  critical  -- Two of the above (counting the drives separately)
+  emergency -- Three or more of the above
+*/
+
+
+async function getData() {
+  var ret={
+    status:"healthy",
+    date:Date.now(),
+    uptime:await getUptimeData(),
+    disks:await getDFData(),
+    ram:await getFreeData(),
+    pi:await getVcgencmdData(),
+    usb:await getLSUSBData(),
+    bandwidth:await computeNetworkBandwidth()
+  }
+  var problems=0;
+
+  if(ret.pi.temperatureC >= 75)problems++;
+  if(ret.pi.throttled.raw & 0xF)problems++; // don't count the sticky flags
+
+  var drives=getMassStorageDevices(ret.usb)
+  if(drives.length<2)problems+=2-drives.length;
+  drives.forEach(d=>{
+    if(d.speed[0]<3) // format is USBVER/speed.
+      problems++;
+  })
+
+  if(problems==1)ret.status=='degraded';
+  else if(problems==2)ret.status=='critical';
+  else if(problems>=3)ret.status='emergency';
+
+  return ret;
+}
+
+async function getVcgencmdData() {
+  return {
+    temepratureC:await vcgencmdMeasureTemp(),
+    throttled:await vcgencmdGetThrottled(),
+    clock:{
+      cpu:await vcgencmdMeasureClock("arm"),
+      sdCard:await vcgencmdMeasureClock("emmc")
+    },
+    volts:{
+      core:await vcgencmdMeasureVolts("core"),
+      sdram_c:await vcgencmdMeasureVolts("sdram_c"),
+      sdram_i:await vcgencmdMeasureVolts("sdram_i"),
+      sdram_p:await vcgencmdMeasureVolts("sdram_p")
+    }
+  }
+}
+
+async function vcgencmdMeasureTemp() {
+  try {
+    var d=await execCommand(`vcgencmd measure_temp`);
+    d=d.stdout.trim().match(/^temp=([0-9]+\.[0-9]+)'C$/)
+    if(!d)return "N/A";
+    return parseFloat(d[1]);
+  }
+  catch(e) {
+    return e.message
+  }
+}
+async function vcgencmdGetThrottled() {
+  try {
+    var d=await execCommand(`vcgencmd get_throttled`);
+    d=d.stdout.trim().match(/^throttled=(0x[0-9a-fA-F]+)$/)
+    if(!d)return "N/A";
+    var numeric=parseInt(d[1],16);
+    return {
+      raw:numeric,
+      current:{
+        underVoltage: !!(numeric&(1<<0)),
+        armFreqCapped:!!(numeric&(1<<1)),
+        throttled:    !!(numeric&(1<<2)),
+        softTempLimit:!!(numeric&(1<<3))
+      },
+      occurred:{
+        underVoltage: !!(numeric&(1<<16)),
+        armFreqCapped:!!(numeric&(1<<17)),
+        throttled:    !!(numeric&(1<<18)),
+        softTempLimit:!!(numeric&(1<<19))
+      }
+    }
+
+  }
+  catch(e) {
+    return e.message;
+  }
+}
+async function vcgencmdMeasureClock(clock) {
+  try {
+    var d=await execCommand(`vcgencmd measure_clock ${clock}`);
+    d=d.stdout.trim().match(/^frequency\(.*\)=([0-9]+)$/)
+    if(!d)return "N/A";
+    return parseInt(d[1]);
+  }
+  catch(e) {
+    return e.message;
+  }
+}
+async function vcgencmdMeasureVolts(block) {
+  try {
+    var d=await execCommand(`vcgencmd measure_volts ${block}`);
+    d=d.stdout.trim().match(/^volt=([0-9]+\.[0-9]+)V$/)
+    if(!d)return "N/A";
+    return parseFloat(d[1]);
+  }
+  catch(e) {
+    return e.message;
+  }
+}
+
+
+async function getUptimeData() {
+  try {
+    var d=await execCommand(`uptime`)
+    d=d.stdout.trim().match(/^.*? up (.*?),  ([0-9]) users?,  load average: ([0-9]+\.[0-9]+), ([0-9]+\.[0-9]+), ([0-9]+\.[0-9]+)$/);
+    if(!d)return "N/A"
+    return {
+      up:d[1],
+      users:parseInt(d[2]),
+      load:{
+        "1min":parseFloat(d[3]),
+        "5min":parseFloat(d[4]),
+        "15min":parseFloat(d[5])
+      }
+    }
+  }
+  catch(e) {
+    return e.message
+  }
+}
+
+async function getDFData() {
+  try {
+    var d=await execCommand(`df --output=target,size,used,avail --block-size=K`);
+    d=d.stdout.trim().split('\n');
+    d.shift() // remove header
+    d=d.map(l=>{
+      l=l.split(/\s+/);
+      var ret={
+        path:l[0],
+        size:parseInt(l[1]),
+        used:parseInt(l[2]),
+        avail:parseInt(l[3]),
+      }
+      ret.usedPercent=parseFloat((ret.used/ret.size*100).toFixed(3))
+      return ret;
+    });
+    return {
+      root:d.find(o=>o.path=='/')||"not found",
+      boot:d.find(o=>o.path=='/boot')||"not found",
+      video:d.find(o=>o.path==utils.paths.video_dir)||"not found",
+      buddy:d.find(o=>o.path==utils.paths.buddy_dir)||"not found",
+      ramdisk:d.find(o=>o.path==utils.paths.ram_disk)||"not found"
+    }
+  }
+  catch(e) {
+    return e.message
+  }
+}
+
+function processFreeData(header,dat) {
+  var o={};
+  for(var i=1;i<dat.length;++i) {
+    var h=header[i-1];
+    o[h]=parseInt(dat[i])
+  }
+  if(o.available && o.total) {
+    o.usedPercent=parseFloat(((1-o.available/o.total)*100).toFixed(3))
+  }
+  else if(o.used && o.total) {
+    o.usedPercent=parseFloat((o.used/o.total*100).toFixed(3))
+  }
+  return o;
+}
+async function getFreeData() {
+  try {
+    var d=await execCommand(`free -wk`);
+    d=d.stdout.trim().split('\n');
+    var header=d[0].split(/\s+/)
+    var mem=d[1].split(/\s+/)
+    var swap=d[2].split(/\s+/)
+    return {
+      memory:processFreeData(header,mem),
+      swap:processFreeData(header,swap)
+    }
+  }
+  catch(e) {
+    return e.message
+  }
+}
+
+
+
+
+function cleanLSUSB(dat) {
+  var ret={}
+  dat.line=dat.line.replace(/\/:|\|__/g,'').trim()
+  if(dat.line.startsWith('Port')) {
+    var l=dat.line.match(/Port ([0-9]+): Dev ([0-9]+), If ([0-9]+), Class=(.*?), Driver=(.*?), (.*)/);
+    ret.port=+l[1];
+    ret.dev=+l[2];
+//    ret.if=+l[3];
+    ret.class=l[4]
+//    ret.driver=l[5]
+    ret.speed=l[6]
+  }
+  else if(dat.line.startsWith('Bus')) {
+    var l=dat.line.match(/Bus ([0-9]+)\.Port ([0-9]+): Dev ([0-9]+), Class=(.*?), Driver=(.*?), (.*)/);
+    ret.bus=l[1]
+    ret.port=+l[2];
+    ret.dev=+l[2];
+    ret.class=l[4]
+//    ret.driver=l[5]
+    ret.speed=l[6]
+  }
+  else {
+    ret.type="unknown"
+    ret.raw=dat.line
+  }
+  if(ret.speed=='12M')ret.speed="1/12Mbps"
+  else if(ret.speed=='480M')ret.speed="2/480Mbps"
+  else if(ret.speed=='5000M')ret.speed="3/5Gbps"
+  else if(ret.speed=='10000M')ret.speed="3.1/10Gbps"
+  else if(ret.speed=='20000M')ret.speed="3.2/20Gbps"
+  else if(ret.speed=='40000M')ret.speed="4/40Gbps"
+  if(dat.children.length)
+    ret.children=dat.children.map(cleanLSUSB);
+  return ret;
+}
+
+async function getLSUSBData() {
+  var str=await execCommand(`lsusb -t`);
+  str=str.stdout.split('\n').filter(l=>l);
+  str=str.map(o=>({line:o.trim(),depth:o.match(/^(\s*)/)[1].length/4,children:[]}))
+  var root=[];
+  var work=[];
+  for(var i=0;i<str.length;++i) {
+    if(str[i].depth==0)continue;
+    for(var j=i-1;j>=0;j--) {
+      if(str[j].depth < str[i].depth) {
+        str[j].children.push(str[i])
+        break
+      }
+    }
+  }
+  return str.filter(o=>o.depth==0).map(cleanLSUSB)
+}
+
+function getMassStorageDevices(dat) {
+  var ret=[];
+  if(dat.class=='Mass Storage')
+    ret.push(dat);
+  if(ret.children) {
+    ret.children.forEach(c=>ret.push(...getMassStorageDevices(c)))
+  }
+  return ret;
+}
+
+
+
+
+var lastNetworkData;
+async function computeNetworkBandwidth() { // units are kilobytes (not bits!) per second
+  var data={bandwidth:await getNetworkStats(),date:Date.now()}
+  var ret={}
+  if(lastNetworkData) {
+    for(var iface of data.bandwidth) {
+      var last_iface=lastNetworkData.bandwidth.find(l=>l.interface==iface.interface);
+      var deltaT=(data.date - lastNetworkData.date)/1000;
+      ret[iface.interface]={
+        in:+((iface.bytes_in-last_iface.bytes_in) / 1024 / deltaT).toFixed(3),
+        out:+((iface.bytes_out-last_iface.bytes_out) / 1024 / deltaT).toFixed(3)
+      }
+    }
+  }
+  else {
+    // initial call at boot
+    for(var iface of data.bandwidth) {
+      ret[iface.interface]={in:"N/A",out:"N/A"}
+    }
+  }
+  lastNetworkData=data;
+  return ret;
+}
+
+
+function checkInterfaceName(n) {
+  if(/^(eth|wlan)[0-9]|lo/.test(n))return n;
+  return "cellular"
+}
+async function getNetworkStats() {
+  var dat=await fs.readFile('/proc/net/dev');
+  dat=dat.toString().trim().split('\n')
+  dat.shift() // remove pointless header
+  dat.shift() // same
+  dat=dat.map(line=>line.trim().split(/\s+/));
+
+  return dat.map(line=>{
+    var ret={interface:checkInterfaceName(line[0].replace(/:/,''))};
+    ret.bytes_in=+line[1]
+    ret.bytes_out=+line[9]
+    return ret;
+  }).sort((a,b)=>a.interface.localeCompare(b.interface))
+}
+
+
+module.exports = {
+  run
+}

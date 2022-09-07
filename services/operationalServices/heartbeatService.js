@@ -26,7 +26,8 @@ async function run() {
         //TODO:
         //firewallHealthy: await firewallHealthy(),
         drivesHealthy: await drivesHealthy(),
-        videosAreRecording: await videosAreRecording()
+        videosAreRecording: await videosAreRecording(),
+        services:await getServiceData()
       }
     }
 
@@ -177,6 +178,72 @@ async function videosAreRecording() {
     tx2.issue(`Host: ${config.hostName} |  Cameras are not recording.`);
   }
   
+  return result;
+}
+
+
+/*
+  STATUS REPORTING
+  healthy   -- Everything appears functional. There might be minor misconfigurations or other small issues, but nothing that should affect stability.
+  degraded  -- Either something not-mission-critical is broken, or something mission-critical is working poorly. System is expected to still be stable, but it could use some attention when convenient.
+  critical  -- Something mission-critical is nonfunctional, and system may be unstable. It needs attention now, but will try to limp along for as long as it can.
+  emergency -- Something mission-critical is nonfunctional, and the system is **not** expected to be stable. It might limp along for a short period by chance, but it needs attention immediately.
+
+  The line between critical and emergency is pretty subtle, and either state should really be treated as a system failure.
+  Basically: critical means broken but probably will work for a while. emergency means broken and probably won't work at all, or if it does, it won't for long.
+
+  In short:
+  healthy   -- I'm fine
+  degraded  -- I need help, but it can probably wait til next week.
+  critical  -- I need help, but it can probably wait til tomorrow.
+  emergency -- I need help, ideally yesterday.
+*/
+async function getServiceData() {
+  // possible statuses in order: healthy, degraded, critical, emergency.
+  // overall status is the lowest of those seen
+  var result={status:"healthy"};
+
+  try {
+    var dir=fs.readdirSync('/mnt/ramdisk/services');
+  }
+  catch(e) {
+    result.status="emergency";
+    result.reason="could not find services folder";
+    return result;
+  }
+
+  dir=dir.filter(o=>o.endsWith('.json')).sort();
+  var now=Date.now();
+  var allStatuses=[];
+
+  for(var file of dir) {
+    var service=file.slice(0,-5); // remove .json
+    try {
+      var dat=fs.readFileSync(`/mnt/ramdisk/services/${file}`,"utf8");
+      dat=JSON.parse(dat);
+      if(dat.date < now - 15*60*1000) {
+        // if any data is over 15 minutes old, set that system to emergency, because it means something failed.
+        dat.status="emergency";
+      }
+      result[service]=dat;
+    }
+    catch(e) {
+      result[service]={
+        status:"emergency",
+        date:now,
+        reason:"could not read service file"
+      };
+    }
+    allStatuses.push(result[service].status);
+  }
+
+  if(allStatuses.includes("emergency"))
+    result.status="emergency";
+  else if(allStatuses.includes("critical"))
+    result.status="critical";
+  else if(allStatuses.includes("degraded"))
+    result.status="degraded";
+
   return result;
 }
 
